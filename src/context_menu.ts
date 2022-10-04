@@ -1,4 +1,4 @@
-// ContextMenu modified from https://github.com/GeorgianStan/vanilla-context-menu (licensed under MIT license)
+// ContextMenu modified from https://github.com/GeorgianStan/vanilla-context-menu
 interface CoreOptions {
     transformOrigin: [string, string];
 }
