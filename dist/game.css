@@ -1,0 +1,135 @@
+body {
+  background: rgb(76, 75, 75);
+}
+
+.timer-background {
+  transform: rotate(-90deg) translateX(-100%);
+  stroke-width: 50%;
+}
+
+.context-menu-theme-default {
+  background-color: #000000;
+  color: #ffffff;
+  transform-origin: "left top 1px";
+}
+
+.context-menu {
+  font-family: "Open Sans", sans-serif;
+  position: fixed;
+  z-index: 10000;
+  width: 150px;
+  transform: scale(0);
+  transition-property: transform;
+  transition-timing-function: ease-in-out;
+}
+.context-menu--black-theme {
+  background: #1b1a1a;
+}
+.context-menu--black-theme hr {
+  background-color: #555;
+}
+.context-menu--black-theme > *:not(hr) {
+  color: #eee;
+}
+.context-menu--black-theme > *:not(hr):hover {
+  background: #555;
+}
+.context-menu--white-theme {
+  background: #fff;
+}
+.context-menu--white-theme hr {
+  background-color: #e4e4e4;
+}
+.context-menu--white-theme > *:not(hr) {
+  color: #262626;
+}
+.context-menu--white-theme > *:not(hr):hover {
+  background: #e4e4e4;
+}
+.context-menu.visible {
+  transform: scale(1);
+}
+.context-menu hr {
+  margin: 2px 0;
+  height: 1px;
+  border: 0;
+}
+.context-menu > *:not(hr) {
+  padding: 8px 10px;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.context-menu > *:not(hr) i {
+  margin-right: 5px;
+}
+
+:root {
+  --clock-table-cell-size: 64px;
+}
+
+.clock-table {
+  display: flex;
+  flex-direction: column;
+  outline: 2px solid;
+  width: -webkit-min-content;
+  width: -moz-min-content;
+  width: min-content;
+  height: -webkit-fit-content;
+  height: -moz-fit-content;
+  height: fit-content;
+}
+
+.clock-table-head {
+  display: flex;
+  flex-direction: row;
+  height: var(--clock-table-cell-size);
+}
+
+.statistic-box {
+  min-width: 64px;
+  outline: 1px solid;
+  flex: 1;
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+}
+
+.statistic-svg {
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+  display: flex;
+  padding: 1px;
+}
+
+.statistic-name {
+  font-size: 200%;
+  text-anchor: middle;
+  dominant-baseline: text-before-edge;
+}
+
+.statistic-value {
+  font-size: 200%;
+  text-anchor: end;
+  dominant-baseline: text-after-edge;
+}
+
+.clock-table-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.clock-table-cell {
+  display: flex;
+  flex-direction: row;
+  outline: 1px solid;
+  margin: 1px;
+  padding: 3px;
+  height: var(--clock-table-cell-size);
+  width: var(--clock-table-cell-size);
+}
+
+.clock.Producer {
+  display: block;
+}

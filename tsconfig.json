@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "target": "ES6",
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "allowUmdGlobalAccess": true,
+        "sourceMap": false,
+        "outDir": "dist",
+    },
+    "exclude": [
+    ]
+}

@@ -1,0 +1,84 @@
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _DisplayableNumber_display_name, _DisplayableNumber_value;
+class DisplayableNumber {
+    constructor(display_name, value) {
+        _DisplayableNumber_display_name.set(this, void 0);
+        _DisplayableNumber_value.set(this, void 0);
+        __classPrivateFieldSet(this, _DisplayableNumber_display_name, display_name, "f");
+        __classPrivateFieldSet(this, _DisplayableNumber_value, value, "f");
+    }
+    set(value) {
+        __classPrivateFieldSet(this, _DisplayableNumber_value, value, "f");
+    }
+    add(value) {
+        __classPrivateFieldSet(this, _DisplayableNumber_value, __classPrivateFieldGet(this, _DisplayableNumber_value, "f") + value, "f");
+    }
+    subtract(value) {
+        __classPrivateFieldSet(this, _DisplayableNumber_value, __classPrivateFieldGet(this, _DisplayableNumber_value, "f") - value, "f");
+    }
+    displayName() {
+        return __classPrivateFieldGet(this, _DisplayableNumber_display_name, "f");
+    }
+    value() {
+        return __classPrivateFieldGet(this, _DisplayableNumber_value, "f");
+    }
+    toString() {
+        return __classPrivateFieldGet(this, _DisplayableNumber_display_name, "f") + ": " + __classPrivateFieldGet(this, _DisplayableNumber_value, "f");
+    }
+    equals(other) {
+        if (other instanceof DisplayableNumber) {
+            return __classPrivateFieldGet(this, _DisplayableNumber_value, "f") === other.value();
+        }
+        else {
+            return __classPrivateFieldGet(this, _DisplayableNumber_value, "f") === other;
+        }
+    }
+}
+_DisplayableNumber_display_name = new WeakMap(), _DisplayableNumber_value = new WeakMap();
+class Statistic extends DisplayableNumber {
+}
+class Resource extends DisplayableNumber {
+}
+class GameState {
+    constructor() {
+        this.ops = new Resource('Money', 0);
+        this.n = new Statistic('n', 2);
+        this.checking = new Statistic('Checking', 2);
+        this.length = new Statistic('Length', 1);
+        this.current_seq = [2];
+        this.current_iter = 0;
+    }
+    applySequence(seq) {
+        const applied = seq.length;
+        this.length.set(this.current_seq.push(...seq));
+        this.current_iter += applied;
+        this.n.set(seq[seq.length - 1]);
+        this.ops.add(applied);
+    }
+    resetSequence(from) {
+        this.current_seq = [from];
+        this.n.set(from);
+        this.checking.set(from);
+        this.length.set(1);
+    }
+    canVerify() {
+        return this.n.equals(1);
+    }
+    verify() {
+        if (!this.canVerify()) {
+            return false;
+        }
+        this.resetSequence(this.checking.value() + 1);
+        return true;
+    }
+}
