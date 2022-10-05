@@ -5,6 +5,7 @@ interface CoreOptions {
 interface DefaultOptions {
     transitionDuration: number;
     addCancel: boolean;
+    additionalScopeClass: string;
     theme: 'black' | 'white';
 }
 
@@ -15,6 +16,8 @@ interface ConfigurableOptions extends Partial<DefaultOptions> {
     generatePrimaryMenuItems?: MenuItemGenerator;
     generateSecondaryMenuItems?: MenuItemGenerator;
     defaultMenuItems: MenuItem[];
+    onShow?: () => void;
+    onClose?: () => void;
     customClass?: string;
     customThemeClass?: string;
     preventCloseOnClick?: boolean;
@@ -40,6 +43,8 @@ class ContextMenu {
 
     #state: State = { defaultMenuItems: [] };
 
+    static #currentContextMenu: ContextMenu | undefined;
+
     #coreOptions: CoreOptions = {
         transformOrigin: ['top', 'left'], 
     };
@@ -47,6 +52,7 @@ class ContextMenu {
     #defaultOptions: DefaultOptions = {
         theme: 'black',
         transitionDuration: 200,
+        additionalScopeClass: "selected",
         addCancel: true,
     };
 
@@ -153,7 +159,18 @@ class ContextMenu {
     };
 
     #removeExistingContextMenu = (): void => {
-        document.querySelector(".context-menu")?.remove();
+        if (!ContextMenu.#currentContextMenu) {
+            return;
+        }
+        const c = ContextMenu.#currentContextMenu
+        if (c.#options.additionalScopeClass) {
+           c.#options.scope.classList.remove(c.#options.additionalScopeClass);
+        }
+
+        if (c.#options.onClose) {
+            c.#options.onClose();
+        }
+        document.querySelector(".context-menu")?.remove();    
     };
 
     #applyStyleOnContextMenu = (
@@ -211,11 +228,13 @@ class ContextMenu {
         event.preventDefault();
         event.stopPropagation();
 
+
         // store event so it can be passed to callbakcs
         this.#initialContextMenuEvent = event;
 
         // the current context menu should disappear when a new one is displayed
         this.#removeExistingContextMenu();
+        ContextMenu.#currentContextMenu = this;
 
         // build and show on ui
         const contextMenu: HTMLElement = this.#buildContextMenu(event.button);
@@ -239,6 +258,14 @@ class ContextMenu {
             mouseX !== normalizedX,
             mouseY !== normalizedY,
         );
+
+        if (this.#options.additionalScopeClass) {
+            this.#options.scope.classList.add(this.#options.additionalScopeClass);
+        }
+
+        if (this.#options.onShow) {
+            this.#options.onShow();
+        }
 
         // disable context menu for it
         contextMenu.oncontextmenu = (e) => e.preventDefault();

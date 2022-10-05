@@ -1,3 +1,7 @@
+:root {
+    --clock-table-cell-size: 64px;
+}
+
 body {
     background: rgb(76, 75, 75);
 }
@@ -5,12 +9,82 @@ body {
 .timer-background {
     transform: rotate(-90deg) translateX(-100%);
     stroke-width:50%;
+    animation-play-state: running;
+    -o-animation-play-state: running;
+    -moz-animation-play-state: running;
+    -webkit-animation-play-state: running;
+}
+
+#game-container {
+    position:absolute
+}
+
+#options-menu {
+    width: 50%;
+    height: 50%;
+    top: 25%;
+    left: 25%;
+
+    position:absolute;
+    
+    
+    & #options-menu-wrapper {
+        background-color: gray;
+        position:absolute;
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        flex-direction: column;
+    }
+
+    & .option-container {
+        & * {
+            // flex: 1;
+        }
+        // flex: 1;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+    }
+
+
+    & #close-options-menu {
+        top: 0;
+        left: 0;
+        width: 25px;
+        height: 25px;
+        background-color: red;
+    }
+    &.disabled * {
+        z-index: -1;
+        opacity: 0;
+    }
+    &.enabled * {
+        z-index: 10000;
+        opacity: 1;
+    }
+
 }
 
 .context-menu-theme-default {
-    background-color: #000000;
-    color: #ffffff;
+    // background-color: #000000;
+    // color: #ffffff;
     transform-origin: "left top 1px";
+    background: #1b1a1a;
+    
+    hr {
+        background-color: #555;
+    }
+
+    &>*:not(hr) {
+        color: #eee;
+
+        &:hover {
+            background: #555;
+        }
+    }
 }
 
 .context-menu {
@@ -77,10 +151,6 @@ body {
     }
 }
 
-:root {
-    --clock-table-cell-size: 64px;
-}
-
 .clock-table {
     display:flex;
     flex-direction: column;
@@ -92,7 +162,7 @@ body {
 .clock-table-head {
     display:flex;
     flex-direction: row;
-    height: var(--clock-table-cell-size);
+    height: max(64px, var(--clock-table-cell-size));
 }
 
 .statistic-box {
@@ -113,13 +183,14 @@ body {
 }
 
 .statistic-name {
-    font-size: 200%;
+    // font-size: 200%;
     text-anchor: middle;
     dominant-baseline: text-before-edge;
+    
 }
 
 .statistic-value {
-    font-size: 200%;
+    // font-size: 200%;
     text-anchor: end;
     dominant-baseline: text-after-edge;
 }
@@ -127,16 +198,67 @@ body {
 .clock-table-row {
     display: flex;
     flex-direction: row;
+
+
 }
 
 .clock-table-cell {
     display: flex;
     flex-direction: row;
-    outline: 1px solid;
-    margin: 1px;
+    // margin: 1px;
     padding: 3px;
     height: var(--clock-table-cell-size);
     width: var(--clock-table-cell-size);
+    
+    border-left: 1px solid #000000;
+    border-right: 1px solid #000000;
+    border-top: 1px solid #000000;
+    border-bottom: 1px solid #000000;
+
+
+    z-index: 1;
+    --selected-border-color: chartreuse;
+    --rowcol-border-color: rgba(128, 255, 0, 0.568);
+
+    &:hover {
+        border: 1px dashed var(--selected-border-color);
+        z-index: 3;
+        // border-radius: 1px;
+    }
+    
+    &.row-highlighted:not(:hover){
+        border-top: 1px dashed var(--rowcol-border-color);
+        border-bottom: 1px dashed var(--rowcol-border-color);
+
+        z-index: 2;
+    }
+    
+    &.column-highlighted:not(:hover) {
+        border-left: 1px dashed var(--rowcol-border-color);
+        border-right: 1px dashed var(--rowcol-border-color);
+        z-index: 2;
+    }
+
+    &:not(.column-highlighted,.row-highlighted):not(:hover) {
+        z-index: 0;
+    }
+
+    
+    &.selected {
+        animation: pulse-border 1s ease-in-out Infinite alternate none;
+        border-style: dashed;
+        border-radius: 0px;
+        z-index: 2;
+    }
+
+    @keyframes pulse-border {
+        0% {
+            border-color: rgba(127, 255, 0, 1);
+        }
+        100% {
+            border-color: rgba(127, 255, 0, 0);
+        }
+    }
 }
 
 .clock.Producer{

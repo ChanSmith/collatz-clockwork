@@ -70,6 +70,9 @@ class ClockManager {
         }
         return c;
     }
+    forEachClock(f) {
+        this.grid.forEach(f);
+    }
     getClock(pos) {
         return this.grid.get(pos.toString());
     }

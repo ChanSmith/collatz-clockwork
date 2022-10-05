@@ -31,6 +31,20 @@ class Clock {
     getOpCount() {
         return 1;
     }
+    pause() {
+        if (this.animation) {
+            this.animation.pause();
+        }
+    }
+    paused() {
+        var _a, _b;
+        return ((_b = (_a = this.animation) === null || _a === void 0 ? void 0 : _a.playState) !== null && _b !== void 0 ? _b : "running") == "paused";
+    }
+    unpause() {
+        if (this.animation) {
+            this.animation.play();
+        }
+    }
     positionString() {
         return this.options.position.toString();
     }

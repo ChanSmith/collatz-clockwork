@@ -84,6 +84,9 @@ class ClockManager {
         return c;
     }
 
+    forEachClock(f: (clock: Clock) => void) {
+        this.grid.forEach(f);
+    }
 
     getClock(pos: Position): Clock | undefined {
         return this.grid.get(pos.toString());

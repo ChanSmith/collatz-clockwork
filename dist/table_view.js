@@ -32,18 +32,39 @@ const clock_background_timing = {
     iterations: 1,
 };
 const STATS_UPDATE_INTERVAL = 16;
-const shrinkElementToFitParent = (element, sizes = ["200%", "150%", "100%", "75%", "50%", "25%"]) => {
+const horizontalRatio = (element) => {
     const parent = element.parentElement;
-    if (!parent) {
+    return element.clientWidth / parent.clientWidth;
+};
+const verticalRatio = (element) => {
+    const parent = element.parentElement;
+    return element.clientHeight / parent.clientHeight;
+};
+// Returns whether the ratio of both targets to actuals is greater than max_difference
+const needsResize = (element, max_horizontal, max_vertical, max_difference = 0.1 /* 10% */) => {
+    if (horizontalRatio(element) > max_horizontal || verticalRatio(element) > max_vertical) {
+        return true;
+    }
+    return Math.abs(horizontalRatio(element) - max_horizontal) > max_difference
+        && Math.abs(verticalRatio(element) - max_vertical) > max_difference;
+};
+const sizeTextToFitParent = (element, max_horizontal = 1.0, max_veritical = 0.5) => {
+    var _a;
+    const parent = element.parentElement;
+    if (!parent || !needsResize(element, max_horizontal, max_veritical)) {
         return;
     }
-    let index = 0;
-    while (element.clientWidth > parent.clientWidth && index < sizes.length) {
-        // console.log("shrinking to" + sizes[index]);
-        // this.name_element.setAttribute("font-size", sizes[shrinkIndex]);
-        this.name_element.style.fontSize = sizes[index];
-        index++;
-    }
+    const horizontal_ratio = horizontalRatio(element);
+    const vertical_ratio = verticalRatio(element);
+    const ratio = Math.min(max_horizontal / horizontal_ratio, max_veritical / vertical_ratio);
+    // if (horizontal_ratio < max_horizontal && vertical_ratio < max_veritical) {
+    //     ratio = Math.min(max_horizontal / horizontal_ratio, max_veritical / vertical_ratio);
+    // } else {
+    //     ratio = Math.min( horizontal_ratio / max_horizontal, vertical_ratio / max_veritical);
+    // }
+    const current_size = parseFloat(((_a = element.getAttribute("font-size")) === null || _a === void 0 ? void 0 : _a.split("%")[0]) || "100");
+    const new_size = Math.floor(current_size * ratio).toFixed(2);
+    element.setAttribute("font-size", new_size + "%");
 };
 class StatisticView extends HTMLDivElement {
     constructor() {
@@ -72,12 +93,12 @@ class StatisticView extends HTMLDivElement {
         this.update();
     }
     // Make display update itself every STATS_UPDATE_INTERVAL ms
-    // TODO: look into requestAnimationFrame
+    // TODO: look into only resizing when things change (e.g. cell resize or text length changes)
     update() {
         this.name_element.textContent = this.stat.displayName();
-        shrinkElementToFitParent(this.name_element);
+        sizeTextToFitParent(this.name_element);
         this.value_element.textContent = this.stat.value().toString();
-        shrinkElementToFitParent(this.value_element);
+        sizeTextToFitParent(this.value_element);
         window.setTimeout(() => this.update(), STATS_UPDATE_INTERVAL);
     }
 }
@@ -88,10 +109,50 @@ class TableView {
         this.clock_manager = new ClockManager(this.game);
         this.generateFlexTable();
     }
+    highlightRow(n) {
+        const row = this.table_body.children[n];
+        if (row) {
+            for (const cell of row.children) {
+                cell.classList.add("row-highlighted");
+            }
+        }
+    }
+    unHighlightRow(n) {
+        const row = this.table_body.children[n];
+        if (row) {
+            for (const cell of row.children) {
+                cell.classList.remove("row-highlighted");
+            }
+        }
+    }
+    highlightColumn(n) {
+        for (const row of this.table_body.children) {
+            const cell = row.children[n];
+            if (cell) {
+                cell.classList.add("column-highlighted");
+            }
+        }
+    }
+    unHighlightColumn(n) {
+        for (const row of this.table_body.children) {
+            const cell = row.children[n];
+            if (cell) {
+                cell.classList.remove("column-highlighted");
+            }
+        }
+    }
     generateMenuForCell(cell, pos) {
         let menu = new ContextMenu({
             scope: cell,
             customThemeClass: "context-menu-theme-default",
+            onShow: () => {
+                this.highlightRow(pos.row);
+                this.highlightColumn(pos.col);
+            },
+            onClose: () => {
+                this.unHighlightRow(pos.row);
+                this.unHighlightColumn(pos.col);
+            },
             generatePrimaryMenuItems: this.game.primaryMenuItemGenerator(pos),
             generateSecondaryMenuItems: this.game.secondaryMenuItemGenerator(pos),
             defaultMenuItems: [
@@ -128,6 +189,24 @@ class TableView {
             element.removeChild(element.firstChild);
         }
     }
+    clockPaused(pos) {
+        var _a;
+        return (_a = this.clock_manager.getClock(pos)) === null || _a === void 0 ? void 0 : _a.paused();
+    }
+    pauseClock(pos) {
+        var _a;
+        (_a = this.clock_manager.getClock(pos)) === null || _a === void 0 ? void 0 : _a.pause();
+    }
+    unpauseClock(pos) {
+        var _a;
+        (_a = this.clock_manager.getClock(pos)) === null || _a === void 0 ? void 0 : _a.unpause();
+    }
+    pause() {
+        this.clock_manager.forEachClock(clock => clock.pause());
+    }
+    unpause() {
+        this.clock_manager.forEachClock(clock => clock.unpause());
+    }
     removeClock(pos) {
         const cell = this.getCell(pos);
         if (!cell) {
@@ -146,6 +225,7 @@ class TableView {
     }
     animateClock(element, clock) {
         let background_anim = element.animate(clock_background_keyframes, clock_background_timing);
+        clock.animation = background_anim;
         background_anim.finished.then(() => {
             clock.tick();
             this.animateClock(element, clock);

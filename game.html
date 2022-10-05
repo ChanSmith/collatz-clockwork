@@ -5,19 +5,25 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="./dist/game.css">
+    <style type="text/css" id="dynamic-style"></style>
     <title>Collatz Clockwork</title>
 </head>
 
 <body>
-
+    <img src="./assets/shortcut_collatz_equation.svg" alt="Collatz Equation" class="collatz-equation">
+    <div id="options-menu" is="options-menu"></div>
     <div id="game-container">
         <div id="table-container">
 
         </div>
+        <button id="open-options" class="btn btn-primary" onclick="g.openOptionsMenu()">Options</button>
+        <button id="pause-button" class="btn btn-primary" onclick="g.pause()">Pause all</button>
+        <button id="unpause-button" class="btn btn-primary" onclick="g.unpause()">Unpause all</button>
     </div>
     
 </body>
 
+<script src="./dist/options_menu.js" type="text/javascript"></script>
 <script src="./dist/clock.js" type="text/javascript"></script>
 <script src="./dist/context_menu.js" type="text/javascript"></script>
 <script src="./dist/clock_manager.js" type="text/javascript"></script>

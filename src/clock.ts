@@ -25,6 +25,8 @@ abstract class Clock {
 
     abstract readonly clockType: ClockType;
 
+    animation?: Animation;
+
     getType(): ClockType {
         return this.clockType;
     }
@@ -49,6 +51,22 @@ abstract class Clock {
 
     getOpCount(): number {
         return 1;
+    }
+
+    pause() {
+        if (this.animation) {
+            this.animation.pause();
+        }
+    }
+
+    paused(): boolean {
+        return (this.animation?.playState ?? "running") == "paused"
+    }
+
+    unpause() {
+        if (this.animation) {
+            this.animation.play();
+        }
     }
 
     positionString(): string {

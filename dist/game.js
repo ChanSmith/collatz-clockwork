@@ -50,6 +50,28 @@ class Game {
             }
         ];
     }
+    getPauseClockMenuItems(pos) {
+        if (this.table_view.clockPaused(pos)) {
+            return [
+                {
+                    label: "Unpause Clock",
+                    callback: () => {
+                        this.table_view.unpauseClock(pos);
+                    }
+                }
+            ];
+        }
+        else {
+            return [
+                {
+                    label: "Pause Clock",
+                    callback: () => {
+                        this.table_view.pauseClock(pos);
+                    }
+                }
+            ];
+        }
+    }
     primaryMenuItemGenerator(pos) {
         return () => {
             let items = [];
@@ -57,7 +79,7 @@ class Game {
                 items.push(...this.getNewClockMenuItems(pos));
             }
             else {
-                // Get upgrades?
+                items.push(...this.getPauseClockMenuItems(pos));
             }
             return items;
         };
@@ -82,5 +104,28 @@ class Game {
     verify() {
         return this.game_state.verify();
     }
+    openOptionsMenu() {
+        const menu = document.querySelector("#options-menu");
+        menu === null || menu === void 0 ? void 0 : menu.enable();
+    }
+    pause() {
+        this.table_view.pause();
+        // document.documentElement.style.animationPlayState = "paused";
+    }
+    unpause() {
+        this.table_view.unpause();
+        // document.documentElement.style.animationPlayState = "running";
+    }
 }
 let g = new Game();
+function handleVisibilityChange() {
+    if (document.visibilityState === "hidden") {
+        console.log("pausing");
+        g.pause();
+    }
+    else {
+        console.log("unpausing");
+        g.unpause();
+    }
+}
+document.addEventListener("visibilitychange", handleVisibilityChange, false);
