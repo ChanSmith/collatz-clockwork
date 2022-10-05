@@ -1,5 +1,7 @@
 :root {
   --clock-table-cell-size: 64px;
+  --producer-color: #FF55FF;
+  --verifier-color: #00FF00;
 }
 
 body {
@@ -9,10 +11,6 @@ body {
 .timer-background {
   transform: rotate(-90deg) translateX(-100%);
   stroke-width: 50%;
-  animation-play-state: running;
-  -o-animation-play-state: running;
-  -moz-animation-play-state: running;
-  -webkit-animation-play-state: running;
 }
 
 #game-container {
@@ -226,6 +224,12 @@ body {
   }
 }
 
-.clock.Producer {
+.clock {
   display: block;
+}
+.clock.Producer circle {
+  stroke: var(--producer-color);
+}
+.clock.Verifier circle {
+  stroke: var(--verifier-color);
 }

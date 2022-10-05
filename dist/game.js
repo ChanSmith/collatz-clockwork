@@ -1,6 +1,11 @@
+var logUnpauseInfo;
+// logUnpauseInfo = console.log;
+var logFocusChange;
+//  logFocusChange = console.log;
 class Game {
     constructor() {
         this.click_count = 0;
+        this.pause_time = 0;
         this.generator = new CollatzGenerator();
         // this.clock_manager = new ClockManager(this);
         this.table_view = new TableView(this);
@@ -8,6 +13,7 @@ class Game {
         this.table_view.addStatistic(this.game_state.ops);
         this.table_view.addStatistic(this.game_state.checking);
         this.table_view.addStatistic(this.game_state.n);
+        this.inline_styles = document.getElementById('dynamic-style').sheet;
     }
     addClock(pos, opts) {
         // let c: Clock = this.clock_manager.addClock(pos, opts);
@@ -108,24 +114,61 @@ class Game {
         const menu = document.querySelector("#options-menu");
         menu === null || menu === void 0 ? void 0 : menu.enable();
     }
-    pause() {
-        this.table_view.pause();
-        // document.documentElement.style.animationPlayState = "paused";
+    pause(manual = true) {
+        this.pause_time = performance.now();
+        this.table_view.pauseAll(manual);
+        // TODO: add an indicator that game is paused an progress will be updated when unpaused
     }
-    unpause() {
-        this.table_view.unpause();
-        // document.documentElement.style.animationPlayState = "running";
+    // advance the game by a given amount of time in ms
+    advanceBy(diff) {
+        const missed = Math.floor(diff / TEN_SECONDS);
+        const extra = diff % TEN_SECONDS;
+        logUnpauseInfo === null || logUnpauseInfo === void 0 ? void 0 : logUnpauseInfo("Performing " + missed + " extra ticks and adding " + extra + "ms to the next tick for each clock");
+        // Sort clocks by progress and iterate through for each missed tick
+        // Will need to redo this if we add clocks that tick at different rates
+        let clocks = Array.from(filter(this.table_view.clock_manager.grid.values(), c => !c.manually_paused));
+        clocks.sort((a, b) => a.remainingTime() - b.remainingTime());
+        logUnpauseInfo === null || logUnpauseInfo === void 0 ? void 0 : logUnpauseInfo("Sorted clocks:" + clocks.map(c => c + ": " + c.remainingTime()));
+        for (let i = 0; i < missed; i++) {
+            for (const clock of clocks) {
+                clock.tick();
+            }
+        }
+        // TODO: how to handle the cell animations -- only the last will play
+        // Add the extra time and tick if needed, in the same order
+        for (const clock of clocks) {
+            if (clock.remainingTime() < extra) {
+                clock.tick();
+                clock.animation.currentTime = (clock.animation.currentTime + extra) % TEN_SECONDS;
+            }
+            else {
+                clock.animation.currentTime += extra;
+            }
+        }
+        logUnpauseInfo === null || logUnpauseInfo === void 0 ? void 0 : logUnpauseInfo("After progressing:" + clocks.map(c => c + ": " + c.remainingTime()));
+    }
+    unpause(manual = true) {
+        const now = performance.now();
+        const diff = now - this.pause_time;
+        logUnpauseInfo === null || logUnpauseInfo === void 0 ? void 0 : logUnpauseInfo("unpaused after" + diff + "ms");
+        this.advanceBy(diff);
+        this.table_view.unpauseAll(manual);
     }
 }
 let g = new Game();
-function handleVisibilityChange() {
-    if (document.visibilityState === "hidden") {
-        console.log("pausing");
-        g.pause();
-    }
-    else {
-        console.log("unpausing");
-        g.unpause();
-    }
-}
-document.addEventListener("visibilitychange", handleVisibilityChange, false);
+var lastChange = performance.now();
+var getChange = () => {
+    var now = performance.now();
+    var delta = now - lastChange;
+    lastChange = now;
+    return delta;
+};
+window.addEventListener("focus", () => {
+    g.unpause(false);
+    logFocusChange === null || logFocusChange === void 0 ? void 0 : logFocusChange("focus");
+});
+window.addEventListener("blur", () => {
+    g.pause(false);
+    logFocusChange === null || logFocusChange === void 0 ? void 0 : logFocusChange("blur");
+});
+// const c = new ReferenceClock(g, {type:"Reference", position: new Position(1,1)});
