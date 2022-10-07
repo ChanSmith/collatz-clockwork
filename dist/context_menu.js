@@ -97,20 +97,6 @@ class ContextMenu {
             }
             return { normalizedX, normalizedY };
         });
-        _ContextMenu_removeExistingContextMenu.set(this, () => {
-            var _b;
-            if (!__classPrivateFieldGet(ContextMenu, _a, "f", _ContextMenu_currentContextMenu)) {
-                return;
-            }
-            const c = __classPrivateFieldGet(ContextMenu, _a, "f", _ContextMenu_currentContextMenu);
-            if (__classPrivateFieldGet(c, _ContextMenu_options, "f").additionalScopeClass) {
-                __classPrivateFieldGet(c, _ContextMenu_options, "f").scope.classList.remove(__classPrivateFieldGet(c, _ContextMenu_options, "f").additionalScopeClass);
-            }
-            if (__classPrivateFieldGet(c, _ContextMenu_options, "f").onClose) {
-                __classPrivateFieldGet(c, _ContextMenu_options, "f").onClose();
-            }
-            (_b = document.querySelector(".context-menu")) === null || _b === void 0 ? void 0 : _b.remove();
-        });
         _ContextMenu_applyStyleOnContextMenu.set(this, (contextMenu, outOfBoundsOnX, outOfBoundsOnY) => {
             // transition duration
             contextMenu.style.transitionDuration = `${__classPrivateFieldGet(this, _ContextMenu_options, "f").transitionDuration}ms`;
@@ -139,7 +125,7 @@ class ContextMenu {
                 // global value for all menu items, or the individual option or false
                 const preventCloseOnClick = (_c = (_b = menuOption.preventCloseOnClick) !== null && _b !== void 0 ? _b : __classPrivateFieldGet(this, _ContextMenu_options, "f").preventCloseOnClick) !== null && _c !== void 0 ? _c : false;
                 if (!preventCloseOnClick) {
-                    __classPrivateFieldGet(this, _ContextMenu_removeExistingContextMenu, "f").call(this);
+                    __classPrivateFieldGet(ContextMenu, _a, "f", _ContextMenu_removeExistingContextMenu).call(ContextMenu);
                 }
             };
         });
@@ -150,7 +136,7 @@ class ContextMenu {
             // store event so it can be passed to callbakcs
             __classPrivateFieldSet(this, _ContextMenu_initialContextMenuEvent, event, "f");
             // the current context menu should disappear when a new one is displayed
-            __classPrivateFieldGet(this, _ContextMenu_removeExistingContextMenu, "f").call(this);
+            __classPrivateFieldGet(ContextMenu, _a, "f", _ContextMenu_removeExistingContextMenu).call(ContextMenu);
             __classPrivateFieldSet(ContextMenu, _a, this, "f", _ContextMenu_currentContextMenu);
             // build and show on ui
             const contextMenu = __classPrivateFieldGet(this, _ContextMenu_buildContextMenu, "f").call(this, event.button);
@@ -186,7 +172,7 @@ class ContextMenu {
             if (clickedTarget.closest("[context-menu]")) {
                 return;
             }
-            __classPrivateFieldGet(this, _ContextMenu_removeExistingContextMenu, "f").call(this);
+            __classPrivateFieldGet(ContextMenu, _a, "f", _ContextMenu_removeExistingContextMenu).call(ContextMenu);
         });
         this.updateOptions(configurableOptions);
         __classPrivateFieldGet(this, _ContextMenu_state, "f").defaultMenuItems = __classPrivateFieldGet(this, _ContextMenu_options, "f").defaultMenuItems;
@@ -204,6 +190,9 @@ class ContextMenu {
         document.removeEventListener('click', __classPrivateFieldGet(this, _ContextMenu_onDocumentClick, "f"));
         __classPrivateFieldGet(this, _ContextMenu_options, "f").scope.oncontextmenu = null;
     }
+    static removeExistingContextMenu() {
+        __classPrivateFieldGet(ContextMenu, _a, "f", _ContextMenu_removeExistingContextMenu).call(ContextMenu);
+    }
     updateOptions(configurableOptions) {
         // extend default options and bind the menu items inside the state for pug template
         Object.assign(__classPrivateFieldGet(this, _ContextMenu_options, "f"), __classPrivateFieldGet(this, _ContextMenu_defaultOptions, "f"));
@@ -212,7 +201,7 @@ class ContextMenu {
         __classPrivateFieldGet(this, _ContextMenu_state, "f").defaultMenuItems = __classPrivateFieldGet(this, _ContextMenu_options, "f").defaultMenuItems;
     }
 }
-_a = ContextMenu, _ContextMenu_initialContextMenuEvent = new WeakMap(), _ContextMenu_state = new WeakMap(), _ContextMenu_coreOptions = new WeakMap(), _ContextMenu_defaultOptions = new WeakMap(), _ContextMenu_options = new WeakMap(), _ContextMenu_buildContextMenu = new WeakMap(), _ContextMenu_normalizePozition = new WeakMap(), _ContextMenu_removeExistingContextMenu = new WeakMap(), _ContextMenu_applyStyleOnContextMenu = new WeakMap(), _ContextMenu_bindCallbacks = new WeakMap(), _ContextMenu_onShowContextMenu = new WeakMap(), _ContextMenu_onDocumentClick = new WeakMap(), _ContextMenu_instances = new WeakSet(), _ContextMenu_generateCancelItems = function _ContextMenu_generateCancelItems() {
+_a = ContextMenu, _ContextMenu_initialContextMenuEvent = new WeakMap(), _ContextMenu_state = new WeakMap(), _ContextMenu_coreOptions = new WeakMap(), _ContextMenu_defaultOptions = new WeakMap(), _ContextMenu_options = new WeakMap(), _ContextMenu_buildContextMenu = new WeakMap(), _ContextMenu_normalizePozition = new WeakMap(), _ContextMenu_applyStyleOnContextMenu = new WeakMap(), _ContextMenu_bindCallbacks = new WeakMap(), _ContextMenu_onShowContextMenu = new WeakMap(), _ContextMenu_onDocumentClick = new WeakMap(), _ContextMenu_instances = new WeakSet(), _ContextMenu_generateCancelItems = function _ContextMenu_generateCancelItems() {
     return [
         {
             label: 'Close Menu',
@@ -223,3 +212,17 @@ _a = ContextMenu, _ContextMenu_initialContextMenuEvent = new WeakMap(), _Context
     ];
 };
 _ContextMenu_currentContextMenu = { value: void 0 };
+_ContextMenu_removeExistingContextMenu = { value: () => {
+        var _b;
+        if (!__classPrivateFieldGet(ContextMenu, _a, "f", _ContextMenu_currentContextMenu)) {
+            return;
+        }
+        const c = __classPrivateFieldGet(ContextMenu, _a, "f", _ContextMenu_currentContextMenu);
+        if (__classPrivateFieldGet(c, _ContextMenu_options, "f").additionalScopeClass) {
+            __classPrivateFieldGet(c, _ContextMenu_options, "f").scope.classList.remove(__classPrivateFieldGet(c, _ContextMenu_options, "f").additionalScopeClass);
+        }
+        if (__classPrivateFieldGet(c, _ContextMenu_options, "f").onClose) {
+            __classPrivateFieldGet(c, _ContextMenu_options, "f").onClose();
+        }
+        (_b = document.querySelector(".context-menu")) === null || _b === void 0 ? void 0 : _b.remove();
+    } };

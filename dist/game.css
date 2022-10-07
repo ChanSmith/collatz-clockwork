@@ -38,6 +38,9 @@ body {
   justify-content: center;
   align-items: center;
 }
+#options-menu .option-container .color-container {
+  border: 1px solid #000000;
+}
 #options-menu #close-options-menu {
   top: 0;
   left: 0;
@@ -200,7 +203,7 @@ body {
 .clock-table-cell:not(.column-highlighted, .row-highlighted):not(:hover) {
   z-index: 0;
 }
-.clock-table-cell.selected {
+.clock-table-cell.selected, .clock-table-cell.dragging, .clock-table-cell.drag-target {
   -webkit-animation: pulse-border 1s ease-in-out Infinite alternate none;
           animation: pulse-border 1s ease-in-out Infinite alternate none;
   border-style: dashed;

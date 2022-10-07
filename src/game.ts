@@ -28,6 +28,14 @@ class Game {
 
         this.inline_styles = (document.getElementById('dynamic-style') as HTMLStyleElement).sheet!;
     }
+
+    addRow() {
+        this.table_view.addRow();
+    }
+
+    addColumn() {
+        this.table_view.addColumn();
+    }
     
     addClock(pos: Position, opts: ClockOptions) {
         // let c: Clock = this.clock_manager.addClock(pos, opts);
@@ -35,6 +43,46 @@ class Game {
         this.table_view.addClock(pos,opts);
     }
     
+    fillGrid() {
+        
+        const rows = this.table_view.getRows();
+        const cols = this.table_view.getColumns();
+        const adding = rows * cols - this.table_view.clockCount();
+        const delay = TEN_SECONDS / adding;
+        for (var i = 0; i < rows; i++) {
+            for (var j = 0; j < cols; j++) {
+                const pos = new Position(i, j);
+                if (this.canAddClock(pos, "Reference")) {
+                    const type = Math.random() > 0.25 ? "Producer" : "Verifier"
+                    this.addClock(pos, {type: type, position: pos});
+                    // this.advanceBy(delay);
+                }
+            }
+        }
+        this.redistributeTimes();
+    }
+
+    // TODO: make this only apply to some clocks?
+    redistributeTimes() {
+        const count = this.table_view.clockCount();
+        // Pause all clocks, set time to 0, then unpause on a delay
+        this.pause(true);
+        this.table_view.resetAll();
+        const offset = TEN_SECONDS / count;
+        var offsetCount = 0;
+        for (let i = 0; i < this.table_view.getRows(); i++) {
+            for (let j = 0; j < this.table_view.getColumns(); j++) {
+                const pos = new Position(i, j);
+                if (!this.table_view.canAddClock(pos)) {
+                    // TODO: track these and cancel them if another unpause comes in 
+                    window.setTimeout(() => {
+                        this.table_view.unpauseClock(pos);
+                    }, offset * offsetCount++);
+                }
+            }
+        }
+    }
+
     canAddClock(pos: Position, type: ClockType) {
         return this.table_view.canAddClock(pos);
     }
@@ -179,7 +227,9 @@ class Game {
         const now = performance.now();
         const diff = now - this.pause_time;
         logUnpauseInfo?.("unpaused after" + diff + "ms");
-        this.advanceBy(diff);
+        if (!manual) {
+            this.advanceBy(diff);
+        }
 
         this.table_view.unpauseAll(manual);
     }

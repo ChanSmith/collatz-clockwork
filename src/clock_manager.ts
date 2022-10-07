@@ -101,8 +101,11 @@ class ClockManager {
         let dest = this.removeClock(to);
         if (dest) {
             this.grid.set(from.toString(), dest);
+            dest.setPosition(from);
         }
         this.grid.set(to.toString(), c);
+        c.setPosition(to);
+        return dest;
     }
 
 }

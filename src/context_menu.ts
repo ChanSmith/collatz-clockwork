@@ -158,7 +158,7 @@ class ContextMenu {
         return { normalizedX, normalizedY };
     };
 
-    #removeExistingContextMenu = (): void => {
+    static #removeExistingContextMenu = (): void => {
         if (!ContextMenu.#currentContextMenu) {
             return;
         }
@@ -219,7 +219,7 @@ class ContextMenu {
                 false;
 
             if (!preventCloseOnClick) {
-                this.#removeExistingContextMenu();
+                ContextMenu.#removeExistingContextMenu();
             }
         };
     };
@@ -233,7 +233,7 @@ class ContextMenu {
         this.#initialContextMenuEvent = event;
 
         // the current context menu should disappear when a new one is displayed
-        this.#removeExistingContextMenu();
+        ContextMenu.#removeExistingContextMenu();
         ContextMenu.#currentContextMenu = this;
 
         // build and show on ui
@@ -289,7 +289,7 @@ class ContextMenu {
         if (clickedTarget.closest("[context-menu]")) {
             return;
         }
-        this.#removeExistingContextMenu();
+        ContextMenu.#removeExistingContextMenu();
     };
 
     constructor(configurableOptions: ConfigurableOptions) {
@@ -313,6 +313,10 @@ class ContextMenu {
     off(): void {
         document.removeEventListener('click', this.#onDocumentClick);
         this.#options.scope.oncontextmenu = null;
+    }
+
+    static removeExistingContextMenu(): void {
+        ContextMenu.#removeExistingContextMenu();
     }
 
     updateOptions(configurableOptions: Partial<ConfigurableOptions>): void {

@@ -4,6 +4,24 @@ class Position {
     toString(): string {
         return "(" + this.row + ", " + this.col + ")";
     }
+
+    static parse(str: string): Position {
+        let match = str.match(/\((\d+), (\d+)\)/);
+        if (match == null) {
+            throw new Error("Invalid position string");
+        }
+        return new Position(parseInt(match[1]), parseInt(match[2]));
+    }
+
+    equals(other: Position): boolean {
+        return this.row == other.row && this.col == other.col;
+    }
+
+    copy(): Position {
+        return new Position(this.row, this.col);
+    }
+
+
 }
 
 type ClockType = "Producer" | "Verifier" | "Reference";
@@ -68,6 +86,14 @@ abstract class Clock {
         if (this.animation) {
             this.animation.pause();
         }
+    }
+
+    getPosition(): Position {
+        return this.options.position.copy();
+    }
+
+    setPosition(pos: Position) {
+        this.options.position = pos.copy();
     }
 
     paused(): boolean {

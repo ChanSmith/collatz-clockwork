@@ -6,6 +6,19 @@ class Position {
     toString() {
         return "(" + this.row + ", " + this.col + ")";
     }
+    static parse(str) {
+        let match = str.match(/\((\d+), (\d+)\)/);
+        if (match == null) {
+            throw new Error("Invalid position string");
+        }
+        return new Position(parseInt(match[1]), parseInt(match[2]));
+    }
+    equals(other) {
+        return this.row == other.row && this.col == other.col;
+    }
+    copy() {
+        return new Position(this.row, this.col);
+    }
 }
 class UpgradeInfo {
 }
@@ -44,6 +57,12 @@ class Clock {
         if (this.animation) {
             this.animation.pause();
         }
+    }
+    getPosition() {
+        return this.options.position.copy();
+    }
+    setPosition(pos) {
+        this.options.position = pos.copy();
     }
     paused() {
         var _a, _b;

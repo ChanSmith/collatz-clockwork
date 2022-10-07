@@ -3,7 +3,13 @@ const TABLE_BODY_SIZE = 4;
 // const CELL_SIZE = 64;
 const SVG_NS = "http://www.w3.org/2000/svg"; // Making this https breaks it, at least when running locally
 
+var dragLog: Logger;
+// dragLog = console.log;
 
+
+
+const HIGLIGHTED_ANIMATION_NAME = "pulse-border";
+const HIGHLIGHTED_ANIMATION_DURATION = 1000;
 
 // TODO: make these controlled by a <input type="color"> element
 const CLOCK_PALETTE = {
@@ -153,6 +159,7 @@ class StatisticView extends HTMLDivElement {
 
 customElements.define('statistic-view', StatisticView, { extends: 'div' });
 
+const CLOCK_DRAG_SOURCE = "clock_source_pos";
 class TableView {
 
     game: Game;
@@ -162,6 +169,11 @@ class TableView {
     table: HTMLDivElement;
     table_head: HTMLDivElement;
     table_body: HTMLDivElement;
+
+    dragging_cell: HTMLDivElement | null = null;
+    dragging_pos: Position | null = null;
+    // TODO: implement/use this
+    selected_cell: HTMLDivElement | null = null;
 
     clock_manager: ClockManager;
 
@@ -253,7 +265,6 @@ class TableView {
 
     clearElementAndAnimations(element: Element) {
         element.getAnimations().forEach(a => {
-            console.log("cancelling animation" + a.toString());
             a.cancel();
         });
         while (element.firstElementChild && element.firstChild) {
@@ -356,7 +367,80 @@ class TableView {
 
     }
 
-    createClockElement(clock: Clock) {
+    getHighlightedAnimationTime(cell: HTMLDivElement) {
+        let time = 0;
+        cell.getAnimations().some(a => {
+            if (a instanceof CSSAnimation && a.animationName == HIGLIGHTED_ANIMATION_NAME && a.currentTime) {
+                // Out of phase
+                time = a.currentTime %  (2 * HIGHLIGHTED_ANIMATION_DURATION) + 1000;
+                // In phase
+                // time = a.currentTime %  (2 * HIGHLIGHTED_ANIMATION_DURATION);
+            }
+        });
+        return time;
+    }
+    setHighlightedAnimationTime(cell: HTMLDivElement, time: number) {
+        cell.getAnimations().forEach(a => {
+            if (a instanceof CSSAnimation && a.animationName == HIGLIGHTED_ANIMATION_NAME) {
+                a.currentTime = time;
+            }
+        });
+    }
+
+    makeCellDragTarget(cell: HTMLDivElement, pos: Position) {
+        cell.addEventListener("dragenter", (event) => {
+            event.preventDefault();
+            dragLog?.("Drag enter ", event)
+            event.dataTransfer!.dropEffect = "move";
+            cell.classList.add("drag-target");
+            if (this.dragging_cell && this.dragging_cell !== cell) {
+                let time = this.getHighlightedAnimationTime(this.dragging_cell);
+                this.setHighlightedAnimationTime(cell, time);
+            }
+        });
+        // The drop event doesn't fire if there's no dragover event
+        cell.addEventListener("dragover", (event) => {
+            event.preventDefault();
+        });
+        cell.addEventListener("dragleave", (event) => {
+            event.preventDefault();
+            dragLog?.("Drag leave ", event)
+            cell.classList.remove("drag-target");
+        });
+        
+        cell.addEventListener("drop", (event) => {
+            event.preventDefault();
+            dragLog?.("Drop ", event);
+            if (!this.dragging_pos) { return;}
+            this.moveClock(this.dragging_pos, pos);
+            cell.classList.remove("drag-target");
+        });
+    }
+
+
+    makeCellDraggable(el: HTMLDivElement, pos: Position) {
+        el.setAttribute("draggable", "true");
+        el.addEventListener("dragstart", (event) => {
+            if (!event.dataTransfer) return;
+            // Could make the context menu bind to the clock instead of the cell, but this is easier
+            ContextMenu.removeExistingContextMenu();
+            dragLog?.("Drag start ", event);
+            this.dragging_cell = el;
+            this.dragging_pos = pos;
+            // One of these is supposed to be set on target
+            event.dataTransfer.dropEffect = "move";
+            event.dataTransfer.effectAllowed = "move";
+            // Set clock image if necessary
+            el.classList.add("dragging");
+        });
+        el.addEventListener("dragend", (event) => {
+            el.classList.remove("dragging");
+            this.dragging_cell = null;
+            this.dragging_pos = null;
+        });
+    }
+
+    createClockElement(clock: Clock, animationStart: number = 0) {
         // let div = document.createElement("div");
         let s = document.createElementNS(SVG_NS, "svg") as SVGSVGElement;
         s.classList.add("clock");
@@ -367,15 +451,16 @@ class TableView {
         timer_background.classList.add(clock.getType());
 
         timer_background.setAttribute("fill", "transparent");
-        // timer_background.setAttribute("stroke", CLOCK_PALETTE[clock.getType()]);
         timer_background.setAttribute("cx", "50%");
         timer_background.setAttribute("cy", "50%");
         timer_background.setAttribute("r", "25%");
 
        this.animateClock(timer_background, clock);
-
+       if (animationStart > 0) {
+            clock.animation!.currentTime = animationStart;
+       }
+        
         s.appendChild(timer_background);
-
 
         return s;
         // return div;
@@ -391,11 +476,36 @@ class TableView {
         return r;
     }
 
+    moveClock(from:Position, to:Position) {
+        let from_cell = this.getCell(from);
+        let to_cell = this.getCell(to);
+
+        if (!from_cell || !to_cell) {
+            return;
+        }
+        const from_clock = this.clock_manager.getClock(from);
+        if (!from_clock) {
+            return;
+        }
+        const from_start = from_clock.animation!.currentTime!;
+        this.clearElementAndAnimations(from_cell);
+        
+        const to_clock = this.clock_manager.moveClock(from, to);
+        if (to_clock) {
+            const to_start = to_clock.animation!.currentTime!;
+            this.clearElementAndAnimations(to_cell);
+            from_cell.appendChild(this.createClockElement(to_clock, to_start));
+        }
+        const startTime = from_clock.animation!.currentTime!;
+        to_cell.appendChild(this.createClockElement(from_clock, from_start));
+    }
 
     generateTableCell(pos: Position) : HTMLDivElement  {
         let cell = document.createElement("div");
         cell.classList.add("clock-table-cell");
         this.generateMenuForCell(cell, pos);
+        this.makeCellDragTarget(cell, pos);
+        this.makeCellDraggable(cell, pos);
         return cell;
     }
 
@@ -443,6 +553,18 @@ class TableView {
     getColumns() {
         return this.getRow(0).children.length;
     }
+
+    clockCount() {
+        return this.clock_manager.grid.size;
+    }
+
+    resetAll() {
+        this.clock_manager.forEachClock((clock) => {
+            clock.animation!.currentTime = 0;
+        });
+    }
+
+    
 
     // TODO let rows/cols be added anywher -- need to update pos of all clocks to the 
     // bottom and right
