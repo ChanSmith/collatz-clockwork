@@ -1,3 +1,42 @@
+const CELL_SIZE_OPTION = {
+    name: "Cell Size",
+    id_prefix: "cell-size",
+    default: "64",
+    input_type: "range",
+    input_options: {
+        min: "4",
+        max: "256",
+        value: "64",
+        step: "2",
+        id: "size-slider",
+    },
+    input_transformer: (s) => s + "px",
+    css_variable: "--clock-table-cell-size",
+};
+const CLOCK_COLOR_OPTION = {
+    name: "Clock Colors",
+    id_prefix: "clock-color",
+    sub_options: [
+        {
+            name: "Producer",
+            id_prefix: "producer",
+            default: "#FF55FF",
+            input_type: "color",
+            css_variable: "--producer-color",
+        },
+        {
+            name: "Verifier",
+            id_prefix: "verifier",
+            default: "#00FF00",
+            input_type: "color",
+            css_variable: "--verifier-color",
+        },
+    ],
+};
+const OPTIONS = [
+    CELL_SIZE_OPTION,
+    CLOCK_COLOR_OPTION,
+];
 const DEFAULT_CLOCK_TABLE_SIZE = 64;
 const COLOR_OPTIONS_MAP = new Map([
     ["Producer", "--producer-color"],
@@ -88,10 +127,52 @@ class OptionsMenu extends HTMLDivElement {
         });
         this.wrapper.appendChild(container);
     }
+    generateOption(option, sub_option = false) {
+        const container = document.createElement('div');
+        container.classList.add(sub_option ? 'sub-option-container' : 'option-container');
+        const label = document.createElement('label');
+        label.textContent = option.name + ": ";
+        container.appendChild(label);
+        if (option.sub_options) {
+            option.sub_options.forEach((sub_option) => {
+                container.appendChild(this.generateOption(sub_option, true));
+            });
+        }
+        else if (option.input_type && option.css_variable) {
+            const setValue = (v) => {
+                const value = option.input_transformer ? option.input_transformer(v) : v;
+                document.documentElement.style.setProperty(option.css_variable, value);
+            };
+            const input = document.createElement('input');
+            input.type = option.input_type;
+            input.id = option.name;
+            container.appendChild(input);
+            for (const key in option.input_options) {
+                input.setAttribute(key, option.input_options[key]);
+            }
+            if (option.default) {
+                input.value = option.default;
+                const reset = document.createElement('button');
+                reset.textContent = "Reset";
+                reset.addEventListener('click', () => {
+                    input.value = option.default;
+                    setValue(option.default);
+                });
+                container.appendChild(reset);
+            }
+            input.addEventListener('input', () => {
+                setValue(input.value);
+            });
+        }
+        return container;
+    }
     addOptions() {
         this.addCloseButton();
-        this.addSizeSlider();
-        this.addColorPickers();
+        // this.addSizeSlider();
+        // this.addColorPickers();
+        for (const option of OPTIONS) {
+            this.wrapper.appendChild(this.generateOption(option));
+        }
     }
     connectedCallback() {
         this.classList.add('options-menu');
