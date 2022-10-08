@@ -194,6 +194,11 @@ class Game {
         menu?.enable();
     }
 
+    toggleOptionsMenu() {
+        const menu = document.querySelector("#options-menu") as OptionsMenu;
+        menu?.toggle();
+    }
+
     pause(manual: boolean = true) {
         this.pause_time = performance.now();
         this.table_view.pauseAll(manual);

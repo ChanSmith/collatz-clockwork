@@ -53,6 +53,10 @@ class OptionsMenu extends HTMLDivElement {
         this.classList.remove("enabled");
         this.classList.add("disabled");
     }
+    toggle() {
+        this.classList.toggle("enabled");
+        this.classList.toggle("disabled");
+    }
     addCloseButton() {
         const close_button = document.createElement('button');
         close_button.textContent = "X";

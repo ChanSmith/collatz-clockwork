@@ -8,19 +8,23 @@ type AchievementOptions = {
     max_level?: number,
     level_up_condition?: (level: number) => boolean,
     secret?: boolean,
-    unlocked?: boolean,
-    level?: number,
 }
 type ConcreteAchievementOptions = {
     [Property in keyof AchievementOptions]-?: AchievementOptions[Property];
 }
 
+type AchievementState = {
+    unlocked: number | null, // Date
+    last_leveled_up: number | null, // Date
+    level: number | null,
+}
 
 // TODO: check for achievement unlock / level up
 
 class Achievement {    
     static achievements: Map<string, Achievement> = new Map();
     options: ConcreteAchievementOptions;
+    state: AchievementState = { unlocked: null, last_leveled_up:null, level: null};
 
     static #DEFAULT_ACHIEVEMENT_OPTIONS = {
         max_level: 0,
@@ -38,11 +42,24 @@ class Achievement {
         }
 
     unlock() {
-        if (this.options.unlocked) {
+        if (this.state.unlocked) {
             return;
         }
         if (this.options.unlockCondition()) {
-            this.options.unlocked = true;
+            this.state.unlocked = Date.now();
+            this.state.level = 0;
+        }
+    }
+
+    levelUp() {
+        if (!this.state.unlocked || !this.state.level) {
+            return;
+        }
+        if (this.options.max_level && this.state.level < this.options.max_level
+             && this.options.level_up_condition
+             && this.options.level_up_condition(this.state.level)){
+            this.state.level += 1;
+            this.state.last_leveled_up = Date.now();
         }
     }
 

@@ -1,3 +1,8 @@
+:root {
+  --hidden_z_index: -1;
+  --foreground_z_index: 10000;
+}
+
 body {
   background: rgb(128, 128, 128);
 }
@@ -17,6 +22,14 @@ body {
   top: 25%;
   left: 25%;
   position: absolute;
+}
+#options-menu.disabled * {
+  z-index: var(--hidden_z_index);
+  opacity: 0;
+}
+#options-menu.enabled * {
+  z-index: var(--foreground_z_index);
+  opacity: 1;
 }
 #options-menu #options-menu-wrapper {
   background-color: rgb(200, 200, 200);
@@ -42,14 +55,6 @@ body {
   width: 25px;
   height: 25px;
   background-color: red;
-}
-#options-menu.disabled * {
-  z-index: -1;
-  opacity: 0;
-}
-#options-menu.enabled * {
-  z-index: 10000;
-  opacity: 1;
 }
 
 .context-menu-theme-default {

@@ -162,6 +162,10 @@ class Game {
         const menu = document.querySelector("#options-menu");
         menu === null || menu === void 0 ? void 0 : menu.enable();
     }
+    toggleOptionsMenu() {
+        const menu = document.querySelector("#options-menu");
+        menu === null || menu === void 0 ? void 0 : menu.toggle();
+    }
     pause(manual = true) {
         this.pause_time = performance.now();
         this.table_view.pauseAll(manual);

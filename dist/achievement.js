@@ -7,15 +7,28 @@ var _a, _Achievement_DEFAULT_ACHIEVEMENT_OPTIONS;
 // TODO: check for achievement unlock / level up
 class Achievement {
     constructor(options) {
+        this.state = { unlocked: null, last_leveled_up: null, level: null };
         this.options = Object.assign(Object.assign({}, __classPrivateFieldGet(Achievement, _a, "f", _Achievement_DEFAULT_ACHIEVEMENT_OPTIONS)), options);
         Achievement.achievements.set(this.options.id, this);
     }
     unlock() {
-        if (this.options.unlocked) {
+        if (this.state.unlocked) {
             return;
         }
         if (this.options.unlockCondition()) {
-            this.options.unlocked = true;
+            this.state.unlocked = Date.now();
+            this.state.level = 0;
+        }
+    }
+    levelUp() {
+        if (!this.state.unlocked || !this.state.level) {
+            return;
+        }
+        if (this.options.max_level && this.state.level < this.options.max_level
+            && this.options.level_up_condition
+            && this.options.level_up_condition(this.state.level)) {
+            this.state.level += 1;
+            this.state.last_leveled_up = Date.now();
         }
     }
     static getAchievement(id) {
