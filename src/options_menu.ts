@@ -3,7 +3,7 @@ interface InputOptions {
 }
 
 // TODO: add a way to read the default options from CSS
-interface GameOption{ 
+interface GameOption {
     name: string;
     id: string;
     default?: string;
@@ -20,9 +20,9 @@ const CELL_SIZE_OPTION = {
     default: "128",
     input_type: "range",
     input_options: {
-        min : "4",
-        max : "256",
-        step : "2",
+        min: "4",
+        max: "256",
+        step: "2",
     },
     input_transformer: (s: string) => s + "px",
     css_variable: "--clock-table-cell-size",
@@ -38,7 +38,7 @@ const CLOCK_COLOR_OPTION = {
             name: "Producer",
             default: "#4b2e83",
             input_type: "color",
-            css_variable: "--producer-color",   
+            css_variable: "--producer-color",
         },
         {
             id: "verifier",
@@ -78,7 +78,7 @@ class OptionsMenu extends HTMLDivElement {
         this.classList.remove("disabled");
         this.classList.add("enabled");
     }
-    
+
     disable() {
         this.classList.remove("enabled");
         this.classList.add("disabled");
@@ -94,9 +94,9 @@ class OptionsMenu extends HTMLDivElement {
         this.wrapper.appendChild(close_button);
     }
     // TODO: actually compute/use the id if I need it
-    generateOption(option: GameOption, sub_option: boolean = false, id:string = "") {
+    generateOption(option: GameOption, sub_option: boolean = false, id: string = "") {
         const container = document.createElement('div');
-        container.classList.add(sub_option? 'sub-option-container' : 'option-container');
+        container.classList.add(sub_option ? 'sub-option-container' : 'option-container');
         const label = document.createElement('label');
         label.textContent = option.name + ": ";
         container.appendChild(label);
@@ -105,7 +105,7 @@ class OptionsMenu extends HTMLDivElement {
                 container.appendChild(this.generateOption(sub_option, true));
             });
         } else if (option.input_type && option.css_variable) {
-            const setValue = (v:string) => { 
+            const setValue = (v: string) => {
                 const value = option.input_transformer ? option.input_transformer(v) : v;
                 document.documentElement.style.setProperty(option.css_variable!, value);
             }
@@ -116,7 +116,7 @@ class OptionsMenu extends HTMLDivElement {
             for (const key in option.input_options) {
                 input.setAttribute(key, option.input_options[key]);
             }
-            if(option.default) {
+            if (option.default) {
                 input.value = option.default;
                 const reset = document.createElement('button');
                 reset.textContent = "Reset";
@@ -149,7 +149,7 @@ class OptionsMenu extends HTMLDivElement {
         this.appendChild(wrapper);
 
         this.addOptions();
-        
+
     }
 }
 

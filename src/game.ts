@@ -1,18 +1,18 @@
 var logUnpauseInfo: Logger;
-    // logUnpauseInfo = console.log;
+// logUnpauseInfo = console.log;
 
 var logFocusChange: Logger;
-    //  logFocusChange = console.log;
+//  logFocusChange = console.log;
 
 class Game {
     static game: Game;
     game_state: GameState;
-    
+
     generator: CollatzGenerator;
     // clock_manager: ClockManager;
     table_view: TableView;
     click_count: number = 0;
-    
+
     inline_styles: CSSStyleSheet;
     pause_time: number = 0;
 
@@ -26,7 +26,7 @@ class Game {
         // this.clock_manager = new ClockManager(this);
         this.table_view = new TableView(this);
         this.game_state = new GameState();
-        
+
         this.table_view.addStatistic(this.game_state.ops);
         this.table_view.addStatistic(this.game_state.checking);
         this.table_view.addStatistic(this.game_state.n);
@@ -41,15 +41,15 @@ class Game {
     addColumn() {
         this.table_view.addColumn();
     }
-    
+
     addClock(pos: Position, opts: ClockOptions) {
         // let c: Clock = this.clock_manager.addClock(pos, opts);
         // let c: Clock = ClockManager.createClock(this, opts);
-        this.table_view.addClock(pos,opts);
+        this.table_view.addClock(pos, opts);
     }
-    
+
     fillGrid() {
-        
+
         const rows = this.table_view.getRows();
         const cols = this.table_view.getColumns();
         const adding = rows * cols - this.table_view.clockCount();
@@ -59,7 +59,7 @@ class Game {
                 const pos = new Position(i, j);
                 if (this.canAddClock(pos, "Reference")) {
                     const type = Math.random() > 0.25 ? "Producer" : "Verifier"
-                    this.addClock(pos, {type: type, position: pos});
+                    this.addClock(pos, { type: type, position: pos });
                     // this.advanceBy(delay);
                 }
             }
@@ -91,15 +91,15 @@ class Game {
     canAddClock(pos: Position, type: ClockType) {
         return this.table_view.canAddClock(pos);
     }
-    
-    
+
+
     getNewClockMenuItems(pos: Position): Array<MenuItem> {
-        let ret : Array<MenuItem> = [];
+        let ret: Array<MenuItem> = [];
         if (this.canAddClock(pos, "Producer")) {
             ret.push({
                 label: "Add Producer",
                 callback: () => {
-                    this.addClock(pos, {type:"Producer", position: pos});
+                    this.addClock(pos, { type: "Producer", position: pos });
                 }
             });
         }
@@ -107,18 +107,18 @@ class Game {
             ret.push({
                 label: "Add Verifier",
                 callback: () => {
-                    this.addClock(pos, {type:"Verifier", position: pos});
+                    this.addClock(pos, { type: "Verifier", position: pos });
                 }
             });
         }
         return ret;
-        
+
     }
-    
+
     removeClock(pos: Position) {
         this.table_view.removeClock(pos);
     }
-    
+
     getRemoveClockMenuItems(pos: Position): Array<MenuItem> {
         return [
             {
@@ -140,7 +140,7 @@ class Game {
                     }
                 }
             ];
-        } else  {
+        } else {
             return [
                 {
                     label: "Pause Clock",
@@ -149,10 +149,10 @@ class Game {
                     }
                 }
             ];
-      }
+        }
     }
-    
-    
+
+
     primaryMenuItemGenerator(pos: Position): MenuItemGenerator {
         return () => {
             let items: Array<MenuItem> = [];
@@ -165,7 +165,7 @@ class Game {
             return items;
         }
     }
-    
+
     secondaryMenuItemGenerator(pos: Position): MenuItemGenerator {
         return () => {
             let items: Array<MenuItem> = [];
@@ -175,16 +175,16 @@ class Game {
             return items;
         };
     }
-    
+
     applyOps(amount: number) {
         const seq = this.generator.getSequence(this.game_state.n.value(), amount);
-        if(seq.length > 0) {
+        if (seq.length > 0) {
             this.game_state.applySequence(seq);
             return true;
         }
         return false;
     }
-    
+
     verify() {
         return this.game_state.verify();
     }
@@ -207,7 +207,7 @@ class Game {
         const grid = this.table_view.clock_manager.grid;
         const not_paused = (c) => !c.manually_paused;
         // Nothing to do if all clocks were manually paused clocks
-        if (!any(grid.values(), not_paused)){
+        if (!any(grid.values(), not_paused)) {
             return;
         }
         const firstClock = first(grid.values(), not_paused) as Clock;
@@ -277,8 +277,8 @@ window.addEventListener("blur", () => {
         // TODO: maybe show something in the tab to indicate that the game is paused but updating
         g.advancePausedGame(delay);
         g.pause_time = lastChange;
-    } , TEN_SECONDS); // keep game updating in background so we don't have to do a bunch of work on focus
-    
+    }, TEN_SECONDS); // keep game updating in background so we don't have to do a bunch of work on focus
+
 });
 
 window.addEventListener("focus", () => {

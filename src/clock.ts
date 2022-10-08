@@ -21,14 +21,9 @@ class Position {
         return new Position(this.row, this.col);
     }
 
-
 }
 
 type ClockType = "Producer" | "Verifier" | "Reference";
-
-// class ClockOptions {
-//     constructor(public type: ClockType, public position: Position) {}
-// }
 
 interface ClockOptions {
     type: ClockType;
@@ -66,7 +61,7 @@ abstract class Clock {
     }
 
     reset() {
-            this.animation!.currentTime = 0;
+        this.animation!.currentTime = 0;
     }
 
     tickAndReset() {
@@ -119,7 +114,7 @@ abstract class Clock {
         return 1;
     }
 
-    pause(manual:boolean = true) {
+    pause(manual: boolean = true) {
         this.manually_paused = manual || this.manually_paused;
         if (this.animation) {
             this.animation.pause();
@@ -169,7 +164,7 @@ class VerifierClock extends Clock {
 
 }
 
-class ReferenceClock extends Clock  {
+class ReferenceClock extends Clock {
     readonly clockType = "Reference";
 
     last_tick: number = 0;
@@ -196,7 +191,7 @@ class ReferenceClock extends Clock  {
             console.log("Reference clock ticked. Delta: " + delta);
         }
     }
-    
+
     attachClock() {
         // Copying this from table view for now
         let s = document.createElementNS(SVG_NS, "svg") as SVGSVGElement;
@@ -231,5 +226,3 @@ class ReferenceClock extends Clock  {
     }
 
 }
-
-// type Clock = ProducerClock | VerifierClock;

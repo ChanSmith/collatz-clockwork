@@ -17,11 +17,11 @@ class DisplayableNumber {
         this.set(this.#value - value);
     }
 
-    displayName() : string {
+    displayName(): string {
         return this.#display_name;
     }
 
-    value() : number {
+    value(): number {
         return this.#value;
     }
 
@@ -48,8 +48,6 @@ class Statistic extends DisplayableNumber {
             this.max_value = value;
         }
     }
-
-   
 }
 
 class Resource extends DisplayableNumber {
@@ -75,9 +73,8 @@ class GameState {
 
     length: Statistic;
 
-
     constructor() {
-        this.ops= new Resource('Money', 0);
+        this.ops = new Resource('Money', 0);
 
         this.n = new Statistic('n', 2);
         this.checking = new Statistic('Checking', 2);
@@ -93,7 +90,7 @@ class GameState {
         this.length.set(this.current_seq.push(...seq));
         this.current_iter += applied;
         this.n.set(seq[seq.length - 1]);
-    
+
         this.ops.add(applied);
     }
 
@@ -108,13 +105,13 @@ class GameState {
         return this.n.equals(1);
     }
 
-    verify() : boolean{
-        if (!this.canVerify()){
+    verify(): boolean {
+        if (!this.canVerify()) {
             return false;
         }
         this.resetSequence(this.checking.value() + 1);
         return true;
     }
 
-    
+
 }

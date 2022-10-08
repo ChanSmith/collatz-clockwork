@@ -19,7 +19,7 @@ class ClockManager {
             this.buckets[i] = new Array<Clock>();
             // window.setTimeout(() => window.setInterval(() => this.tickBucket(i), TEN_SECONDS), i * TEN_SECONDS / CLOCK_RESOLUTION);
         }
-      //  window.setInterval(() => this.tick(), TEN_SECONDS / CLOCK_RESOLUTION);
+        //  window.setInterval(() => this.tick(), TEN_SECONDS / CLOCK_RESOLUTION);
     }
 
     tick() {

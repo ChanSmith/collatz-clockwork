@@ -48,7 +48,7 @@ class ContextMenu {
     static currentContextMenu: ContextMenu | undefined;
 
     #coreOptions: CoreOptions = {
-        transformOrigin: ['top', 'left'], 
+        transformOrigin: ['top', 'left'],
     };
 
     #defaultOptions: DefaultOptions = {
@@ -68,7 +68,7 @@ class ContextMenu {
         return [
             {
                 label: 'Close Menu',
-                callback: () => {},
+                callback: () => { },
                 preventCloseOnClick: false,
             },
             "hr"
@@ -166,14 +166,14 @@ class ContextMenu {
         }
         const c = ContextMenu.currentContextMenu
         if (c.#options.additionalScopeClass) {
-           c.#options.scope.classList.remove(c.#options.additionalScopeClass);
+            c.#options.scope.classList.remove(c.#options.additionalScopeClass);
         }
 
         if (c.#options.onClose) {
             c.#options.onClose();
         }
-        c.#contextMenuElement?.remove();  
-        c.#contextMenuElement = null;  
+        c.#contextMenuElement?.remove();
+        c.#contextMenuElement = null;
     };
 
     #applyStyleOnContextMenu = (
@@ -303,7 +303,7 @@ class ContextMenu {
 
         // bind the required event listeners
         this.#options.scope.oncontextmenu = this.#onShowContextMenu;
-        this.#options.scope.onclick  = this.#onShowContextMenu;
+        this.#options.scope.onclick = this.#onShowContextMenu;
 
         // add a click event listener to create a modal effect for the context menu and close it if the user clicks outside of it
         document.addEventListener('click', this.#onDocumentClick);

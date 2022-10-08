@@ -11,22 +11,15 @@ var dragLog: Logger;
 const HIGLIGHTED_ANIMATION_NAME = "pulse-border-hovered";
 const SELECTED_ANIMATION_NAME = "pulse-border-selected";
 
-// TODO: make these controlled by a <input type="color"> element
-const CLOCK_PALETTE = {
-    "Producer": "#FF55FF",
-    "Verifier": "#00FF00",
-}
-
-
 
 const cell_success_keyframes = [
-    {backgroundColor: "rgba(0,255,0, 1.0)"},
-    {backgroundColor: "rgba(0,255,0, 0.0)"},
+    { backgroundColor: "rgba(0,255,0, 1.0)" },
+    { backgroundColor: "rgba(0,255,0, 0.0)" },
 ]
 
 const cell_failure_keyframes = [
-    {backgroundColor: "rgba(255,0,0, 1.0)"},
-    {backgroundColor: "rgba(255,0,0, 0.0)"},
+    { backgroundColor: "rgba(255,0,0, 1.0)" },
+    { backgroundColor: "rgba(255,0,0, 0.0)" },
 ]
 
 const cell_success_timing = {
@@ -53,8 +46,6 @@ const reference_clock_timing = {
     iterations: 1,
 }
 
-
-
 const STATS_UPDATE_INTERVAL = 66;
 const MAX_LAG = 500;
 
@@ -71,29 +62,24 @@ const verticalRatio = (element: SVGTextElement): number => {
 
 
 // Returns whether the ratio of both targets to actuals is greater than max_difference
-const needsResize = (element: SVGTextElement, max_horizontal:number, max_vertical:number, max_difference:number = 0.1 /* 10% */) => {
+const needsResize = (element: SVGTextElement, max_horizontal: number, max_vertical: number, max_difference: number = 0.1 /* 10% */) => {
     if (horizontalRatio(element) > max_horizontal || verticalRatio(element) > max_vertical) {
         return true;
     }
-    return Math.abs(horizontalRatio(element) - max_horizontal) > max_difference 
-            && Math.abs(verticalRatio(element) - max_vertical) > max_difference;
+    return Math.abs(horizontalRatio(element) - max_horizontal) > max_difference
+        && Math.abs(verticalRatio(element) - max_vertical) > max_difference;
 }
 
-const sizeTextToFitParent = (element: SVGTextElement, max_horizontal:number = 0.95, max_veritical:number = 0.5) => {
+const sizeTextToFitParent = (element: SVGTextElement, max_horizontal: number = 0.95, max_veritical: number = 0.5) => {
 
     const parent = element.parentElement;
-    if(!parent || !needsResize(element, max_horizontal, max_veritical)) {
+    if (!parent || !needsResize(element, max_horizontal, max_veritical)) {
         return;
     }
 
     const horizontal_ratio = horizontalRatio(element);
     const vertical_ratio = verticalRatio(element);
     const ratio = Math.min(max_horizontal / horizontal_ratio, max_veritical / vertical_ratio);
-    // if (horizontal_ratio < max_horizontal && vertical_ratio < max_veritical) {
-    //     ratio = Math.min(max_horizontal / horizontal_ratio, max_veritical / vertical_ratio);
-    // } else {
-    //     ratio = Math.min( horizontal_ratio / max_horizontal, vertical_ratio / max_veritical);
-    // }
 
     const current_size = parseFloat(element.getAttribute("font-size")?.split("%")[0] || "100");
     const new_size = Math.floor(current_size * ratio).toFixed(2);
@@ -105,42 +91,39 @@ class StatisticView extends HTMLDivElement {
     svg_element: SVGSVGElement;
     name_element: SVGTextElement;
     value_element: SVGTextElement;
-    
 
-    
+
+
     connectedCallback() {
         this.svg_element = document.createElementNS(SVG_NS, "svg") as SVGSVGElement;
         this.svg_element.classList.add("statistic-svg");
         this.svg_element.setAttribute("width", "100%");
         this.svg_element.setAttribute("height", "100%");
-        // this.svg_element.setAttribute("viewBox", "0 0 100 100");
         this.appendChild(this.svg_element);
 
         this.name_element = document.createElementNS(SVG_NS, "text") as SVGTextElement;
         this.name_element.classList.add("statistic-name");
         this.name_element.setAttribute("x", "50%");
         this.name_element.setAttribute("y", "0%");
-        // this.name_element.setAttribute("text-anchor", "middle");
         this.svg_element.appendChild(this.name_element);
 
         this.value_element = document.createElementNS(SVG_NS, "text") as SVGTextElement;
         this.value_element.classList.add("statistic-value");
         this.value_element.setAttribute("x", "95%");
         this.value_element.setAttribute("y", "100%");
-        // this.value_element.setAttribute("text-anchor", "end");
         this.svg_element.appendChild(this.value_element);
 
 
 
         this.update();
     }
-    
-    
+
+
     constructor() {
         super();
 
         this.classList.add("statistic-box");
-        
+
     }
 
     // Make display update itself every STATS_UPDATE_INTERVAL ms
@@ -247,7 +230,7 @@ class TableView {
     }
 
     addStatistic(stat: DisplayableNumber) {
-        let stat_view = document.createElement("div", {is: "statistic-view" }) as StatisticView;
+        let stat_view = document.createElement("div", { is: "statistic-view" }) as StatisticView;
         stat_view.stat = stat;
         this.table_head.appendChild(stat_view);
     }
@@ -291,7 +274,7 @@ class TableView {
     }
 
     unpauseAll(manual: boolean) {
-        this.clock_manager.forEachClock(clock =>  {
+        this.clock_manager.forEachClock(clock => {
             if (manual || !clock.manually_paused) {
                 clock.unpause();
             }
@@ -300,12 +283,12 @@ class TableView {
 
     removeClock(pos: Position) {
         const cell = this.getCell(pos);
-        if(!cell) {
+        if (!cell) {
             return;
         }
         this.clearElementAndAnimations(cell);
 
-        const c = this.clock_manager.removeClock(pos);       
+        const c = this.clock_manager.removeClock(pos);
     }
 
     animateCellSuccess(pos: Position, success: boolean) {
@@ -315,52 +298,21 @@ class TableView {
         }
         let keyframes = success ? cell_success_keyframes : cell_failure_keyframes;
         cell.animate(keyframes, cell_success_timing);
-        
+
     }
 
 
-    
-    
+
+
     animateClock(element: SVGCircleElement, clock: Clock, offset: number = 0) {
         let background_anim = element.animate(clock_background_keyframes, clock_background_timing);
         background_anim.currentTime = offset;
         clock.animation = background_anim;
-        
-        // background_anim.finished.then(() => {
-        //     clock.tick();
-        //     this.animateClock(element, clock);
-        // }).catch((e) => {
-        //     // Swallow errors from intentionally cancelled animations
-        // });
+
         const start = performance.now();
         background_anim.ready.then(() => {
-            // console.log(clock + " ready");
-            // console.log("     start time: " + background_anim.startTime! + ", ready at " + background_anim.timeline!.currentTime!)
-            // const diff = performance.now() - start;
-            // console.log("     performance diff " + diff);
-            // const total_diff = diff + background_anim.currentTime!;
-            // console.log("     total diff: " + total_diff)
-            // const new_time = total_diff % TEN_SECONDS;
-            // if ((total_diff - TEN_SECONDS) > MAX_LAG) {
-            //     const missed = Math.floor(total_diff / TEN_SECONDS) - 1;
-            //     console.log("     lag detected, " + missed + " ticks missed");
-            //     console.log("     Setting current time to " + new_time);
-            // }
-            // background_anim.currentTime! = new_time;
         });
         background_anim.addEventListener("finish", (event) => {
-            // const diff = event.timelineTime! - background_anim.startTime!;
-            // console.log(clock.toString() + "finish");
-            // const perf_diff = performance.now() - start;
-            // console.log("     timeline diff " + diff);
-            // console.log("     performance diff " + perf_diff);
-            // let delay = 0;
-            // if ((diff - TEN_SECONDS) > MAX_LAG) {
-            //     const missed = Math.floor (diff / TEN_SECONDS) - 1;
-            //     console.log("     lag detected on finish, " + missed + " ticks missed");
-            //     delay = diff % TEN_SECONDS;
-            //     console.log("     adding " + delay + "ms to next animation");
-            // }
             clock.tick();
             this.animateClock(element, clock, 0);
         });
@@ -374,7 +326,7 @@ class TableView {
                 // Out of phase
                 const raw_duration = a.effect!.getTiming().duration!;
                 const duration = typeof raw_duration === "string" ? parseFloat(raw_duration.split("ms")[0]) : raw_duration;
-                time = a.currentTime %  (2 * duration) + duration;
+                time = a.currentTime % (2 * duration) + duration;
                 // In phase
                 // time = a.currentTime %  (2 * duration);
                 return true;
@@ -383,7 +335,7 @@ class TableView {
         return time;
     }
     setHighlightedAnimationTime(cell: HTMLDivElement, time: number) {
-       cell.getAnimations().some(a => {
+        cell.getAnimations().some(a => {
             if (a instanceof CSSAnimation && a.animationName == HIGLIGHTED_ANIMATION_NAME) {
                 a.currentTime = time;
                 return true;
@@ -411,11 +363,11 @@ class TableView {
             dragLog?.("Drag leave ", event)
             cell.classList.remove("drag-target");
         });
-        
+
         cell.addEventListener("drop", (event) => {
             event.preventDefault();
             dragLog?.("Drop ", event);
-            if (!this.dragging_pos) { return;}
+            if (!this.dragging_pos) { return; }
             this.moveClock(this.dragging_pos, pos);
             cell.classList.remove("drag-target");
         });
@@ -459,11 +411,11 @@ class TableView {
         timer_background.setAttribute("cy", "50%");
         timer_background.setAttribute("r", "25%");
 
-       this.animateClock(timer_background, clock);
-       if (animationStart > 0) {
+        this.animateClock(timer_background, clock);
+        if (animationStart > 0) {
             clock.animation!.currentTime = animationStart;
-       }
-        
+        }
+
         s.appendChild(timer_background);
 
         return s;
@@ -480,7 +432,7 @@ class TableView {
         return r;
     }
 
-    moveClock(from:Position, to:Position) {
+    moveClock(from: Position, to: Position) {
         let from_cell = this.getCell(from);
         let to_cell = this.getCell(to);
 
@@ -493,7 +445,7 @@ class TableView {
         }
         const from_start = from_clock.animation!.currentTime!;
         this.clearElementAndAnimations(from_cell);
-        
+
         const to_clock = this.clock_manager.moveClock(from, to);
         if (to_clock) {
             const to_start = to_clock.animation!.currentTime!;
@@ -504,7 +456,7 @@ class TableView {
         to_cell.appendChild(this.createClockElement(from_clock, from_start));
     }
 
-    generateTableCell(pos: Position) : HTMLDivElement  {
+    generateTableCell(pos: Position): HTMLDivElement {
         let cell = document.createElement("div");
         cell.classList.add("clock-table-cell");
         this.generateMenuForCell(cell, pos);
@@ -567,8 +519,6 @@ class TableView {
             clock.animation!.currentTime = 0;
         });
     }
-
-    
 
     // TODO let rows/cols be added anywher -- need to update pos of all clocks to the 
     // bottom and right
