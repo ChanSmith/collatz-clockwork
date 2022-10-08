@@ -195,13 +195,9 @@ body {
   z-index: 3;
 }
 .clock-table-cell.row-highlighted:not(:hover) {
-  border-top: 1px dashed var(--rowcol-border-color);
-  border-bottom: 1px dashed var(--rowcol-border-color);
   z-index: 2;
 }
 .clock-table-cell.column-highlighted:not(:hover) {
-  border-left: 1px dashed var(--rowcol-border-color);
-  border-right: 1px dashed var(--rowcol-border-color);
   z-index: 2;
 }
 .clock-table-cell:not(.column-highlighted, .row-highlighted):not(:hover) {

@@ -9,11 +9,9 @@ class Game {
     game_state: GameState;
 
     generator: CollatzGenerator;
-    // clock_manager: ClockManager;
     table_view: TableView;
     click_count: number = 0;
 
-    inline_styles: CSSStyleSheet;
     pause_time: number = 0;
 
     public test_achieve: boolean = false;
@@ -23,15 +21,12 @@ class Game {
     constructor() {
         Game.game = this;
         this.generator = new CollatzGenerator();
-        // this.clock_manager = new ClockManager(this);
         this.table_view = new TableView(this);
         this.game_state = new GameState();
 
         this.table_view.addStatistic(this.game_state.ops);
         this.table_view.addStatistic(this.game_state.checking);
         this.table_view.addStatistic(this.game_state.n);
-
-        this.inline_styles = (document.getElementById('dynamic-style') as HTMLStyleElement).sheet!;
     }
 
     addRow() {
@@ -43,8 +38,6 @@ class Game {
     }
 
     addClock(pos: Position, opts: ClockOptions) {
-        // let c: Clock = this.clock_manager.addClock(pos, opts);
-        // let c: Clock = ClockManager.createClock(this, opts);
         this.table_view.addClock(pos, opts);
     }
 
@@ -60,7 +53,6 @@ class Game {
                 if (this.canAddClock(pos, "Reference")) {
                     const type = Math.random() > 0.25 ? "Producer" : "Verifier"
                     this.addClock(pos, { type: type, position: pos });
-                    // this.advanceBy(delay);
                 }
             }
         }

@@ -247,15 +247,16 @@ body {
     }
     
     &.row-highlighted:not(:hover){
-        border-top: 1px dashed var(--rowcol-border-color);
-        border-bottom: 1px dashed var(--rowcol-border-color);
+        // TODO: decide if I want to keep this (maybe make it a setting)
+        // border-top: 1px dashed var(--rowcol-border-color);
+        // border-bottom: 1px dashed var(--rowcol-border-color);
 
         z-index: 2;
     }
     
     &.column-highlighted:not(:hover) {
-        border-left: 1px dashed var(--rowcol-border-color);
-        border-right: 1px dashed var(--rowcol-border-color);
+        // border-left: 1px dashed var(--rowcol-border-color);
+        // border-right: 1px dashed var(--rowcol-border-color);
         z-index: 2;
     }
 

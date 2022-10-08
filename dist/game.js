@@ -9,13 +9,11 @@ class Game {
         this.test_achieve = false;
         Game.game = this;
         this.generator = new CollatzGenerator();
-        // this.clock_manager = new ClockManager(this);
         this.table_view = new TableView(this);
         this.game_state = new GameState();
         this.table_view.addStatistic(this.game_state.ops);
         this.table_view.addStatistic(this.game_state.checking);
         this.table_view.addStatistic(this.game_state.n);
-        this.inline_styles = document.getElementById('dynamic-style').sheet;
     }
     testAchievementUnlocked() {
         return this.test_achieve;
@@ -27,8 +25,6 @@ class Game {
         this.table_view.addColumn();
     }
     addClock(pos, opts) {
-        // let c: Clock = this.clock_manager.addClock(pos, opts);
-        // let c: Clock = ClockManager.createClock(this, opts);
         this.table_view.addClock(pos, opts);
     }
     fillGrid() {
@@ -42,7 +38,6 @@ class Game {
                 if (this.canAddClock(pos, "Reference")) {
                     const type = Math.random() > 0.25 ? "Producer" : "Verifier";
                     this.addClock(pos, { type: type, position: pos });
-                    // this.advanceBy(delay);
                 }
             }
         }
