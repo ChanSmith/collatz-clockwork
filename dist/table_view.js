@@ -6,11 +6,6 @@ var dragLog;
 // dragLog = console.log;
 const HIGLIGHTED_ANIMATION_NAME = "pulse-border-hovered";
 const SELECTED_ANIMATION_NAME = "pulse-border-selected";
-// TODO: make these controlled by a <input type="color"> element
-const CLOCK_PALETTE = {
-    "Producer": "#FF55FF",
-    "Verifier": "#00FF00",
-};
 const cell_success_keyframes = [
     { backgroundColor: "rgba(0,255,0, 1.0)" },
     { backgroundColor: "rgba(0,255,0, 0.0)" },
@@ -66,11 +61,6 @@ const sizeTextToFitParent = (element, max_horizontal = 0.95, max_veritical = 0.5
     const horizontal_ratio = horizontalRatio(element);
     const vertical_ratio = verticalRatio(element);
     const ratio = Math.min(max_horizontal / horizontal_ratio, max_veritical / vertical_ratio);
-    // if (horizontal_ratio < max_horizontal && vertical_ratio < max_veritical) {
-    //     ratio = Math.min(max_horizontal / horizontal_ratio, max_veritical / vertical_ratio);
-    // } else {
-    //     ratio = Math.min( horizontal_ratio / max_horizontal, vertical_ratio / max_veritical);
-    // }
     const current_size = parseFloat(((_a = element.getAttribute("font-size")) === null || _a === void 0 ? void 0 : _a.split("%")[0]) || "100");
     const new_size = Math.floor(current_size * ratio).toFixed(2);
     element.setAttribute("font-size", new_size + "%");
@@ -85,19 +75,16 @@ class StatisticView extends HTMLDivElement {
         this.svg_element.classList.add("statistic-svg");
         this.svg_element.setAttribute("width", "100%");
         this.svg_element.setAttribute("height", "100%");
-        // this.svg_element.setAttribute("viewBox", "0 0 100 100");
         this.appendChild(this.svg_element);
         this.name_element = document.createElementNS(SVG_NS, "text");
         this.name_element.classList.add("statistic-name");
         this.name_element.setAttribute("x", "50%");
         this.name_element.setAttribute("y", "0%");
-        // this.name_element.setAttribute("text-anchor", "middle");
         this.svg_element.appendChild(this.name_element);
         this.value_element = document.createElementNS(SVG_NS, "text");
         this.value_element.classList.add("statistic-value");
         this.value_element.setAttribute("x", "95%");
         this.value_element.setAttribute("y", "100%");
-        // this.value_element.setAttribute("text-anchor", "end");
         this.svg_element.appendChild(this.value_element);
         this.update();
     }
@@ -244,41 +231,10 @@ class TableView {
         let background_anim = element.animate(clock_background_keyframes, clock_background_timing);
         background_anim.currentTime = offset;
         clock.animation = background_anim;
-        // background_anim.finished.then(() => {
-        //     clock.tick();
-        //     this.animateClock(element, clock);
-        // }).catch((e) => {
-        //     // Swallow errors from intentionally cancelled animations
-        // });
         const start = performance.now();
         background_anim.ready.then(() => {
-            // console.log(clock + " ready");
-            // console.log("     start time: " + background_anim.startTime! + ", ready at " + background_anim.timeline!.currentTime!)
-            // const diff = performance.now() - start;
-            // console.log("     performance diff " + diff);
-            // const total_diff = diff + background_anim.currentTime!;
-            // console.log("     total diff: " + total_diff)
-            // const new_time = total_diff % TEN_SECONDS;
-            // if ((total_diff - TEN_SECONDS) > MAX_LAG) {
-            //     const missed = Math.floor(total_diff / TEN_SECONDS) - 1;
-            //     console.log("     lag detected, " + missed + " ticks missed");
-            //     console.log("     Setting current time to " + new_time);
-            // }
-            // background_anim.currentTime! = new_time;
         });
         background_anim.addEventListener("finish", (event) => {
-            // const diff = event.timelineTime! - background_anim.startTime!;
-            // console.log(clock.toString() + "finish");
-            // const perf_diff = performance.now() - start;
-            // console.log("     timeline diff " + diff);
-            // console.log("     performance diff " + perf_diff);
-            // let delay = 0;
-            // if ((diff - TEN_SECONDS) > MAX_LAG) {
-            //     const missed = Math.floor (diff / TEN_SECONDS) - 1;
-            //     console.log("     lag detected on finish, " + missed + " ticks missed");
-            //     delay = diff % TEN_SECONDS;
-            //     console.log("     adding " + delay + "ms to next animation");
-            // }
             clock.tick();
             this.animateClock(element, clock, 0);
         });

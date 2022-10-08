@@ -183,4 +183,3 @@ class ReferenceClock extends Clock {
         });
     }
 }
-// type Clock = ProducerClock | VerifierClock;
