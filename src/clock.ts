@@ -41,7 +41,7 @@ class UpgradeInfo {
 
 abstract class Clock {
 
-    abstract readonly clockType: ClockType;
+    readonly clockType: ClockType;
 
     animation?: Animation;
 

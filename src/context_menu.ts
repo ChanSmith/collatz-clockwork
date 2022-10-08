@@ -43,7 +43,7 @@ class ContextMenu {
 
     #state: State = { defaultMenuItems: [] };
 
-    static #currentContextMenu: ContextMenu | undefined;
+    static currentContextMenu: ContextMenu | undefined;
 
     #coreOptions: CoreOptions = {
         transformOrigin: ['top', 'left'], 
@@ -158,11 +158,11 @@ class ContextMenu {
         return { normalizedX, normalizedY };
     };
 
-    static #removeExistingContextMenu = (): void => {
-        if (!ContextMenu.#currentContextMenu) {
+    static removeExistingContextMenu = (): void => {
+        if (!ContextMenu.currentContextMenu) {
             return;
         }
-        const c = ContextMenu.#currentContextMenu
+        const c = ContextMenu.currentContextMenu
         if (c.#options.additionalScopeClass) {
            c.#options.scope.classList.remove(c.#options.additionalScopeClass);
         }
@@ -219,7 +219,7 @@ class ContextMenu {
                 false;
 
             if (!preventCloseOnClick) {
-                ContextMenu.#removeExistingContextMenu();
+                ContextMenu.removeExistingContextMenu();
             }
         };
     };
@@ -233,8 +233,8 @@ class ContextMenu {
         this.#initialContextMenuEvent = event;
 
         // the current context menu should disappear when a new one is displayed
-        ContextMenu.#removeExistingContextMenu();
-        ContextMenu.#currentContextMenu = this;
+        ContextMenu.removeExistingContextMenu();
+        ContextMenu.currentContextMenu = this;
 
         // build and show on ui
         const contextMenu: HTMLElement = this.#buildContextMenu(event.button);
@@ -289,7 +289,7 @@ class ContextMenu {
         if (clickedTarget.closest("[context-menu]")) {
             return;
         }
-        ContextMenu.#removeExistingContextMenu();
+        ContextMenu.removeExistingContextMenu();
     };
 
     constructor(configurableOptions: ConfigurableOptions) {
@@ -313,10 +313,6 @@ class ContextMenu {
     off(): void {
         document.removeEventListener('click', this.#onDocumentClick);
         this.#options.scope.oncontextmenu = null;
-    }
-
-    static removeExistingContextMenu(): void {
-        ContextMenu.#removeExistingContextMenu();
     }
 
     updateOptions(configurableOptions: Partial<ConfigurableOptions>): void {

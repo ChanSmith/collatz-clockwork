@@ -5,7 +5,7 @@ var logFocusChange: Logger;
     //  logFocusChange = console.log;
 
 class Game {
-    
+    static game: Game;
     game_state: GameState;
     
     generator: CollatzGenerator;
@@ -16,7 +16,12 @@ class Game {
     inline_styles: CSSStyleSheet;
     pause_time: number = 0;
 
+    public test_achieve: boolean = false;
+    testAchievementUnlocked() {
+        return this.test_achieve;
+    }
     constructor() {
+        Game.game = this;
         this.generator = new CollatzGenerator();
         // this.clock_manager = new ClockManager(this);
         this.table_view = new TableView(this);
@@ -261,13 +266,28 @@ var getChange = () => {
 }
 
 
-window.addEventListener("focus", () => {
-    g.unpause(false);
-    logFocusChange?.("focus");
-});
+var pauseIntervalId;
 window.addEventListener("blur", () => {
-    g.pause(false);
     logFocusChange?.("blur");
+    g.pause(false);
+    getChange();
+    pauseIntervalId = window.setInterval(() => {
+        const delay = getChange();
+        console.log("delay: " + delay);
+        // TODO: maybe show something in the tab to indicate that the game is paused but updating
+        g.advancePausedGame(delay);
+        g.pause_time = lastChange;
+    } , TEN_SECONDS); // keep game updating in background so we don't have to do a bunch of work on focus
+    
 });
 
+window.addEventListener("focus", () => {
+    logFocusChange?.("focus");
+    if (pauseIntervalId) {
+        window.clearInterval(pauseIntervalId);
+    }
+    g.unpause(false);
+});
+const dummy_audio_context = new AudioContext();
+console.log(dummy_audio_context);
 // const c = new ReferenceClock(g, {type:"Reference", position: new Position(1,1)});
