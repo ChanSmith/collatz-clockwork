@@ -4,8 +4,8 @@ const TABLE_BODY_SIZE = 4;
 const SVG_NS = "http://www.w3.org/2000/svg"; // Making this https breaks it, at least when running locally
 var dragLog;
 // dragLog = console.log;
-const HIGLIGHTED_ANIMATION_NAME = "pulse-border";
-const HIGHLIGHTED_ANIMATION_DURATION = 1000;
+const HIGLIGHTED_ANIMATION_NAME = "pulse-border-hovered";
+const SELECTED_ANIMATION_NAME = "pulse-border-selected";
 // TODO: make these controlled by a <input type="color"> element
 const CLOCK_PALETTE = {
     "Producer": "#FF55FF",
@@ -39,7 +39,7 @@ const reference_clock_timing = {
     duration: 1000,
     iterations: 1,
 };
-const STATS_UPDATE_INTERVAL = 16;
+const STATS_UPDATE_INTERVAL = 66;
 const MAX_LAG = 500;
 const horizontalRatio = (element) => {
     const parent = element.parentElement;
@@ -283,22 +283,26 @@ class TableView {
             this.animateClock(element, clock, 0);
         });
     }
-    getHighlightedAnimationTime(cell) {
+    getSelectedAnimationTime(cell) {
         let time = 0;
         cell.getAnimations().some(a => {
-            if (a instanceof CSSAnimation && a.animationName == HIGLIGHTED_ANIMATION_NAME && a.currentTime) {
+            if (a instanceof CSSAnimation && a.animationName == SELECTED_ANIMATION_NAME && a.currentTime) {
                 // Out of phase
-                time = a.currentTime % (2 * HIGHLIGHTED_ANIMATION_DURATION) + 1000;
+                const raw_duration = a.effect.getTiming().duration;
+                const duration = typeof raw_duration === "string" ? parseFloat(raw_duration.split("ms")[0]) : raw_duration;
+                time = a.currentTime % (2 * duration) + duration;
                 // In phase
-                // time = a.currentTime %  (2 * HIGHLIGHTED_ANIMATION_DURATION);
+                // time = a.currentTime %  (2 * duration);
+                return true;
             }
         });
         return time;
     }
     setHighlightedAnimationTime(cell, time) {
-        cell.getAnimations().forEach(a => {
+        cell.getAnimations().some(a => {
             if (a instanceof CSSAnimation && a.animationName == HIGLIGHTED_ANIMATION_NAME) {
                 a.currentTime = time;
+                return true;
             }
         });
     }
@@ -309,7 +313,7 @@ class TableView {
             event.dataTransfer.dropEffect = "move";
             cell.classList.add("drag-target");
             if (this.dragging_cell && this.dragging_cell !== cell) {
-                let time = this.getHighlightedAnimationTime(this.dragging_cell);
+                let time = this.getSelectedAnimationTime(this.dragging_cell);
                 this.setHighlightedAnimationTime(cell, time);
             }
         });

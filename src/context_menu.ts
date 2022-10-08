@@ -43,6 +43,8 @@ class ContextMenu {
 
     #state: State = { defaultMenuItems: [] };
 
+    #contextMenuElement: HTMLElement | null = null;
+
     static currentContextMenu: ContextMenu | undefined;
 
     #coreOptions: CoreOptions = {
@@ -170,7 +172,8 @@ class ContextMenu {
         if (c.#options.onClose) {
             c.#options.onClose();
         }
-        document.querySelector(".context-menu")?.remove();    
+        c.#contextMenuElement?.remove();  
+        c.#contextMenuElement = null;  
     };
 
     #applyStyleOnContextMenu = (
@@ -238,6 +241,7 @@ class ContextMenu {
 
         // build and show on ui
         const contextMenu: HTMLElement = this.#buildContextMenu(event.button);
+        this.#contextMenuElement = contextMenu;
         document.querySelector('body')?.append(contextMenu);
 
         // set the position

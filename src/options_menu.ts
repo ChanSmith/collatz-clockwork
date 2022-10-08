@@ -17,12 +17,11 @@ interface GameOption{
 const CELL_SIZE_OPTION = {
     id: "cell-size",
     name: "Cell Size",
-    default: "64",
+    default: "128",
     input_type: "range",
     input_options: {
         min : "4",
         max : "256",
-        value : "64",
         step : "2",
     },
     input_transformer: (s: string) => s + "px",
@@ -37,14 +36,14 @@ const CLOCK_COLOR_OPTION = {
         {
             id: "producer",
             name: "Producer",
-            default: "#FF55FF",
+            default: "#4b2e83",
             input_type: "color",
             css_variable: "--producer-color",   
         },
         {
             id: "verifier",
             name: "Verifier",
-            default: "#00FF00",
+            default: "#b7a57a",
             input_type: "color",
             css_variable: "--verifier-color",
         },
@@ -130,6 +129,7 @@ class OptionsMenu extends HTMLDivElement {
             input.addEventListener('input', () => {
                 setValue(input.value);
             });
+            setValue(option.default!);
         }
         return container;
     }

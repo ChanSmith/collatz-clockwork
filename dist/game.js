@@ -231,9 +231,10 @@ window.addEventListener("blur", () => {
     pauseIntervalId = window.setInterval(() => {
         const delay = getChange();
         console.log("delay: " + delay);
+        // TODO: maybe show something in the tab to indicate that the game is paused but updating
         g.advancePausedGame(delay);
         g.pause_time = lastChange;
-    }, TEN_SECONDS);
+    }, TEN_SECONDS); // keep game updating in background so we don't have to do a bunch of work on focus
 });
 window.addEventListener("focus", () => {
     logFocusChange === null || logFocusChange === void 0 ? void 0 : logFocusChange("focus");
@@ -242,6 +243,6 @@ window.addEventListener("focus", () => {
     }
     g.unpause(false);
 });
-const dummy_audio_context = new AudioContext();
-console.log(dummy_audio_context);
+// const dummy_audio_context = new AudioContext();
+// console.log(dummy_audio_context);
 // const c = new ReferenceClock(g, {type:"Reference", position: new Position(1,1)});

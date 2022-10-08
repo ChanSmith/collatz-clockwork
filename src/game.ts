@@ -288,6 +288,6 @@ window.addEventListener("focus", () => {
     }
     g.unpause(false);
 });
-const dummy_audio_context = new AudioContext();
-console.log(dummy_audio_context);
+// const dummy_audio_context = new AudioContext();
+// console.log(dummy_audio_context);
 // const c = new ReferenceClock(g, {type:"Reference", position: new Position(1,1)});

@@ -9,13 +9,14 @@ var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
     return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
 };
-var _ContextMenu_instances, _ContextMenu_initialContextMenuEvent, _ContextMenu_state, _ContextMenu_coreOptions, _ContextMenu_defaultOptions, _ContextMenu_options, _ContextMenu_generateCancelItems, _ContextMenu_buildContextMenu, _ContextMenu_normalizePozition, _ContextMenu_applyStyleOnContextMenu, _ContextMenu_bindCallbacks, _ContextMenu_onShowContextMenu, _ContextMenu_onDocumentClick;
+var _ContextMenu_instances, _ContextMenu_initialContextMenuEvent, _ContextMenu_state, _ContextMenu_contextMenuElement, _ContextMenu_coreOptions, _ContextMenu_defaultOptions, _ContextMenu_options, _ContextMenu_generateCancelItems, _ContextMenu_buildContextMenu, _ContextMenu_normalizePozition, _ContextMenu_applyStyleOnContextMenu, _ContextMenu_bindCallbacks, _ContextMenu_onShowContextMenu, _ContextMenu_onDocumentClick;
 class ContextMenu {
     constructor(configurableOptions) {
         _ContextMenu_instances.add(this);
         // private vars
         _ContextMenu_initialContextMenuEvent.set(this, void 0);
         _ContextMenu_state.set(this, { defaultMenuItems: [] });
+        _ContextMenu_contextMenuElement.set(this, null);
         _ContextMenu_coreOptions.set(this, {
             transformOrigin: ['top', 'left'],
         });
@@ -140,6 +141,7 @@ class ContextMenu {
             ContextMenu.currentContextMenu = this;
             // build and show on ui
             const contextMenu = __classPrivateFieldGet(this, _ContextMenu_buildContextMenu, "f").call(this, event.button);
+            __classPrivateFieldSet(this, _ContextMenu_contextMenuElement, contextMenu, "f");
             (_a = document.querySelector('body')) === null || _a === void 0 ? void 0 : _a.append(contextMenu);
             // set the position
             const { clientX: mouseX, clientY: mouseY } = event;
@@ -198,7 +200,7 @@ class ContextMenu {
         __classPrivateFieldGet(this, _ContextMenu_state, "f").defaultMenuItems = __classPrivateFieldGet(this, _ContextMenu_options, "f").defaultMenuItems;
     }
 }
-_ContextMenu_initialContextMenuEvent = new WeakMap(), _ContextMenu_state = new WeakMap(), _ContextMenu_coreOptions = new WeakMap(), _ContextMenu_defaultOptions = new WeakMap(), _ContextMenu_options = new WeakMap(), _ContextMenu_buildContextMenu = new WeakMap(), _ContextMenu_normalizePozition = new WeakMap(), _ContextMenu_applyStyleOnContextMenu = new WeakMap(), _ContextMenu_bindCallbacks = new WeakMap(), _ContextMenu_onShowContextMenu = new WeakMap(), _ContextMenu_onDocumentClick = new WeakMap(), _ContextMenu_instances = new WeakSet(), _ContextMenu_generateCancelItems = function _ContextMenu_generateCancelItems() {
+_ContextMenu_initialContextMenuEvent = new WeakMap(), _ContextMenu_state = new WeakMap(), _ContextMenu_contextMenuElement = new WeakMap(), _ContextMenu_coreOptions = new WeakMap(), _ContextMenu_defaultOptions = new WeakMap(), _ContextMenu_options = new WeakMap(), _ContextMenu_buildContextMenu = new WeakMap(), _ContextMenu_normalizePozition = new WeakMap(), _ContextMenu_applyStyleOnContextMenu = new WeakMap(), _ContextMenu_bindCallbacks = new WeakMap(), _ContextMenu_onShowContextMenu = new WeakMap(), _ContextMenu_onDocumentClick = new WeakMap(), _ContextMenu_instances = new WeakSet(), _ContextMenu_generateCancelItems = function _ContextMenu_generateCancelItems() {
     return [
         {
             label: 'Close Menu',
@@ -220,5 +222,6 @@ ContextMenu.removeExistingContextMenu = () => {
     if (__classPrivateFieldGet(c, _ContextMenu_options, "f").onClose) {
         __classPrivateFieldGet(c, _ContextMenu_options, "f").onClose();
     }
-    (_a = document.querySelector(".context-menu")) === null || _a === void 0 ? void 0 : _a.remove();
+    (_a = __classPrivateFieldGet(c, _ContextMenu_contextMenuElement, "f")) === null || _a === void 0 ? void 0 : _a.remove();
+    __classPrivateFieldSet(c, _ContextMenu_contextMenuElement, null, "f");
 };
