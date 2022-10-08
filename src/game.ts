@@ -195,32 +195,47 @@ class Game {
         // TODO: add an indicator that game is paused an progress will be updated when unpaused
     }
 
-    // advance the game by a given amount of time in ms
-    advanceBy(diff: number) {
-        const missed = Math.floor(diff / TEN_SECONDS);
-        const extra = diff % TEN_SECONDS;
-        logUnpauseInfo?.("Performing " + missed + " extra ticks and adding " + extra + "ms to the next tick for each clock");
-        // Sort clocks by progress and iterate through for each missed tick
-        // Will need to redo this if we add clocks that tick at different rates
-        let clocks = Array.from(filter(this.table_view.clock_manager.grid.values(), c => !c.manually_paused));
-        clocks.sort((a, b) => a.remainingTime() - b.remainingTime());
-        logUnpauseInfo?.("Sorted clocks:" + clocks.map(c => c + ": " + c.remainingTime()));
-        for (let i = 0; i < missed; i++) {
-            for (const clock of clocks) {
-                clock.tick();
-            }
+    advancePausedGame(diff: number) {
+        // Keep track of the total time we have simulated. While total less than diff, find the clock with the least remaining time,
+        // tick it and add its remaining time to the total. 
+        // TODO: this may need to be optimized if we have a lot of clocks
+        const grid = this.table_view.clock_manager.grid;
+        const not_paused = (c) => !c.manually_paused;
+        // Nothing to do if all clocks were manually paused clocks
+        if (!any(grid.values(), not_paused)){
+            return;
         }
-        // TODO: how to handle the cell animations -- only the last will play
-        // Add the extra time and tick if needed, in the same order
-        for (const clock of clocks) {
-            if (clock.remainingTime() < extra) {
-                clock.tick();
-                clock.animation!.currentTime = (clock.animation!.currentTime! + extra) % TEN_SECONDS;
-            } else {
-                clock.animation!.currentTime! += extra;
-            }
+        const firstClock = first(grid.values(), not_paused) as Clock;
+        const minClockFn = (a: Clock, b: Clock) => {
+            // If either is undefined/null, return the other
+            return a.remainingTime() < b.remainingTime() ? a : b;
         }
-        logUnpauseInfo?.("After progressing:" + clocks.map(c => c + ": " + c.remainingTime()));
+        const nextClock = () => {
+            return reduce(
+                filter(grid.values(), c => !c.manually_paused),
+                minClockFn,
+                firstClock
+            );
+        }
+        let min_clock = nextClock();
+        let simulated = 0;
+        while (simulated + min_clock.remainingTime() < diff) {
+            const step = min_clock.remainingTime();
+            // min_clock.tickAndReset();
+            this.table_view.clock_manager.forEachClock(c => {
+                if (not_paused(c)) {
+                    c.advanceBy(step);
+                }
+            });
+            simulated += step;
+            min_clock = nextClock();
+        }
+        // At this point simulated is smaller than the closest remaining time, so we can advance everything in whatever order
+        this.table_view.clock_manager.forEachClock(c => {
+            if (not_paused(c)) {
+                c.advanceBy(diff - simulated);
+            }
+        });
     }
 
     unpause(manual: boolean = true) {
@@ -228,7 +243,7 @@ class Game {
         const diff = now - this.pause_time;
         logUnpauseInfo?.("unpaused after" + diff + "ms");
         if (!manual) {
-            this.advanceBy(diff);
+            this.advancePausedGame(diff);
         }
 
         this.table_view.unpauseAll(manual);

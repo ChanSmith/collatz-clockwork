@@ -65,16 +65,54 @@ abstract class Clock {
         // console.log("tick from " + this.toString());
     }
 
+    reset() {
+            this.animation!.currentTime = 0;
+    }
+
+    tickAndReset() {
+        this.tick();
+        this.reset();
+    }
+
+    // TODO: implement handling more than one tick if needed
+    advanceBy(amount: number) {
+        if (!this.animation) return;
+        if (!this.animation.currentTime) {
+            this.animation.currentTime = 0;
+        }
+        if (amount >= this.remainingTime()) {
+            amount -= this.remainingTime();
+            this.tickAndReset();
+        }
+        this.animation.currentTime += amount;
+    }
+
+    unscaledDuration(): number {
+        if (!this.animation || !this.animation.effect) {
+            return TEN_SECONDS;
+        }
+        // assume as number and not "<x>s" or "<x>ms"
+        return this.animation.effect.getTiming().duration as number;
+    }
+
+    scaledDuration(): number {
+        if (!this.animation) {
+            return TEN_SECONDS;
+        }
+        return this.unscaledDuration() / this.animation!.playbackRate ?? 1;
+    }
+
     remainingTime(): number {
         if (!this.animation) {
-            return 0;
+            return TEN_SECONDS;
         }
-        const duration = this.animation.effect!.getComputedTiming().duration as number;
-        return duration - this.animation.currentTime!;
+        const speed = this.animation.playbackRate ?? 1;
+        // return duration / speed;
+        return (this.unscaledDuration() - this.animation.currentTime!) / speed;
     }
 
     toString(): string {
-        return this.getType() + " at " + this.positionString();
+        return this.getType() + " at " + this.options.position.toString();
     }
 
     getOpCount(): number {
@@ -107,11 +145,6 @@ abstract class Clock {
         this.manually_paused = false;
     }
 
-    positionString(): string {
-        return this.options.position.toString();
-    }
-
-
 }
 
 class ProducerClock extends Clock {
@@ -143,7 +176,6 @@ class ReferenceClock extends Clock  {
 
     circle: SVGCircleElement;
 
-    private readonly duration = reference_clock_timing.duration;
 
     constructor(game: Game, options: ClockOptions) {
         super(game, options);
@@ -191,41 +223,9 @@ class ReferenceClock extends Clock  {
         let background_anim = this.circle.animate(clock_background_keyframes, reference_clock_timing);
         background_anim.currentTime = delay;
         this.animation = background_anim;
-
-
-        background_anim.ready.then(() => {
-            const now = performance.now();
-            console.log(this + " ready");
-            console.log("     start time: " + background_anim.startTime! + ", ready at " + background_anim.timeline!.currentTime!)
-            const diff = now - start;
-            console.log("     performance diff " + diff);
-            const total_diff = diff + background_anim.currentTime!;
-            console.log("     total diff: " + total_diff)
-            console.log("     since last tick: " + (now - this.last_tick));
-            const new_time = total_diff % this.duration;
-            if (total_diff > 0) {
-                const missed = Math.floor(total_diff / 1000);
-                console.log("     lag detected, " + missed + " ticks missed");
-                console.log("     Setting current time to " + new_time);
-            }
-            background_anim.currentTime! = new_time;
-        });
         background_anim.addEventListener("finish", (event) => {
-            const diff = event.timelineTime! - background_anim.startTime!;
-            console.log(this + "finish");
-            const perf_diff = performance.now() - start;
-            console.log("     timeline diff " + diff);
-            console.log("     performance diff " + perf_diff);
-            let delay = 0;
-            const missed_time = perf_diff - this.duration;
-            if (missed_time  > 0) {
-                const missed = Math.floor(missed_time / this.duration);
-                console.log("     lag detected on finish, " + missed + " ticks missed");
-                delay = missed_time % this.duration;
-                console.log("     adding " + delay + "ms to next animation");
-            }
             this.tick();
-            this.animate(delay)
+            this.animate()
         });
 
     }

@@ -2,9 +2,10 @@ interface InputOptions {
     [key: string]: string;
 }
 
+// TODO: add a way to read the default options from CSS
 interface GameOption{ 
     name: string;
-    id_prefix: string;
+    id: string;
     default?: string;
     input_type?: string;
     input_options?: InputOptions;
@@ -14,8 +15,8 @@ interface GameOption{
 }
 
 const CELL_SIZE_OPTION = {
+    id: "cell-size",
     name: "Cell Size",
-    id_prefix: "cell-size",
     default: "64",
     input_type: "range",
     input_options: {
@@ -23,7 +24,6 @@ const CELL_SIZE_OPTION = {
         max : "256",
         value : "64",
         step : "2",
-        id : "size-slider",
     },
     input_transformer: (s: string) => s + "px",
     css_variable: "--clock-table-cell-size",
@@ -31,19 +31,19 @@ const CELL_SIZE_OPTION = {
 
 
 const CLOCK_COLOR_OPTION = {
+    id: "clock-color",
     name: "Clock Colors",
-    id_prefix: "clock-color",
     sub_options: [
         {
+            id: "producer",
             name: "Producer",
-            id_prefix: "producer",
             default: "#FF55FF",
             input_type: "color",
             css_variable: "--producer-color",   
         },
         {
+            id: "verifier",
             name: "Verifier",
-            id_prefix: "verifier",
             default: "#00FF00",
             input_type: "color",
             css_variable: "--verifier-color",
@@ -94,7 +94,8 @@ class OptionsMenu extends HTMLDivElement {
         });
         this.wrapper.appendChild(close_button);
     }
-    generateOption(option: GameOption, sub_option: boolean = false) {
+    // TODO: actually compute/use the id if I need it
+    generateOption(option: GameOption, sub_option: boolean = false, id:string = "") {
         const container = document.createElement('div');
         container.classList.add(sub_option? 'sub-option-container' : 'option-container');
         const label = document.createElement('label');

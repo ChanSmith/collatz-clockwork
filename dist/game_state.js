@@ -21,10 +21,10 @@ class DisplayableNumber {
         __classPrivateFieldSet(this, _DisplayableNumber_value, value, "f");
     }
     add(value) {
-        __classPrivateFieldSet(this, _DisplayableNumber_value, __classPrivateFieldGet(this, _DisplayableNumber_value, "f") + value, "f");
+        this.set(__classPrivateFieldGet(this, _DisplayableNumber_value, "f") + value);
     }
     subtract(value) {
-        __classPrivateFieldSet(this, _DisplayableNumber_value, __classPrivateFieldGet(this, _DisplayableNumber_value, "f") - value, "f");
+        this.set(__classPrivateFieldGet(this, _DisplayableNumber_value, "f") - value);
     }
     displayName() {
         return __classPrivateFieldGet(this, _DisplayableNumber_display_name, "f");
@@ -46,8 +46,20 @@ class DisplayableNumber {
 }
 _DisplayableNumber_display_name = new WeakMap(), _DisplayableNumber_value = new WeakMap();
 class Statistic extends DisplayableNumber {
+    set(value) {
+        super.set(value);
+        if (value > this.max_value) {
+            this.max_value = value;
+        }
+    }
 }
 class Resource extends DisplayableNumber {
+    set(value) {
+        super.set(value);
+        if (value > this.max_value) {
+            this.max_value = value;
+        }
+    }
 }
 class GameState {
     constructor() {

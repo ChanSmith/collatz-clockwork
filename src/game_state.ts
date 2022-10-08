@@ -11,10 +11,10 @@ class DisplayableNumber {
     }
 
     add(value: number) {
-        this.#value += value;
+        this.set(this.#value + value);
     }
     subtract(value: number) {
-        this.#value -= value;
+        this.set(this.#value - value);
     }
 
     displayName() : string {
@@ -24,7 +24,6 @@ class DisplayableNumber {
     value() : number {
         return this.#value;
     }
-
 
     toString(): string {
         return this.#display_name + ": " + this.#value;
@@ -43,12 +42,25 @@ class Statistic extends DisplayableNumber {
 
     max_value: number;
 
+    set(value: number) {
+        super.set(value);
+        if (value > this.max_value) {
+            this.max_value = value;
+        }
+    }
+
    
 }
 
 class Resource extends DisplayableNumber {
     max_value: number;
 
+    set(value: number) {
+        super.set(value);
+        if (value > this.max_value) {
+            this.max_value = value;
+        }
+    }
 }
 
 class GameState {

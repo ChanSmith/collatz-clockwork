@@ -13,6 +13,33 @@ function* filter<T extends IterableIterator<IteratorValue<T>>>(iter: T, f: (v: I
     }
 }
 
+function any<T extends IterableIterator<IteratorValue<T>>>(iter: T, f: (v: IteratorValue<T>) => boolean): boolean {
+    for (const v of iter) {
+        if (f(v)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function all<T extends IterableIterator<IteratorValue<T>>>(iter: T, f: (v: IteratorValue<T>) => boolean): boolean {
+    for (const v of iter) {
+        if (!f(v)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function first<T extends IterableIterator<IteratorValue<T>>>(iter: T, f: (v: IteratorValue<T>) => boolean): IteratorValue<T> | undefined {
+    for (const v of iter) {
+        if (f(v)) {
+            return v;
+        }
+    }
+    return undefined;
+}
+
 // map(iterable, f) yields f(v) for each value v
 function* map<T extends IterableIterator<IteratorValue<T>>, U>(iter: T, f: (v: IteratorValue<T>) => U) {
     for (const v of iter) {
@@ -20,11 +47,11 @@ function* map<T extends IterableIterator<IteratorValue<T>>, U>(iter: T, f: (v: I
     }
 }
 
-// reduce(iterable, f, init) yields f(v_n,f(...f(f(init, v_0), v_1)...))
-function* reduce<T extends IterableIterator<IteratorValue<T>>, U>(iter: T, f: (acc: U, v: IteratorValue<T>) => U, initial: U) {
+// reduce(iterable, f, init) return f(v_n,f(...f(f(init, v_0), v_1)...))
+function reduce<T extends IterableIterator<IteratorValue<T>>, U>(iter: T, f: (acc: U, v: IteratorValue<T>) => U, initial: U): U {
     let acc = initial;
     for (const v of iter) {
         acc = f(acc, v);
-        yield acc;
     }
+    return acc;
 }

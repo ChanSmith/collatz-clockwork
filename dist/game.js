@@ -190,12 +190,50 @@ class Game {
         }
         logUnpauseInfo === null || logUnpauseInfo === void 0 ? void 0 : logUnpauseInfo("After progressing:" + clocks.map(c => c + ": " + c.remainingTime()));
     }
+    advancePausedGame(diff) {
+        // Keep track of the total time we have simulated. While total less than diff, find the clock with the least remaining time,
+        // tick it and add its remaining time to the total. 
+        // TODO: this can be optimized
+        const grid = this.table_view.clock_manager.grid;
+        const not_paused = (c) => !c.manually_paused;
+        // Nothing to do if all clocks were manually paused clocks
+        if (!any(grid.values(), not_paused)) {
+            return;
+        }
+        const firstClock = first(grid.values(), not_paused);
+        const minClockFn = (a, b) => {
+            // If either is undefined/null, return the other
+            return a.remainingTime() < b.remainingTime() ? a : b;
+        };
+        const nextClock = () => {
+            return reduce(filter(grid.values(), c => !c.manually_paused), minClockFn, firstClock);
+        };
+        let min_clock = nextClock();
+        let simulated = 0;
+        while (simulated + min_clock.remainingTime() < diff) {
+            const step = min_clock.remainingTime();
+            // min_clock.tickAndReset();
+            this.table_view.clock_manager.forEachClock(c => {
+                if (not_paused(c)) {
+                    c.advanceBy(step);
+                }
+            });
+            simulated += step;
+            min_clock = nextClock();
+        }
+        // At this point simulated is smaller than the closest remaining time, so we can advance everything in whatever order
+        this.table_view.clock_manager.forEachClock(c => {
+            if (not_paused(c)) {
+                c.advanceBy(diff - simulated);
+            }
+        });
+    }
     unpause(manual = true) {
         const now = performance.now();
         const diff = now - this.pause_time;
         logUnpauseInfo === null || logUnpauseInfo === void 0 ? void 0 : logUnpauseInfo("unpaused after" + diff + "ms");
         if (!manual) {
-            this.advanceBy(diff);
+            this.advancePausedGame(diff);
         }
         this.table_view.unpauseAll(manual);
     }
