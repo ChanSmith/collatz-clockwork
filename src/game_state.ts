@@ -64,7 +64,8 @@ class Resource extends DisplayableNumber {
 class GameState {
 
     ops: Resource;
-
+    
+    // TODO: track failed ops (e.g max consecutive failed ops would be a stat)
     n: Statistic;
     checking: Statistic;
 
@@ -112,6 +113,4 @@ class GameState {
         this.resetSequence(this.checking.value() + 1);
         return true;
     }
-
-
 }

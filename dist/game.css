@@ -21,15 +21,16 @@ body {
   height: 50%;
   top: 25%;
   left: 25%;
+  transition-property: transform;
+  transition-duration: 250ms;
+  transform-origin: top left;
+  transition-timing-function: ease-in-out;
+  transform: scale(0);
   position: absolute;
-}
-#options-menu.disabled * {
-  z-index: var(--hidden_z_index);
-  opacity: 0;
-}
-#options-menu.enabled * {
   z-index: var(--foreground_z_index);
-  opacity: 1;
+}
+#options-menu.enabled {
+  transform: scale(1);
 }
 #options-menu #options-menu-wrapper {
   background-color: rgb(200, 200, 200);

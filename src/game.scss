@@ -26,17 +26,26 @@ body {
     height: 50%;
     top: 25%;
     left: 25%;
+    transition-property: transform;
+    transition-duration: 250ms;
+    transform-origin: top left;
+    transition-timing-function: ease-in-out;
+    transform: scale(0);
 
     position:absolute;  
+    z-index: var(--foreground_z_index);
 
-    &.disabled * {
-        z-index: var(--hidden_z_index);
-        opacity: 0;
-    }
+    // &.disabled *:not(#options-menu-wrapper) {
+        //     z-index: var(--hidden_z_index);
+        //     opacity: 0;
+        // }
+        
+    // &.enabled * {
+    //     opacity: 1;
+    // }
 
-    &.enabled * {
-        z-index: var(--foreground_z_index);
-        opacity: 1;
+    &.enabled {
+        transform: scale(1);
     }
     
     

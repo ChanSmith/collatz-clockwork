@@ -134,7 +134,7 @@ class ContextMenu {
             var _a;
             event.preventDefault();
             event.stopPropagation();
-            // store event so it can be passed to callbakcs
+            // store event so it can be passed to callbacks
             __classPrivateFieldSet(this, _ContextMenu_initialContextMenuEvent, event, "f");
             // the current context menu should disappear when a new one is displayed
             ContextMenu.removeExistingContextMenu();

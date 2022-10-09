@@ -312,6 +312,8 @@ class TableView {
         const start = performance.now();
         background_anim.ready.then(() => {
         });
+        // TODO: see if it's better to  use infinite iterations 
+        // with "animationiteration" event listener on element
         background_anim.addEventListener("finish", (event) => {
             clock.tick();
             this.animateClock(element, clock, 0);
@@ -343,6 +345,12 @@ class TableView {
         });
     }
 
+    // TODO: consider making dragging select cells instead (to do what, idk)
+    // the target in each event is the previous cell that was hovered over not (not the original), 
+    // so that wouldn't be too hard to do
+
+
+    // Add handlers to cell so another cell can be dragged to it
     makeCellDragTarget(cell: HTMLDivElement, pos: Position) {
         cell.addEventListener("dragenter", (event) => {
             event.preventDefault();
@@ -373,7 +381,7 @@ class TableView {
         });
     }
 
-
+    // Add handlers to cell so it can be dragged to another cell
     makeCellDraggable(el: HTMLDivElement, pos: Position) {
         el.setAttribute("draggable", "true");
         el.addEventListener("dragstart", (event) => {
@@ -397,7 +405,6 @@ class TableView {
     }
 
     createClockElement(clock: Clock, animationStart: number = 0) {
-        // let div = document.createElement("div");
         let s = document.createElementNS(SVG_NS, "svg") as SVGSVGElement;
         s.classList.add("clock");
         s.classList.add(clock.getType());
@@ -419,7 +426,6 @@ class TableView {
         s.appendChild(timer_background);
 
         return s;
-        // return div;
     }
 
     generateTableRow(row: number, size: number): HTMLDivElement {
@@ -520,7 +526,7 @@ class TableView {
         });
     }
 
-    // TODO let rows/cols be added anywher -- need to update pos of all clocks to the 
+    // TODO let rows/cols be added anywhere -- need to update pos of all clocks to the 
     // bottom and right
     addRow() {
         let row = this.generateTableRow(this.getRows(), this.getColumns());

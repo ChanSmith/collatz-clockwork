@@ -27,6 +27,7 @@ interface Options extends ConfigurableOptions, CoreOptions {
 interface MenuOption {
     label: string;
     callback: (ev: MouseEvent) => any;
+    //TODO: add suboptions
     iconClass?: string;
     preventCloseOnClick?: boolean;
 }
@@ -232,7 +233,7 @@ class ContextMenu {
         event.stopPropagation();
 
 
-        // store event so it can be passed to callbakcs
+        // store event so it can be passed to callbacks
         this.#initialContextMenuEvent = event;
 
         // the current context menu should disappear when a new one is displayed

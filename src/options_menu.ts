@@ -36,14 +36,14 @@ const CLOCK_COLOR_OPTION = {
         {
             id: "producer",
             name: "Producer",
-            default: "#4b2e83",
+            default: "#7d3ccc",
             input_type: "color",
             css_variable: "--producer-color",
         },
         {
             id: "verifier",
             name: "Verifier",
-            default: "#b7a57a",
+            default: "#ccc53c",
             input_type: "color",
             css_variable: "--verifier-color",
         },
