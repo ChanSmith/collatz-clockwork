@@ -55,3 +55,10 @@ function reduce<T extends IterableIterator<IteratorValue<T>>, U>(iter: T, f: (ac
     }
     return acc;
 }
+
+
+function* range(start: number, end: number, step: number = 1) {
+    for (let i = start; i < end; i += step) {
+        yield i;
+    }
+}

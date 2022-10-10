@@ -144,6 +144,13 @@ class Game {
         }
     }
 
+    getClockUpgradeMenuItems(pos: Position): MenuItem[] {
+        const clock = this.table_view.clock_manager.getClock(pos);
+        if (clock) {
+            return clock.getUpgradeMenuItems();
+        }
+        return [];
+    }
 
     primaryMenuItemGenerator(pos: Position): MenuItemGenerator {
         return () => {
@@ -153,6 +160,8 @@ class Game {
             }
             else {
                 items.push(...this.getPauseClockMenuItems(pos));
+                items.push("hr");
+                items.push(...this.getClockUpgradeMenuItems(pos));
             }
             return items;
         }

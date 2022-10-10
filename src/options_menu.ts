@@ -55,7 +55,6 @@ const OPTIONS = [
     CLOCK_COLOR_OPTION,
 ];
 
-
 const DEFAULT_CLOCK_TABLE_SIZE = 64;
 
 const COLOR_OPTIONS_MAP = new Map([

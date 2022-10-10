@@ -27,14 +27,38 @@ class Clock {
         this.game = game;
         this.options = options;
         this.manually_paused = false;
+        // this.upgrade_tree = new UpgradeTree(this.getType());
     }
     getType() {
         return this.clockType;
     }
     getPossibleUpgrades() {
-        return new Map();
+        return this.upgrade_tree.getPossibleUpgrades();
     }
-    applyUpgrade(key) {
+    getUpgradeMenuItems() {
+        let ret = [];
+        const possible_upgrades = this.getPossibleUpgrades();
+        for (const upgrade_id of upgradeIds(possible_upgrades)) {
+            const upgrade = UPGRADES[upgrade_id];
+            const new_state = possible_upgrades[upgrade_id];
+            const new_level = new_state.level;
+            let level_label;
+            if (upgrade.max_level !== Infinity) {
+                level_label = " (" + new_level + " / " + upgrade.max_level + ")";
+            }
+            else {
+                level_label = " (" + new_level + " / ∞)";
+            }
+            ret.push({
+                label: upgrade.name + level_label,
+                callback: () => this.applyUpgrade(upgrade_id, new_state),
+            });
+        }
+        // TODO: show locked ones with requirement
+        return ret;
+    }
+    applyUpgrade(key, new_state) {
+        this.upgrade_tree.applyUpgrade(key, new_state);
     }
     tick() {
         // console.log("tick from " + this.toString());
@@ -112,9 +136,10 @@ class Clock {
     }
 }
 class ProducerClock extends Clock {
-    constructor() {
-        super(...arguments);
+    constructor(game, options) {
+        super(game, options);
         this.clockType = "Producer";
+        this.upgrade_tree = new UpgradeTree(this.clockType);
     }
     tick() {
         super.tick();
@@ -123,9 +148,10 @@ class ProducerClock extends Clock {
     }
 }
 class VerifierClock extends Clock {
-    constructor() {
-        super(...arguments);
+    constructor(game, options) {
+        super(game, options);
         this.clockType = "Verifier";
+        this.upgrade_tree = new UpgradeTree(this.clockType);
     }
     tick() {
         super.tick();

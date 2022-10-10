@@ -24,6 +24,9 @@ class Position {
 }
 
 type ClockType = "Producer" | "Verifier" | "Reference";
+type ClockTypeSet = {
+    [U in ClockType]?: boolean;
+}
 
 interface ClockOptions {
     type: ClockType;
@@ -41,19 +44,44 @@ abstract class Clock {
     animation?: Animation;
 
     manually_paused: boolean = false;
+    upgrade_tree: UpgradeTree;
 
     getType(): ClockType {
         return this.clockType;
     }
 
-    constructor(public game: Game, public options: ClockOptions) { }
-
-    getPossibleUpgrades(): Map<string, UpgradeInfo> {
-        return new Map<string, UpgradeInfo>();
+    constructor(public game: Game, public options: ClockOptions) { 
+        // this.upgrade_tree = new UpgradeTree(this.getType());
     }
 
-    applyUpgrade(key: string) {
+    getPossibleUpgrades(): PossibleUpgrades {
+        return this.upgrade_tree.getPossibleUpgrades();
+    }
 
+    getUpgradeMenuItems(): MenuItem[] {
+        let ret: MenuItem[] = [];
+        const possible_upgrades = this.getPossibleUpgrades();
+        for (const upgrade_id of upgradeIds(possible_upgrades)) {
+            const upgrade  = UPGRADES[upgrade_id];
+            const new_state = possible_upgrades[upgrade_id]!;
+            const new_level = new_state.level;
+            let level_label;
+            if (upgrade.max_level !== Infinity) {
+                level_label = " (" + new_level + " / " + upgrade.max_level + ")";
+            } else {
+                level_label = " (" + new_level + " / ∞)";
+            }
+            ret.push( {
+                label: upgrade.name + level_label,
+                callback: () => this.applyUpgrade(upgrade_id, new_state),
+            });
+        }
+        // TODO: show locked ones with requirement
+        return ret;
+    }
+
+    applyUpgrade(key: UpgradeId, new_state: PossibleUpgradeState) {
+        this.upgrade_tree.applyUpgrade(key, new_state);
     }
 
     tick() {
@@ -145,6 +173,11 @@ abstract class Clock {
 class ProducerClock extends Clock {
     readonly clockType = "Producer";
 
+    constructor(game: Game, options: ClockOptions) {
+        super(game, options);
+        this.upgrade_tree = new UpgradeTree(this.clockType);
+    }
+
     tick() {
         super.tick();
         const success = this.game.applyOps(this.getOpCount());
@@ -156,6 +189,11 @@ class ProducerClock extends Clock {
 class VerifierClock extends Clock {
     readonly clockType = "Verifier";
 
+    constructor(game: Game, options: ClockOptions) {
+        super(game, options);
+        this.upgrade_tree = new UpgradeTree(this.clockType);
+    }
+    
     tick() {
         super.tick();
         const success = this.game.verify();
