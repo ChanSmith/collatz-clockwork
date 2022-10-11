@@ -30,6 +30,7 @@ interface MenuOption {
     //TODO: add suboptions
     iconClass?: string;
     preventCloseOnClick?: boolean;
+    disabled?: boolean;
 }
 type MenuItem = MenuOption | 'hr';
 
@@ -102,12 +103,17 @@ class ContextMenu {
             } else {
                 const menuItem = document.createElement('div');
                 menuItem.classList.add('menu-item');
+                if (item.disabled) {
+                    menuItem.classList.add('disabled');
+                }
                 const label = document.createElement('span');
                 label.classList.add('label');
                 label.textContent = item.label;
                 menuItem.appendChild(label);
                 contextMenu.appendChild(menuItem);
-                this.#bindCallbacks(menuItem, item);
+                if (!item.disabled) {
+                    this.#bindCallbacks(menuItem, item);
+                }
             }
         }
 

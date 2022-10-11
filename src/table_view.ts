@@ -291,6 +291,28 @@ class TableView {
         const c = this.clock_manager.removeClock(pos);
     }
 
+    getNearbyClocks(pos: Position): Array<Clock> {
+        let clocks = new Array<Clock>();
+        const width = this.getColumns();
+        const height = this.getRows();
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                if (i == 0 && j == 0
+                    || pos.row + i < 0 || pos.row + i >= height
+                    || pos.col + j < 0 || pos.col + j >= width) {
+                    continue;
+                }
+
+                let p = new Position(pos.row + i, pos.col + j);
+                let c = this.clock_manager.getClock(p);
+                if (c) {
+                    clocks.push(c);
+                }
+            }
+        }
+        return clocks;
+    }
+
     animateCellSuccess(pos: Position, success: boolean) {
         let cell = this.getCell(pos);
         if (!cell) {

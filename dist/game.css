@@ -123,6 +123,10 @@ body {
 .context-menu > *:not(hr) i {
   margin-right: 5px;
 }
+.context-menu > *:not(hr).disabled {
+  opacity: 0.5;
+  cursor: default;
+}
 
 .clock-table {
   display: flex;

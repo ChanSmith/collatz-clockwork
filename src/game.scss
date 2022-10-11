@@ -173,6 +173,11 @@ body {
         i {
             margin-right: 5px;
         }
+
+        &.disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
     }
 }
 

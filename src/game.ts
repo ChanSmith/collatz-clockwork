@@ -177,13 +177,21 @@ class Game {
         };
     }
 
+    canPurchase(possible_upgrade: PossibleUpgradeState) {
+        return this.game_state.canPurchase(possible_upgrade);
+    }
+
+    purchase(possible_upgrade: PossibleUpgradeState) {
+        this.game_state.purchase(possible_upgrade);
+    }
+
     applyOps(amount: number) {
         const seq = this.generator.getSequence(this.game_state.n.value(), amount);
         if (seq.length > 0) {
             this.game_state.applySequence(seq);
-            return true;
+            return seq.length;
         }
-        return false;
+        return 0;
     }
 
     verify() {

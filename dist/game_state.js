@@ -83,6 +83,12 @@ class GameState {
         this.checking.set(from);
         this.length.set(1);
     }
+    canPurchase(possible_upgrade) {
+        return this.ops.value() >= possible_upgrade.cost;
+    }
+    purchase(possible_upgrade) {
+        this.ops.subtract(possible_upgrade.cost);
+    }
     canVerify() {
         return this.n.equals(1);
     }

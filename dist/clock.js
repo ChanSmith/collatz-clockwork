@@ -39,9 +39,11 @@ class Clock {
         let ret = [];
         const possible_upgrades = this.getPossibleUpgrades();
         for (const upgrade_id of upgradeIds(possible_upgrades)) {
-            const upgrade = UPGRADES[upgrade_id];
-            const new_state = possible_upgrades[upgrade_id];
-            const new_level = new_state.level;
+            const possible_upgrade = possible_upgrades[upgrade_id];
+            const upgrade = UPGRADES_OPTIONS[upgrade_id];
+            const new_level = possible_upgrade.level;
+            const cost = possible_upgrade.cost;
+            const disabled = !this.game.canPurchase(possible_upgrade);
             let level_label;
             if (upgrade.max_level !== Infinity) {
                 level_label = " (" + new_level + " / " + upgrade.max_level + ")";
@@ -50,15 +52,21 @@ class Clock {
                 level_label = " (" + new_level + " / ∞)";
             }
             ret.push({
-                label: upgrade.name + level_label,
-                callback: () => this.applyUpgrade(upgrade_id, new_state),
+                label: upgrade.name + " $" + cost + level_label,
+                callback: () => this.applyUpgrade(upgrade_id, possible_upgrade),
+                disabled: disabled,
+                preventCloseOnClick: disabled,
             });
         }
         // TODO: show locked ones with requirement
         return ret;
     }
-    applyUpgrade(key, new_state) {
-        this.upgrade_tree.applyUpgrade(key, new_state);
+    applyUpgrade(key, possible_upgrade) {
+        this.game.purchase(possible_upgrade);
+        this.upgrade_tree.applyUpgrade(key, possible_upgrade);
+        if (key == "playback_speed") {
+            this.animation.updatePlaybackRate(Math.pow(2, possible_upgrade.level));
+        }
     }
     tick() {
         // console.log("tick from " + this.toString());
@@ -70,8 +78,10 @@ class Clock {
         this.tick();
         this.reset();
     }
+    // Advance the animation by the given amount of real time (milliseconds)
     // TODO: implement handling more than one tick if needed
     advanceBy(amount) {
+        var _a;
         if (!this.animation)
             return;
         if (!this.animation.currentTime) {
@@ -81,22 +91,21 @@ class Clock {
             amount -= this.remainingTime();
             this.tickAndReset();
         }
-        this.animation.currentTime += amount;
+        this.animation.currentTime += (amount * ((_a = this.animation.playbackRate) !== null && _a !== void 0 ? _a : 1));
     }
+    // Returns the unscaled duration of the animation
     unscaledDuration() {
-        if (!this.animation || !this.animation.effect) {
-            return TEN_SECONDS;
-        }
-        // assume as number and not "<x>s" or "<x>ms"
-        return this.animation.effect.getTiming().duration;
+        return clock_background_timing.duration;
     }
+    // Returns the real duration of the animation
     scaledDuration() {
         var _a;
         if (!this.animation) {
             return TEN_SECONDS;
         }
-        return (_a = this.unscaledDuration() / this.animation.playbackRate) !== null && _a !== void 0 ? _a : 1;
+        return this.unscaledDuration() / ((_a = this.animation.playbackRate) !== null && _a !== void 0 ? _a : 1);
     }
+    // Returns real time remaining
     remainingTime() {
         var _a;
         if (!this.animation) {
@@ -143,8 +152,28 @@ class ProducerClock extends Clock {
     }
     tick() {
         super.tick();
-        const success = this.game.applyOps(this.getOpCount());
+        const op_count = this.getOpCount();
+        const applied_ops = this.game.applyOps(op_count);
+        if (applied_ops > 0) {
+            this.advanceNearby();
+        }
+        // TODO: animate the cell multiple times, or show a different color based on ratio 
+        // of applied ops to requested ops
+        const success = applied_ops > 0;
         this.game.table_view.animateCellSuccess(this.options.position, success);
+    }
+    getOpCount() {
+        return 1 + this.upgrade_tree.getUpgradeLevel("applications_per_cycle");
+    }
+    advanceNearby() {
+        const upgrade_level = this.upgrade_tree.getUpgradeLevel("advance_nearby");
+        if (upgrade_level <= 0) {
+            return;
+        }
+        const nearby = this.game.table_view.getNearbyClocks(this.options.position);
+        for (const clock of nearby) {
+            clock.advanceBy(upgrade_level * ADVANCE_NEARBY_AMOUNT);
+        }
     }
 }
 class VerifierClock extends Clock {
@@ -207,5 +236,8 @@ class ReferenceClock extends Clock {
             this.tick();
             this.animate();
         });
+    }
+    unscaledDuration() {
+        return reference_clock_timing.duration;
     }
 }

@@ -57,12 +57,17 @@ class ContextMenu {
                 else {
                     const menuItem = document.createElement('div');
                     menuItem.classList.add('menu-item');
+                    if (item.disabled) {
+                        menuItem.classList.add('disabled');
+                    }
                     const label = document.createElement('span');
                     label.classList.add('label');
                     label.textContent = item.label;
                     menuItem.appendChild(label);
                     contextMenu.appendChild(menuItem);
-                    __classPrivateFieldGet(this, _ContextMenu_bindCallbacks, "f").call(this, menuItem, item);
+                    if (!item.disabled) {
+                        __classPrivateFieldGet(this, _ContextMenu_bindCallbacks, "f").call(this, menuItem, item);
+                    }
                 }
             }
             // const contextMenu: HTMLElement = wrapper.children[0] as HTMLElement;

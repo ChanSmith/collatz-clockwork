@@ -62,26 +62,34 @@ abstract class Clock {
         let ret: MenuItem[] = [];
         const possible_upgrades = this.getPossibleUpgrades();
         for (const upgrade_id of upgradeIds(possible_upgrades)) {
-            const upgrade  = UPGRADES[upgrade_id];
-            const new_state = possible_upgrades[upgrade_id]!;
-            const new_level = new_state.level;
-            let level_label;
+            const possible_upgrade = possible_upgrades[upgrade_id]!;
+            const upgrade  = UPGRADES_OPTIONS[upgrade_id];
+            const new_level = possible_upgrade.level;
+            const cost = possible_upgrade.cost;
+            const disabled = !this.game.canPurchase(possible_upgrade);
+            let level_label: string;
             if (upgrade.max_level !== Infinity) {
                 level_label = " (" + new_level + " / " + upgrade.max_level + ")";
             } else {
                 level_label = " (" + new_level + " / ∞)";
             }
             ret.push( {
-                label: upgrade.name + level_label,
-                callback: () => this.applyUpgrade(upgrade_id, new_state),
+                label: upgrade.name + " $" + cost + level_label,
+                callback: () => this.applyUpgrade(upgrade_id, possible_upgrade),
+                disabled: disabled,
+                preventCloseOnClick: disabled,
             });
         }
         // TODO: show locked ones with requirement
         return ret;
     }
 
-    applyUpgrade(key: UpgradeId, new_state: PossibleUpgradeState) {
-        this.upgrade_tree.applyUpgrade(key, new_state);
+    applyUpgrade(key: UpgradeId, possible_upgrade: PossibleUpgradeState) {
+        this.game.purchase(possible_upgrade);
+        this.upgrade_tree.applyUpgrade(key, possible_upgrade);
+        if (key == "playback_speed") {
+            this.animation!.updatePlaybackRate(2 ** possible_upgrade.level);
+        }
     }
 
     tick() {
@@ -97,6 +105,7 @@ abstract class Clock {
         this.reset();
     }
 
+    // Advance the animation by the given amount of real time (milliseconds)
     // TODO: implement handling more than one tick if needed
     advanceBy(amount: number) {
         if (!this.animation) return;
@@ -107,24 +116,23 @@ abstract class Clock {
             amount -= this.remainingTime();
             this.tickAndReset();
         }
-        this.animation.currentTime += amount;
+        this.animation.currentTime += (amount * (this.animation.playbackRate ?? 1));
     }
 
+    // Returns the unscaled duration of the animation
     unscaledDuration(): number {
-        if (!this.animation || !this.animation.effect) {
-            return TEN_SECONDS;
-        }
-        // assume as number and not "<x>s" or "<x>ms"
-        return this.animation.effect.getTiming().duration as number;
+        return clock_background_timing.duration;
     }
 
+    // Returns the real duration of the animation
     scaledDuration(): number {
         if (!this.animation) {
             return TEN_SECONDS;
         }
-        return this.unscaledDuration() / this.animation!.playbackRate ?? 1;
+        return this.unscaledDuration() / (this.animation!.playbackRate ?? 1);
     }
 
+    // Returns real time remaining
     remainingTime(): number {
         if (!this.animation) {
             return TEN_SECONDS;
@@ -180,9 +188,32 @@ class ProducerClock extends Clock {
 
     tick() {
         super.tick();
-        const success = this.game.applyOps(this.getOpCount());
+        const op_count = this.getOpCount();
+        const applied_ops = this.game.applyOps(op_count);
+
+        if (applied_ops > 0) {
+            this.advanceNearby();
+        }
+
+        // TODO: animate the cell multiple times, or show a different color based on ratio 
+        // of applied ops to requested ops
+        const success = applied_ops > 0;
         this.game.table_view.animateCellSuccess(this.options.position, success);
     }
+
+    getOpCount(): number {
+        return 1 + this.upgrade_tree.getUpgradeLevel("applications_per_cycle");
+    }
+
+    advanceNearby() {
+        const upgrade_level = this.upgrade_tree.getUpgradeLevel("advance_nearby");
+        if (upgrade_level <= 0) { return;}
+        const nearby = this.game.table_view.getNearbyClocks(this.options.position);
+        for (const clock of nearby) {
+            clock.advanceBy(upgrade_level * ADVANCE_NEARBY_AMOUNT);
+        }
+    }
+
 
 }
 
@@ -261,6 +292,10 @@ class ReferenceClock extends Clock {
             this.animate()
         });
 
+    }
+
+    unscaledDuration(): number {
+        return reference_clock_timing.duration;
     }
 
 }
