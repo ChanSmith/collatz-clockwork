@@ -49,6 +49,6 @@ const ACHIEVEMENTS = [
         id: "test",
         name: "Test",
         description: "Test",
-        unlockCondition: () => Game.game.testAchievementUnlocked(),
+        unlockCondition: () => Game.testAchievementUnlocked(),
     }),
 ];

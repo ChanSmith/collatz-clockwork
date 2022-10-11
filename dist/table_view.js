@@ -101,13 +101,11 @@ class StatisticView extends HTMLDivElement {
 customElements.define('statistic-view', StatisticView, { extends: 'div' });
 const CLOCK_DRAG_SOURCE = "clock_source_pos";
 class TableView {
-    constructor(game) {
+    constructor() {
         this.dragging_cell = null;
         this.dragging_pos = null;
         // TODO: implement/use this
         this.selected_cell = null;
-        this.game = game;
-        this.clock_manager = new ClockManager(this.game);
         this.generateFlexTable();
     }
     highlightRow(n) {
@@ -154,8 +152,8 @@ class TableView {
                 this.unHighlightRow(pos.row);
                 this.unHighlightColumn(pos.col);
             },
-            generatePrimaryMenuItems: this.game.primaryMenuItemGenerator(pos),
-            generateSecondaryMenuItems: this.game.secondaryMenuItemGenerator(pos),
+            generatePrimaryMenuItems: Game.primaryMenuItemGenerator(pos),
+            generateSecondaryMenuItems: Game.secondaryMenuItemGenerator(pos),
             defaultMenuItems: [
                 {
                     label: "Nothing to do here",
@@ -172,11 +170,11 @@ class TableView {
         this.table_head.appendChild(stat_view);
     }
     canAddClock(pos) {
-        return this.clock_manager.canAddClock(pos);
+        return Game.clock_manager.canAddClock(pos);
     }
     /* Assume already called canAddClock */
     addClock(pos, opts) {
-        const clock = this.clock_manager.addClock(pos, opts);
+        const clock = Game.clock_manager.addClock(pos, opts);
         let cell = this.getCell(pos);
         cell === null || cell === void 0 ? void 0 : cell.appendChild(this.createClockElement(clock));
     }
@@ -191,21 +189,21 @@ class TableView {
     }
     clockPaused(pos) {
         var _a;
-        return (_a = this.clock_manager.getClock(pos)) === null || _a === void 0 ? void 0 : _a.paused();
+        return (_a = Game.clock_manager.getClock(pos)) === null || _a === void 0 ? void 0 : _a.paused();
     }
     pauseClock(pos) {
         var _a;
-        (_a = this.clock_manager.getClock(pos)) === null || _a === void 0 ? void 0 : _a.pause();
+        (_a = Game.clock_manager.getClock(pos)) === null || _a === void 0 ? void 0 : _a.pause();
     }
     unpauseClock(pos) {
         var _a;
-        (_a = this.clock_manager.getClock(pos)) === null || _a === void 0 ? void 0 : _a.unpause();
+        (_a = Game.clock_manager.getClock(pos)) === null || _a === void 0 ? void 0 : _a.unpause();
     }
     pauseAll(manual) {
-        this.clock_manager.forEachClock(clock => clock.pause(manual));
+        Game.clock_manager.forEachClock(clock => clock.pause(manual));
     }
     unpauseAll(manual) {
-        this.clock_manager.forEachClock(clock => {
+        Game.clock_manager.forEachClock(clock => {
             if (manual || !clock.manually_paused) {
                 clock.unpause();
             }
@@ -217,7 +215,7 @@ class TableView {
             return;
         }
         this.clearElementAndAnimations(cell);
-        const c = this.clock_manager.removeClock(pos);
+        const c = Game.clock_manager.removeClock(pos);
     }
     getNearbyClocks(pos) {
         let clocks = new Array();
@@ -231,7 +229,7 @@ class TableView {
                     continue;
                 }
                 let p = new Position(pos.row + i, pos.col + j);
-                let c = this.clock_manager.getClock(p);
+                let c = Game.clock_manager.getClock(p);
                 if (c) {
                     clocks.push(c);
                 }
@@ -374,13 +372,13 @@ class TableView {
         if (!from_cell || !to_cell) {
             return;
         }
-        const from_clock = this.clock_manager.getClock(from);
+        const from_clock = Game.clock_manager.getClock(from);
         if (!from_clock) {
             return;
         }
         const from_start = from_clock.animation.currentTime;
         this.clearElementAndAnimations(from_cell);
-        const to_clock = this.clock_manager.moveClock(from, to);
+        const to_clock = Game.clock_manager.moveClock(from, to);
         if (to_clock) {
             const to_start = to_clock.animation.currentTime;
             this.clearElementAndAnimations(to_cell);
@@ -432,10 +430,10 @@ class TableView {
         return this.getRow(0).children.length;
     }
     clockCount() {
-        return this.clock_manager.grid.size;
+        return Game.clock_manager.grid.size;
     }
     resetAll() {
-        this.clock_manager.forEachClock((clock) => {
+        Game.clock_manager.forEachClock((clock) => {
             clock.animation.currentTime = 0;
         });
     }

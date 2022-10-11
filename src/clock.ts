@@ -50,7 +50,7 @@ abstract class Clock {
         return this.clockType;
     }
 
-    constructor(public game: Game, public options: ClockOptions) { 
+    constructor(public options: ClockOptions) { 
         // this.upgrade_tree = new UpgradeTree(this.getType());
     }
 
@@ -66,7 +66,7 @@ abstract class Clock {
             const upgrade  = UPGRADES_OPTIONS[upgrade_id];
             const new_level = possible_upgrade.level;
             const cost = possible_upgrade.cost;
-            const disabled = !this.game.canPurchase(possible_upgrade);
+            const disabled = !Game.canPurchase(possible_upgrade);
             let level_label: string;
             if (upgrade.max_level !== Infinity) {
                 level_label = " (" + new_level + " / " + upgrade.max_level + ")";
@@ -85,7 +85,7 @@ abstract class Clock {
     }
 
     applyUpgrade(key: UpgradeId, possible_upgrade: PossibleUpgradeState) {
-        this.game.purchase(possible_upgrade);
+        Game.purchase(possible_upgrade);
         this.upgrade_tree.applyUpgrade(key, possible_upgrade);
         if (key == "playback_speed") {
             this.animation!.updatePlaybackRate(2 ** possible_upgrade.level);
@@ -181,15 +181,15 @@ abstract class Clock {
 class ProducerClock extends Clock {
     readonly clockType = "Producer";
 
-    constructor(game: Game, options: ClockOptions) {
-        super(game, options);
+    constructor(options: ClockOptions) {
+        super(options);
         this.upgrade_tree = new UpgradeTree(this.clockType);
     }
 
     tick() {
         super.tick();
         const op_count = this.getOpCount();
-        const applied_ops = this.game.applyOps(op_count);
+        const applied_ops = Game.applyOps(op_count);
 
         if (applied_ops > 0) {
             this.advanceNearby();
@@ -198,7 +198,7 @@ class ProducerClock extends Clock {
         // TODO: animate the cell multiple times, or show a different color based on ratio 
         // of applied ops to requested ops
         const success = applied_ops > 0;
-        this.game.table_view.animateCellSuccess(this.options.position, success);
+        Game.table_view.animateCellSuccess(this.options.position, success);
     }
 
     getOpCount(): number {
@@ -208,7 +208,7 @@ class ProducerClock extends Clock {
     advanceNearby() {
         const upgrade_level = this.upgrade_tree.getUpgradeLevel("advance_nearby");
         if (upgrade_level <= 0) { return;}
-        const nearby = this.game.table_view.getNearbyClocks(this.options.position);
+        const nearby = Game.table_view.getNearbyClocks(this.options.position);
         for (const clock of nearby) {
             clock.advanceBy(upgrade_level * ADVANCE_NEARBY_AMOUNT);
         }
@@ -220,15 +220,15 @@ class ProducerClock extends Clock {
 class VerifierClock extends Clock {
     readonly clockType = "Verifier";
 
-    constructor(game: Game, options: ClockOptions) {
-        super(game, options);
+    constructor(options: ClockOptions) {
+        super( options);
         this.upgrade_tree = new UpgradeTree(this.clockType);
     }
     
     tick() {
         super.tick();
-        const success = this.game.verify();
-        this.game.table_view.animateCellSuccess(this.options.position, success);
+        const success = Game.verify();
+        Game.table_view.animateCellSuccess(this.options.position, success);
     }
 
 }
@@ -242,7 +242,7 @@ class ReferenceClock extends Clock {
 
 
     constructor(game: Game, options: ClockOptions) {
-        super(game, options);
+        super(options);
         this.last_tick = performance.now();
         this.attachClock();
         this.animate();

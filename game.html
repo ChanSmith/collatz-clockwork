@@ -11,13 +11,13 @@
 <body>
     <img src="./assets/shortcut_collatz_equation.svg" alt="Collatz Equation" class="collatz-equation">
     <br>
-    <button id="open-options" class="btn btn-primary" onclick="g.toggleOptionsMenu()">Options</button>
-    <button id="pause-button" class="btn btn-primary" onclick="g.pause()">Pause all</button>
-    <button id="unpause-button" class="btn btn-primary" onclick="g.unpause()">Unpause all</button>
-    <button id="add-row-button" class="btn btn-primary" onclick="g.addRow()">Add row</button>
-    <button id="add-col-button" class="btn btn-primary" onclick="g.addColumn()">Add column</button>
-    <button id="fill-grid-button" class="btn btn-primary" onclick="g.fillGrid()">Fill grid</button>
-    <button id="redist-time-button" class="btn btn-primary" onclick="g.redistributeTimes()">Redistribute times</button>
+    <button id="open-options" class="btn btn-primary" onclick="Game.toggleOptionsMenu()">Options</button>
+    <button id="pause-button" class="btn btn-primary" onclick="Game.pause()">Pause all</button>
+    <button id="unpause-button" class="btn btn-primary" onclick="Game.unpause()">Unpause all</button>
+    <button id="add-row-button" class="btn btn-primary" onclick="Game.addRow()">Add row</button>
+    <button id="add-col-button" class="btn btn-primary" onclick="Game.addColumn()">Add column</button>
+    <button id="fill-grid-button" class="btn btn-primary" onclick="Game.fillGrid()">Fill grid</button>
+    <button id="redist-time-button" class="btn btn-primary" onclick="Game.redistributeTimes()">Redistribute times</button>
 
     <div id="options-menu" is="options-menu"></div>
     <div id="game-container">

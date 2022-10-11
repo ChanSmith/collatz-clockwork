@@ -5,101 +5,100 @@ var logFocusChange: Logger;
 //  logFocusChange = console.log;
 
 class Game {
-    static game: Game;
-    game_state: GameState;
+    static game_state: GameState;
 
-    generator: CollatzGenerator;
-    table_view: TableView;
-    click_count: number = 0;
+    static generator: CollatzGenerator;
+    static table_view: TableView;
+    static clock_manager: ClockManager;
+    static click_count: number = 0;
 
-    pause_time: number = 0;
+    static pause_time: number = 0;
 
-    public test_achieve: boolean = false;
-    testAchievementUnlocked() {
-        return this.test_achieve;
+    static test_achieve: boolean = false;
+    static testAchievementUnlocked() {
+        return Game.test_achieve;
     }
     constructor() {
-        Game.game = this;
-        this.generator = new CollatzGenerator();
-        this.table_view = new TableView(this);
-        this.game_state = new GameState();
+        Game.generator = new CollatzGenerator();
+        Game.table_view = new TableView();
+        Game.clock_manager = new ClockManager();
+        Game.game_state = new GameState();
 
-        this.table_view.addStatistic(this.game_state.ops);
-        this.table_view.addStatistic(this.game_state.checking);
-        this.table_view.addStatistic(this.game_state.n);
+        Game.table_view.addStatistic(Game.game_state.ops);
+        Game.table_view.addStatistic(Game.game_state.checking);
+        Game.table_view.addStatistic(Game.game_state.n);
     }
 
-    addRow() {
-        this.table_view.addRow();
+    static addRow() {
+        Game.table_view.addRow();
     }
 
-    addColumn() {
-        this.table_view.addColumn();
+    static addColumn() {
+        Game.table_view.addColumn();
     }
 
-    addClock(pos: Position, opts: ClockOptions) {
-        this.table_view.addClock(pos, opts);
+    static addClock(pos: Position, opts: ClockOptions) {
+        Game.table_view.addClock(pos, opts);
     }
 
-    fillGrid() {
-
-        const rows = this.table_view.getRows();
-        const cols = this.table_view.getColumns();
-        const adding = rows * cols - this.table_view.clockCount();
+    static fillGrid() {
+        const rows = Game.table_view.getRows();
+        const cols = Game.table_view.getColumns();
+        const adding = rows * cols - Game.table_view.clockCount();
         const delay = TEN_SECONDS / adding;
         for (var i = 0; i < rows; i++) {
             for (var j = 0; j < cols; j++) {
                 const pos = new Position(i, j);
-                if (this.canAddClock(pos, "Reference")) {
+                if (Game.canAddClock(pos, "Reference")) {
                     const type = Math.random() > 0.25 ? "Producer" : "Verifier"
-                    this.addClock(pos, { type: type, position: pos });
+                    Game.addClock(pos, { type: type, position: pos });
                 }
             }
         }
-        this.redistributeTimes();
+        Game.redistributeTimes();
     }
 
     // TODO: make this only apply to some clocks?
-    redistributeTimes() {
-        const count = this.table_view.clockCount();
+    static redistributeTimes() {
+        const count = Game.table_view.clockCount();
         // Pause all clocks, set time to 0, then unpause on a delay
-        this.pause(true);
-        this.table_view.resetAll();
+        Game.pause(true);
+        Game.table_view.resetAll();
         const offset = TEN_SECONDS / count;
         var offsetCount = 0;
-        for (let i = 0; i < this.table_view.getRows(); i++) {
-            for (let j = 0; j < this.table_view.getColumns(); j++) {
+        for (let i = 0; i < Game.table_view.getRows(); i++) {
+            for (let j = 0; j < Game.table_view.getColumns(); j++) {
                 const pos = new Position(i, j);
-                if (!this.table_view.canAddClock(pos)) {
+                if (!Game.table_view.canAddClock(pos)) {
                     // TODO: track these and cancel them if another unpause comes in 
                     window.setTimeout(() => {
-                        this.table_view.unpauseClock(pos);
+                        Game.table_view.unpauseClock(pos);
                     }, offset * offsetCount++);
                 }
             }
         }
     }
 
-    canAddClock(pos: Position, type: ClockType) {
-        return this.table_view.canAddClock(pos);
+    static canAddClock(pos: Position, type: ClockType) {
+        return Game.table_view.canAddClock(pos);
     }
 
 
-    getNewClockMenuItems(pos: Position): Array<MenuItem> {
+    static  getNewClockMenuItems(pos: Position): Array<MenuItem> {
         let ret: Array<MenuItem> = [];
-        if (this.canAddClock(pos, "Producer")) {
+        if (Game.canAddClock(pos, "Producer")) {
             ret.push({
                 label: "Add Producer",
                 callback: () => {
-                    this.addClock(pos, { type: "Producer", position: pos });
+                    Game.addClock(pos, { type: "Producer", position: pos });
                 }
             });
         }
-        if (this.canAddClock(pos, "Verifier")) {
+        if (Game.canAddClock(pos, "Verifier")) {
             ret.push({
                 label: "Add Verifier",
                 callback: () => {
-                    this.addClock(pos, { type: "Verifier", position: pos });
+                    Game.addClock(pos, { type: "Verifier", position: pos });
                 }
             });
         }
@@ -107,28 +106,28 @@ class Game {
 
     }
 
-    removeClock(pos: Position) {
-        this.table_view.removeClock(pos);
+    static removeClock(pos: Position) {
+        Game.table_view.removeClock(pos);
     }
 
-    getRemoveClockMenuItems(pos: Position): Array<MenuItem> {
+    static getRemoveClockMenuItems(pos: Position): Array<MenuItem> {
         return [
             {
                 label: "Remove Clock",
                 callback: () => {
-                    this.removeClock(pos);
+                    Game.removeClock(pos);
                 }
             }
         ];
     }
 
-    getPauseClockMenuItems(pos: Position): Array<MenuItem> {
-        if (this.table_view.clockPaused(pos)) {
+    static getPauseClockMenuItems(pos: Position): Array<MenuItem> {
+        if (Game.table_view.clockPaused(pos)) {
             return [
                 {
                     label: "Unpause Clock",
                     callback: () => {
-                        this.table_view.unpauseClock(pos);
+                        Game.table_view.unpauseClock(pos);
                     }
                 }
             ];
@@ -137,94 +136,94 @@ class Game {
                 {
                     label: "Pause Clock",
                     callback: () => {
-                        this.table_view.pauseClock(pos);
+                        Game.table_view.pauseClock(pos);
                     }
                 }
             ];
         }
     }
 
-    getClockUpgradeMenuItems(pos: Position): MenuItem[] {
-        const clock = this.table_view.clock_manager.getClock(pos);
+    static getClockUpgradeMenuItems(pos: Position): MenuItem[] {
+        const clock = Game.clock_manager.getClock(pos);
         if (clock) {
             return clock.getUpgradeMenuItems();
         }
         return [];
     }
 
-    primaryMenuItemGenerator(pos: Position): MenuItemGenerator {
+    static primaryMenuItemGenerator(pos: Position): MenuItemGenerator {
         return () => {
             let items: Array<MenuItem> = [];
-            if (this.table_view.canAddClock(pos)) {
-                items.push(...this.getNewClockMenuItems(pos));
+            if (Game.table_view.canAddClock(pos)) {
+                items.push(...Game.getNewClockMenuItems(pos));
             }
             else {
-                items.push(...this.getPauseClockMenuItems(pos));
+                items.push(...Game.getPauseClockMenuItems(pos));
                 items.push("hr");
-                items.push(...this.getClockUpgradeMenuItems(pos));
+                items.push(...Game.getClockUpgradeMenuItems(pos));
             }
             return items;
         }
     }
 
-    secondaryMenuItemGenerator(pos: Position): MenuItemGenerator {
+    static secondaryMenuItemGenerator(pos: Position): MenuItemGenerator {
         return () => {
             let items: Array<MenuItem> = [];
-            if (!this.table_view.canAddClock(pos)) {
-                items.push(...this.getRemoveClockMenuItems(pos));
+            if (!Game.table_view.canAddClock(pos)) {
+                items.push(...Game.getRemoveClockMenuItems(pos));
             }
             return items;
         };
     }
 
-    canPurchase(possible_upgrade: PossibleUpgradeState) {
-        return this.game_state.canPurchase(possible_upgrade);
+    static canPurchase(possible_upgrade: PossibleUpgradeState) {
+        return Game.game_state.canPurchase(possible_upgrade);
     }
 
-    purchase(possible_upgrade: PossibleUpgradeState) {
-        this.game_state.purchase(possible_upgrade);
+    static purchase(possible_upgrade: PossibleUpgradeState) {
+        Game.game_state.purchase(possible_upgrade);
     }
 
-    applyOps(amount: number) {
-        const seq = this.generator.getSequence(this.game_state.n.value(), amount);
+    static applyOps(amount: number) {
+        const seq = Game.generator.getSequence(Game.game_state.n.value(), amount);
         if (seq.length > 0) {
-            this.game_state.applySequence(seq);
+            Game.game_state.applySequence(seq);
             return seq.length;
         }
         return 0;
     }
 
-    verify() {
-        return this.game_state.verify();
+    static verify() {
+        return Game.game_state.verify();
     }
 
-    openOptionsMenu() {
+    static openOptionsMenu() {
         const menu = document.querySelector("#options-menu") as OptionsMenu;
         menu?.enable();
     }
 
-    toggleOptionsMenu() {
+    static  toggleOptionsMenu() {
         const menu = document.querySelector("#options-menu") as OptionsMenu;
         menu?.toggle();
     }
 
-    pause(manual: boolean = true) {
-        this.pause_time = performance.now();
-        this.table_view.pauseAll(manual);
+    static pause(manual: boolean = true) {
+        Game.pause_time = performance.now();
+        Game.table_view.pauseAll(manual);
         // TODO: add an indicator that game is paused an progress will be updated when unpaused
     }
 
-    advancePausedGame(diff: number) {
+    static advancePausedGame(diff: number) {
         // Keep track of the total time we have simulated. While total less than diff, find the clock with the least remaining time,
         // tick it and add its remaining time to the total. 
         // TODO: this may need to be optimized if we have a lot of clocks
-        const grid = this.table_view.clock_manager.grid;
-        const not_paused = (c) => !c.manually_paused;
+        const grid = Game.clock_manager.grid;
+        const notPaused = (c: Clock) => !c.manually_paused;
         // Nothing to do if all clocks were manually paused clocks
-        if (!any(grid.values(), not_paused)) {
+        if (!any(grid.values(), notPaused)) {
             return;
         }
-        const firstClock = first(grid.values(), not_paused) as Clock;
+        const firstClock = first(grid.values(), notPaused) as Clock;
         const minClockFn = (a: Clock, b: Clock) => {
             // If either is undefined/null, return the other
             return a.remainingTime() < b.remainingTime() ? a : b;
@@ -241,8 +240,8 @@ class Game {
         while (simulated + min_clock.remainingTime() < diff) {
             const step = min_clock.remainingTime();
             // min_clock.tickAndReset();
-            this.table_view.clock_manager.forEachClock(c => {
-                if (not_paused(c)) {
+            Game.clock_manager.forEachClock(c => {
+                if (notPaused(c)) {
                     c.advanceBy(step);
                 }
             });
@@ -250,22 +249,22 @@ class Game {
             min_clock = nextClock();
         }
         // At this point simulated is smaller than the closest remaining time, so we can advance everything in whatever order
-        this.table_view.clock_manager.forEachClock(c => {
-            if (not_paused(c)) {
+        Game.clock_manager.forEachClock(c => {
+            if (notPaused(c)) {
                 c.advanceBy(diff - simulated);
             }
         });
     }
 
-    unpause(manual: boolean = true) {
+    static unpause(manual: boolean = true) {
         const now = performance.now();
-        const diff = now - this.pause_time;
+        const diff = now - Game.pause_time;
         logUnpauseInfo?.("unpaused after" + diff + "ms");
         if (!manual) {
-            this.advancePausedGame(diff);
+            Game.advancePausedGame(diff);
         }
 
-        this.table_view.unpauseAll(manual);
+        Game.table_view.unpauseAll(manual);
     }
 }
 
@@ -283,14 +282,14 @@ var getChange = () => {
 var pauseIntervalId;
 window.addEventListener("blur", () => {
     logFocusChange?.("blur");
-    g.pause(false);
+    Game.pause(false);
     getChange();
     pauseIntervalId = window.setInterval(() => {
         const delay = getChange();
         console.log("delay: " + delay);
         // TODO: maybe show something in the tab to indicate that the game is paused but updating
-        g.advancePausedGame(delay);
-        g.pause_time = lastChange;
+        Game.advancePausedGame(delay);
+        Game.pause_time = lastChange;
     }, TEN_SECONDS); // keep game updating in background so we don't have to do a bunch of work on focus
 
 });
@@ -300,8 +299,5 @@ window.addEventListener("focus", () => {
     if (pauseIntervalId) {
         window.clearInterval(pauseIntervalId);
     }
-    g.unpause(false);
+    Game.unpause(false);
 });
-// const dummy_audio_context = new AudioContext();
-// console.log(dummy_audio_context);
-// const c = new ReferenceClock(g, {type:"Reference", position: new Position(1,1)});

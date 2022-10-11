@@ -23,8 +23,7 @@ class Position {
 class UpgradeInfo {
 }
 class Clock {
-    constructor(game, options) {
-        this.game = game;
+    constructor(options) {
         this.options = options;
         this.manually_paused = false;
         // this.upgrade_tree = new UpgradeTree(this.getType());
@@ -43,7 +42,7 @@ class Clock {
             const upgrade = UPGRADES_OPTIONS[upgrade_id];
             const new_level = possible_upgrade.level;
             const cost = possible_upgrade.cost;
-            const disabled = !this.game.canPurchase(possible_upgrade);
+            const disabled = !Game.canPurchase(possible_upgrade);
             let level_label;
             if (upgrade.max_level !== Infinity) {
                 level_label = " (" + new_level + " / " + upgrade.max_level + ")";
@@ -62,7 +61,7 @@ class Clock {
         return ret;
     }
     applyUpgrade(key, possible_upgrade) {
-        this.game.purchase(possible_upgrade);
+        Game.purchase(possible_upgrade);
         this.upgrade_tree.applyUpgrade(key, possible_upgrade);
         if (key == "playback_speed") {
             this.animation.updatePlaybackRate(Math.pow(2, possible_upgrade.level));
@@ -145,22 +144,22 @@ class Clock {
     }
 }
 class ProducerClock extends Clock {
-    constructor(game, options) {
-        super(game, options);
+    constructor(options) {
+        super(options);
         this.clockType = "Producer";
         this.upgrade_tree = new UpgradeTree(this.clockType);
     }
     tick() {
         super.tick();
         const op_count = this.getOpCount();
-        const applied_ops = this.game.applyOps(op_count);
+        const applied_ops = Game.applyOps(op_count);
         if (applied_ops > 0) {
             this.advanceNearby();
         }
         // TODO: animate the cell multiple times, or show a different color based on ratio 
         // of applied ops to requested ops
         const success = applied_ops > 0;
-        this.game.table_view.animateCellSuccess(this.options.position, success);
+        Game.table_view.animateCellSuccess(this.options.position, success);
     }
     getOpCount() {
         return 1 + this.upgrade_tree.getUpgradeLevel("applications_per_cycle");
@@ -170,27 +169,27 @@ class ProducerClock extends Clock {
         if (upgrade_level <= 0) {
             return;
         }
-        const nearby = this.game.table_view.getNearbyClocks(this.options.position);
+        const nearby = Game.table_view.getNearbyClocks(this.options.position);
         for (const clock of nearby) {
             clock.advanceBy(upgrade_level * ADVANCE_NEARBY_AMOUNT);
         }
     }
 }
 class VerifierClock extends Clock {
-    constructor(game, options) {
-        super(game, options);
+    constructor(options) {
+        super(options);
         this.clockType = "Verifier";
         this.upgrade_tree = new UpgradeTree(this.clockType);
     }
     tick() {
         super.tick();
-        const success = this.game.verify();
-        this.game.table_view.animateCellSuccess(this.options.position, success);
+        const success = Game.verify();
+        Game.table_view.animateCellSuccess(this.options.position, success);
     }
 }
 class ReferenceClock extends Clock {
     constructor(game, options) {
-        super(game, options);
+        super(options);
         this.clockType = "Reference";
         this.last_tick = 0;
         this.last_tick = performance.now();
