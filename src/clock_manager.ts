@@ -2,8 +2,6 @@ const TEN_SECONDS = 10 * 1000;
 class ClockManager {
 
     //generator: Generator;
-
-
     grid: Map<String, Clock> = new Map<String, Clock>();
     counts: Map<ClockType, number> = new Map<ClockType, number>();
 

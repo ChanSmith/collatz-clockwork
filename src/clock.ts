@@ -1,3 +1,5 @@
+var tickLog: Logger | undefined;
+// tickLog = console.log;
 class Position {
     constructor(public row: number, public col: number) { }
 
@@ -39,19 +41,21 @@ class UpgradeInfo {
 
 abstract class Clock {
 
-    readonly clockType: ClockType;
+    static readonly clockType: ClockType;
 
     animation?: Animation;
 
     manually_paused: boolean = false;
     upgrade_tree: UpgradeTree;
 
-    getType(): ClockType {
-        return this.clockType;
-    }
 
     constructor(public options: ClockOptions) { 
-        // this.upgrade_tree = new UpgradeTree(this.getType());
+        this.upgrade_tree = new UpgradeTree(new.target.clockType);
+    }
+
+    getType(): ClockType {
+        // Ugly, but doesn't seem to be another way to refer to a static member polymorphically
+        return (this.constructor as typeof Clock).clockType;
     }
 
     getPossibleUpgrades(): PossibleUpgrades {
@@ -93,7 +97,7 @@ abstract class Clock {
     }
 
     tick() {
-        // console.log("tick from " + this.toString());
+        tickLog?.("tick from " + this.toString());
     }
 
     reset() {
@@ -179,12 +183,7 @@ abstract class Clock {
 }
 
 class ProducerClock extends Clock {
-    readonly clockType = "Producer";
-
-    constructor(options: ClockOptions) {
-        super(options);
-        this.upgrade_tree = new UpgradeTree(this.clockType);
-    }
+    static readonly clockType = "Producer";
 
     tick() {
         super.tick();
@@ -218,13 +217,8 @@ class ProducerClock extends Clock {
 }
 
 class VerifierClock extends Clock {
-    readonly clockType = "Verifier";
+    static readonly clockType = "Verifier";
 
-    constructor(options: ClockOptions) {
-        super( options);
-        this.upgrade_tree = new UpgradeTree(this.clockType);
-    }
-    
     tick() {
         super.tick();
         const success = Game.verify();
@@ -234,7 +228,7 @@ class VerifierClock extends Clock {
 }
 
 class ReferenceClock extends Clock {
-    readonly clockType = "Reference";
+    static readonly clockType = "Reference";
 
     last_tick: number = 0;
 
@@ -251,13 +245,13 @@ class ReferenceClock extends Clock {
     tick() {
         super.tick();
         if (!this.last_tick) {
-            console.log("Reference clock ticked. First tick");
+            tickLog?.("Reference clock ticked. First tick");
             this.last_tick = performance.now();
         } else {
             const now = performance.now();
             const delta = now - this.last_tick;
             this.last_tick = now;
-            console.log("Reference clock ticked. Delta: " + delta);
+            tickLog?.("Reference clock ticked. Delta: " + delta);
         }
     }
 

@@ -1,3 +1,5 @@
+var tickLog;
+// tickLog = console.log;
 class Position {
     constructor(row, col) {
         this.row = row;
@@ -26,10 +28,11 @@ class Clock {
     constructor(options) {
         this.options = options;
         this.manually_paused = false;
-        // this.upgrade_tree = new UpgradeTree(this.getType());
+        this.upgrade_tree = new UpgradeTree(new.target.clockType);
     }
     getType() {
-        return this.clockType;
+        // Ugly, but doesn't seem to be another way to refer to a static member polymorphically
+        return this.constructor.clockType;
     }
     getPossibleUpgrades() {
         return this.upgrade_tree.getPossibleUpgrades();
@@ -68,7 +71,7 @@ class Clock {
         }
     }
     tick() {
-        // console.log("tick from " + this.toString());
+        tickLog === null || tickLog === void 0 ? void 0 : tickLog("tick from " + this.toString());
     }
     reset() {
         this.animation.currentTime = 0;
@@ -144,11 +147,6 @@ class Clock {
     }
 }
 class ProducerClock extends Clock {
-    constructor(options) {
-        super(options);
-        this.clockType = "Producer";
-        this.upgrade_tree = new UpgradeTree(this.clockType);
-    }
     tick() {
         super.tick();
         const op_count = this.getOpCount();
@@ -175,22 +173,18 @@ class ProducerClock extends Clock {
         }
     }
 }
+ProducerClock.clockType = "Producer";
 class VerifierClock extends Clock {
-    constructor(options) {
-        super(options);
-        this.clockType = "Verifier";
-        this.upgrade_tree = new UpgradeTree(this.clockType);
-    }
     tick() {
         super.tick();
         const success = Game.verify();
         Game.table_view.animateCellSuccess(this.options.position, success);
     }
 }
+VerifierClock.clockType = "Verifier";
 class ReferenceClock extends Clock {
     constructor(game, options) {
         super(options);
-        this.clockType = "Reference";
         this.last_tick = 0;
         this.last_tick = performance.now();
         this.attachClock();
@@ -199,14 +193,14 @@ class ReferenceClock extends Clock {
     tick() {
         super.tick();
         if (!this.last_tick) {
-            console.log("Reference clock ticked. First tick");
+            tickLog === null || tickLog === void 0 ? void 0 : tickLog("Reference clock ticked. First tick");
             this.last_tick = performance.now();
         }
         else {
             const now = performance.now();
             const delta = now - this.last_tick;
             this.last_tick = now;
-            console.log("Reference clock ticked. Delta: " + delta);
+            tickLog === null || tickLog === void 0 ? void 0 : tickLog("Reference clock ticked. Delta: " + delta);
         }
     }
     attachClock() {
@@ -240,3 +234,4 @@ class ReferenceClock extends Clock {
         return reference_clock_timing.duration;
     }
 }
+ReferenceClock.clockType = "Reference";
