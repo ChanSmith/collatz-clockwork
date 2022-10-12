@@ -116,7 +116,8 @@ body {
     font-family: 'Open Sans', sans-serif;
     position: fixed;
     z-index: 10000;
-    width: 150px;
+    width: fit-content;
+    max-width: 10%;
     transform: scale(0);
     transition-property: transform;
     transition-timing-function: ease-in-out;

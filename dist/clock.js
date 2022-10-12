@@ -1,3 +1,15 @@
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
+var _Clock_paused;
 var tickLog;
 // tickLog = console.log;
 class Position {
@@ -27,6 +39,8 @@ class UpgradeInfo {
 class Clock {
     constructor(options) {
         this.options = options;
+        this.playback_rate = 1;
+        _Clock_paused.set(this, false);
         this.manually_paused = false;
         this.upgrade_tree = new UpgradeTree(new.target.clockType);
     }
@@ -67,7 +81,8 @@ class Clock {
         Game.purchase(possible_upgrade);
         this.upgrade_tree.applyUpgrade(key, possible_upgrade);
         if (key == "playback_speed") {
-            this.animation.updatePlaybackRate(Math.pow(2, possible_upgrade.level));
+            this.playback_rate = Math.pow(2, possible_upgrade.level);
+            this.animation.updatePlaybackRate(this.playback_rate);
         }
     }
     tick() {
@@ -77,23 +92,38 @@ class Clock {
         this.animation.currentTime = 0;
     }
     tickAndReset() {
+        this.animate();
         this.tick();
-        this.reset();
     }
-    // Advance the animation by the given amount of real time (milliseconds)
+    animate() {
+        if (this.animation) {
+            this.animation.cancel();
+        }
+        this.animation = this.circle_element.animate(clock_background_keyframes, clock_background_timing);
+        this.animation.updatePlaybackRate(this.playback_rate);
+        this.animation.addEventListener("finish", () => this.tickAndReset());
+        if (__classPrivateFieldGet(this, _Clock_paused, "f")) {
+            this.animation.pause();
+        }
+    }
+    // Advance the animation by the given amount of unscaled time (milliseconds)
     // TODO: implement handling more than one tick if needed
-    advanceBy(amount) {
-        var _a;
+    // TODO?: make it happen smoothly -- maybe by increasing the playback rate temporarily
+    //        or show some other sort of feedback
+    advanceByUnscaled(amount) {
         if (!this.animation)
             return;
         if (!this.animation.currentTime) {
             this.animation.currentTime = 0;
         }
-        if (amount >= this.remainingTime()) {
-            amount -= this.remainingTime();
+        if (amount >= this.unscaledRemainingTime()) {
+            amount -= this.unscaledRemainingTime();
             this.tickAndReset();
         }
-        this.animation.currentTime += (amount * ((_a = this.animation.playbackRate) !== null && _a !== void 0 ? _a : 1));
+        this.animation.currentTime += amount;
+    }
+    advanceByScaled(amount) {
+        this.advanceByUnscaled(amount * this.playback_rate);
     }
     // Returns the unscaled duration of the animation
     unscaledDuration() {
@@ -107,6 +137,12 @@ class Clock {
         }
         return this.unscaledDuration() / ((_a = this.animation.playbackRate) !== null && _a !== void 0 ? _a : 1);
     }
+    unscaledRemainingTime() {
+        if (!this.animation || !this.animation.currentTime) {
+            return this.unscaledDuration();
+        }
+        return this.unscaledDuration() - this.animation.currentTime;
+    }
     // Returns real time remaining
     remainingTime() {
         var _a;
@@ -114,8 +150,7 @@ class Clock {
             return TEN_SECONDS;
         }
         const speed = (_a = this.animation.playbackRate) !== null && _a !== void 0 ? _a : 1;
-        // return duration / speed;
-        return (this.unscaledDuration() - this.animation.currentTime) / speed;
+        return this.unscaledRemainingTime() / speed;
     }
     toString() {
         return this.getType() + " at " + this.options.position.toString();
@@ -125,6 +160,7 @@ class Clock {
     }
     pause(manual = true) {
         this.manually_paused = manual || this.manually_paused;
+        __classPrivateFieldSet(this, _Clock_paused, true, "f");
         if (this.animation) {
             this.animation.pause();
         }
@@ -136,23 +172,24 @@ class Clock {
         this.options.position = pos.copy();
     }
     paused() {
-        var _a, _b;
-        return ((_b = (_a = this.animation) === null || _a === void 0 ? void 0 : _a.playState) !== null && _b !== void 0 ? _b : "running") == "paused";
+        return __classPrivateFieldGet(this, _Clock_paused, "f");
     }
     unpause() {
         if (this.animation) {
             this.animation.play();
         }
         this.manually_paused = false;
+        __classPrivateFieldSet(this, _Clock_paused, false, "f");
     }
 }
+_Clock_paused = new WeakMap();
 class ProducerClock extends Clock {
     tick() {
         super.tick();
         const op_count = this.getOpCount();
         const applied_ops = Game.applyOps(op_count);
         if (applied_ops > 0) {
-            this.advanceNearby();
+            this.advanceAdjacent();
         }
         // TODO: animate the cell multiple times, or show a different color based on ratio 
         // of applied ops to requested ops
@@ -162,14 +199,14 @@ class ProducerClock extends Clock {
     getOpCount() {
         return 1 + this.upgrade_tree.getUpgradeLevel("applications_per_cycle");
     }
-    advanceNearby() {
-        const upgrade_level = this.upgrade_tree.getUpgradeLevel("advance_nearby");
+    advanceAdjacent() {
+        const upgrade_level = this.upgrade_tree.getUpgradeLevel("advance_adjacent");
         if (upgrade_level <= 0) {
             return;
         }
-        const nearby = Game.table_view.getNearbyClocks(this.options.position);
+        const nearby = Game.table_view.getAdjacentClocks(this.options.position);
         for (const clock of nearby) {
-            clock.advanceBy(upgrade_level * ADVANCE_NEARBY_AMOUNT);
+            clock.advanceByUnscaled(upgrade_level * ADVANCE_ADJACENT_AMOUNT);
         }
     }
 }

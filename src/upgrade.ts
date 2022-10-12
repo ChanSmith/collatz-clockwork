@@ -9,7 +9,7 @@ const UPGRADES_OPTIONS = {
         max_level: Infinity,
         unlocks: 
             {
-                4: ["advance_nearby"],
+                4: ["advance_adjacent"],
             }
         ,
         applies_to: {
@@ -34,9 +34,9 @@ const UPGRADES_OPTIONS = {
             Verifier: true,
         }
     },
-    advance_nearby: {
-        name: "Advance nearby",
-        description: "Each time this clock cycles sucessfully, advance nearby clocks by some amount.",
+    advance_adjacent: {
+        name: "Advance Adjacent",
+        description: "Each time this clock cycles sucessfully, advance adjacent (top, bottom, left, right) clocks by a small amount per level.",
         base_cost : 10,
         level_multiplier: 2.0,
         purchased_multiplier: 1.25,
@@ -51,7 +51,7 @@ const UPGRADES_OPTIONS = {
     },
 } as const;
 
-const ADVANCE_NEARBY_AMOUNT = 250;
+const ADVANCE_ADJACENT_AMOUNT = 250;
 
 type Unlocks = {
     readonly [key: number]: readonly UpgradeId[];
@@ -191,10 +191,12 @@ class UpgradeTree {
         for (const upgrade_id in this.unlocked) {
             const upgrade = UPGRADES[upgrade_id];
             // TODO: check if the player has enough resources
-            possible_upgrades[upgrade_id] = {
-                level: this.unlocked[upgrade_id]!.level + 1,
-                cost: upgrade.getCost(this.unlocked[upgrade_id]!.level + 1)
-            };
+            if(upgrade.options.max_level > this.unlocked[upgrade_id]!.level) {
+                possible_upgrades[upgrade_id] = {
+                    level: this.unlocked[upgrade_id]!.level + 1,
+                    cost: upgrade.getCost(this.unlocked[upgrade_id]!.level + 1)
+                };
+            }
         }
         return possible_upgrades;
     }
@@ -242,7 +244,7 @@ const upgrade_test = {
     // Just to test types are correct
      a : new Upgrade(UPGRADES_OPTIONS.applications_per_cycle),
      b : new Upgrade(UPGRADES_OPTIONS.playback_speed),
-     c : new Upgrade(UPGRADES_OPTIONS.advance_nearby),
+     c : new Upgrade(UPGRADES_OPTIONS.advance_adjacent),
      d : new UpgradeTree("Producer"),
      e : new UpgradeTree("Verifier"),
 }

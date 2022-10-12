@@ -44,7 +44,10 @@ abstract class Clock {
     static readonly clockType: ClockType;
 
     animation?: Animation;
+    circle_element: SVGCircleElement;
+    playback_rate: number = 1;
 
+    #paused: boolean = false;
     manually_paused: boolean = false;
     upgrade_tree: UpgradeTree;
 
@@ -57,6 +60,7 @@ abstract class Clock {
         // Ugly, but doesn't seem to be another way to refer to a static member polymorphically
         return (this.constructor as typeof Clock).clockType;
     }
+    
 
     getPossibleUpgrades(): PossibleUpgrades {
         return this.upgrade_tree.getPossibleUpgrades();
@@ -92,7 +96,8 @@ abstract class Clock {
         Game.purchase(possible_upgrade);
         this.upgrade_tree.applyUpgrade(key, possible_upgrade);
         if (key == "playback_speed") {
-            this.animation!.updatePlaybackRate(2 ** possible_upgrade.level);
+            this.playback_rate = 2 ** possible_upgrade.level;
+            this.animation!.updatePlaybackRate(this.playback_rate);
         }
     }
 
@@ -105,22 +110,41 @@ abstract class Clock {
     }
 
     tickAndReset() {
+        this.animate();
         this.tick();
-        this.reset();
     }
 
-    // Advance the animation by the given amount of real time (milliseconds)
+    animate() {
+        if (this.animation) {
+            this.animation.cancel();
+        }
+        this.animation = this.circle_element.animate(clock_background_keyframes, clock_background_timing);
+        this.animation.updatePlaybackRate(this.playback_rate);
+        this.animation.addEventListener("finish", () => this.tickAndReset());
+        if (this.#paused) {
+            this.animation.pause();
+        }
+
+    }
+
+    // Advance the animation by the given amount of unscaled time (milliseconds)
     // TODO: implement handling more than one tick if needed
-    advanceBy(amount: number) {
+    // TODO?: make it happen smoothly -- maybe by increasing the playback rate temporarily
+    //        or show some other sort of feedback
+    advanceByUnscaled(amount: number) {
         if (!this.animation) return;
         if (!this.animation.currentTime) {
             this.animation.currentTime = 0;
         }
-        if (amount >= this.remainingTime()) {
-            amount -= this.remainingTime();
+        if (amount >= this.unscaledRemainingTime()) {
+            amount -= this.unscaledRemainingTime();
             this.tickAndReset();
         }
-        this.animation.currentTime += (amount * (this.animation.playbackRate ?? 1));
+        this.animation.currentTime += amount;
+    }
+
+    advanceByScaled(amount: number) {
+        this.advanceByUnscaled(amount * this.playback_rate);
     }
 
     // Returns the unscaled duration of the animation
@@ -136,14 +160,20 @@ abstract class Clock {
         return this.unscaledDuration() / (this.animation!.playbackRate ?? 1);
     }
 
+    unscaledRemainingTime(): number {
+        if (!this.animation || !this.animation.currentTime) {
+            return this.unscaledDuration();
+        }
+        return this.unscaledDuration() - this.animation.currentTime;
+    }
+
     // Returns real time remaining
     remainingTime(): number {
         if (!this.animation) {
             return TEN_SECONDS;
         }
         const speed = this.animation.playbackRate ?? 1;
-        // return duration / speed;
-        return (this.unscaledDuration() - this.animation.currentTime!) / speed;
+        return this.unscaledRemainingTime() / speed;
     }
 
     toString(): string {
@@ -156,6 +186,7 @@ abstract class Clock {
 
     pause(manual: boolean = true) {
         this.manually_paused = manual || this.manually_paused;
+        this.#paused = true;
         if (this.animation) {
             this.animation.pause();
         }
@@ -170,7 +201,7 @@ abstract class Clock {
     }
 
     paused(): boolean {
-        return (this.animation?.playState ?? "running") == "paused"
+        return this.#paused;
     }
 
     unpause() {
@@ -178,6 +209,7 @@ abstract class Clock {
             this.animation.play();
         }
         this.manually_paused = false;
+        this.#paused = false;
     }
 
 }
@@ -191,7 +223,7 @@ class ProducerClock extends Clock {
         const applied_ops = Game.applyOps(op_count);
 
         if (applied_ops > 0) {
-            this.advanceNearby();
+            this.advanceAdjacent();
         }
 
         // TODO: animate the cell multiple times, or show a different color based on ratio 
@@ -204,12 +236,12 @@ class ProducerClock extends Clock {
         return 1 + this.upgrade_tree.getUpgradeLevel("applications_per_cycle");
     }
 
-    advanceNearby() {
-        const upgrade_level = this.upgrade_tree.getUpgradeLevel("advance_nearby");
+    advanceAdjacent() {
+        const upgrade_level = this.upgrade_tree.getUpgradeLevel("advance_adjacent");
         if (upgrade_level <= 0) { return;}
-        const nearby = Game.table_view.getNearbyClocks(this.options.position);
+        const nearby = Game.table_view.getAdjacentClocks(this.options.position);
         for (const clock of nearby) {
-            clock.advanceBy(upgrade_level * ADVANCE_NEARBY_AMOUNT);
+            clock.advanceByUnscaled(upgrade_level * ADVANCE_ADJACENT_AMOUNT);
         }
     }
 

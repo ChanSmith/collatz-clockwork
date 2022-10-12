@@ -188,13 +188,13 @@ class Game {
         if (!any(grid.values(), notPaused)) {
             return;
         }
-        const firstClock = first(grid.values(), notPaused);
+        const arbitrary_unpaused_clock = first(grid.values(), notPaused);
         const minClockFn = (a, b) => {
             // If either is undefined/null, return the other
             return a.remainingTime() < b.remainingTime() ? a : b;
         };
         const nextClock = () => {
-            return reduce(filter(grid.values(), c => !c.manually_paused), minClockFn, firstClock);
+            return reduce(filter(grid.values(), c => !c.manually_paused), minClockFn, arbitrary_unpaused_clock);
         };
         let min_clock = nextClock();
         let simulated = 0;
@@ -203,7 +203,7 @@ class Game {
             // min_clock.tickAndReset();
             Game.clock_manager.forEachClock(c => {
                 if (notPaused(c)) {
-                    c.advanceBy(step);
+                    c.advanceByScaled(step);
                 }
             });
             simulated += step;
@@ -212,7 +212,7 @@ class Game {
         // At this point simulated is smaller than the closest remaining time, so we can advance everything in whatever order
         Game.clock_manager.forEachClock(c => {
             if (notPaused(c)) {
-                c.advanceBy(diff - simulated);
+                c.advanceByScaled(diff - simulated);
             }
         });
     }

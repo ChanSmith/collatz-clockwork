@@ -283,12 +283,12 @@ class TableView {
         const c = Game.clock_manager.removeClock(pos);
     }
 
-    getNearbyClocks(pos: Position): Array<Clock> {
+    getNearbyClocks(pos: Position, radius: number = 1): Array<Clock> {
         let clocks = new Array<Clock>();
         const width = this.getColumns();
         const height = this.getRows();
-        for (let i = -1; i <= 1; i++) {
-            for (let j = -1; j <= 1; j++) {
+        for (let i = -radius; i <= radius; i++) {
+            for (let j = -radius; j <= radius; j++) {
                 if (i == 0 && j == 0
                     || pos.row + i < 0 || pos.row + i >= height
                     || pos.col + j < 0 || pos.col + j >= width) {
@@ -296,11 +296,42 @@ class TableView {
                 }
 
                 let p = new Position(pos.row + i, pos.col + j);
+                console.log("Advancing nearby: " + p.toString());
                 let c = Game.clock_manager.getClock(p);
                 if (c) {
                     clocks.push(c);
                 }
             }
+        }
+        return clocks;
+    }
+
+    getAdjacentClocks(pos: Position): Array<Clock> {
+        let clocks = new Array<Clock>();
+        const width = this.getColumns();
+        const height = this.getRows();
+        const addIfPresent = (row: number, col: number) => {
+            let p = new Position(row, col);
+            let c = Game.clock_manager.getClock(p);
+            if (c) {
+                clocks.push(c);
+            }
+        }
+        // Top
+        if (pos.row > 0) {
+            addIfPresent(pos.row - 1, pos.col);
+        }
+        // Bottom 
+        if (pos.row < height - 1) {
+            addIfPresent(pos.row + 1, pos.col);
+        }
+        // Left
+        if (pos.col > 0) {
+            addIfPresent(pos.row, pos.col - 1);
+        }
+        // Right
+        if (pos.col < width - 1) {
+            addIfPresent(pos.row, pos.col + 1);
         }
         return clocks;
     }
@@ -328,10 +359,14 @@ class TableView {
         });
         // TODO: see if it's better to  use infinite iterations 
         // with "animationiteration" event listener on element
-        background_anim.addEventListener("finish", (event) => {
+        // background_anim.addEventListener("finish", (event) => {
+        //     clock.tick();
+        //     this.animateClock(element, clock, 0);
+        // });
+        background_anim.addEventListener("animationiteration", (e) => {
             clock.tick();
-            this.animateClock(element, clock, 0);
         });
+
 
     }
 
@@ -432,7 +467,9 @@ class TableView {
         timer_background.setAttribute("cy", "50%");
         timer_background.setAttribute("r", "25%");
 
-        this.animateClock(timer_background, clock);
+        clock.circle_element = timer_background;
+        clock.animate();
+        // this.animateClock(timer_background, clock);
         if (animationStart > 0) {
             clock.animation!.currentTime = animationStart;
         }
