@@ -62,7 +62,8 @@ const COLOR_OPTIONS_MAP = new Map([
     ["Verifier", "--verifier-color"],
 ]);
 
-
+// TODO: add a way to register/cancel a callback for when an option changes
+// e.g. to have stats title change when the clock table size changes
 class OptionsMenu extends HTMLDivElement {
 
     enabled: boolean;

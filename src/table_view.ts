@@ -132,11 +132,11 @@ class StatisticView extends HTMLDivElement {
     // Since calculating the actual text width is pretty expensive it seems
     update() {
         // this.name_element.textContent = this.stat.displayName();
-        sizeTextToFitParent(this.name_element);
+        sizeTextToFitParent(this.name_element); // Should only need to update when cell size changes (title doesn't change)
         if (this.stat.changed()) {
             this.value_element.textContent = this.stat.value().toString();
         }
-        sizeTextToFitParent(this.value_element);
+        sizeTextToFitParent(this.value_element); // Needs to update when cell size changes or when value changes
 
 
         // window.setTimeout(() => this.update(), STATS_UPDATE_INTERVAL);
