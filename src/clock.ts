@@ -66,32 +66,54 @@ abstract class Clock {
         return this.upgrade_tree.getPossibleUpgrades();
     }
 
-    getUpgradeMenuItems(): MenuItem[] {
-        let ret: MenuItem[] = [];
-        const possible_upgrades = this.getPossibleUpgrades();
-        for (const upgrade_id of upgradeIds(possible_upgrades)) {
-            const possible_upgrade = possible_upgrades[upgrade_id]!;
-            const upgrade  = UPGRADES_OPTIONS[upgrade_id];
-            const new_level = possible_upgrade.level;
-            const cost = possible_upgrade.cost;
-            const disabled = !Game.canPurchase(possible_upgrade);
-            let level_label: string;
-            if (upgrade.max_level !== Infinity) {
-                level_label = " (" + new_level + " / " + upgrade.max_level + ")";
-            } else {
-                level_label = " (" + new_level + " / ∞)";
-            }
-            ret.push( {
-                label: upgrade.name + " $" + cost + level_label,
-                callback: () => this.applyUpgrade(upgrade_id, possible_upgrade),
-                disabled: disabled,
-                preventCloseOnClick: disabled,
-            });
+    getMaxPossibleUpgrades(currency: number): PossibleUpgrades {
+        return this.upgrade_tree.getMaxPossibleUpgrades(currency);
+    }
+
+    generateLabel(upgrade_id: UpgradeId,  possible_upgrade: PossibleUpgradeState): string {
+        const current_level = this.upgrade_tree.getUpgradeLevel(upgrade_id); 
+        const amount = possible_upgrade.level - current_level;
+        const name = UPGRADES_OPTIONS[upgrade_id].name;
+        const max = UPGRADES_OPTIONS[upgrade_id].max_level === Infinity ? "∞" : UPGRADES_OPTIONS[upgrade_id].max_level;
+        return `${name} x${amount} (${current_level}→${possible_upgrade.level}/${max}) - $${possible_upgrade.cost}`;
+    }
+
+    generateUpgradeMenuOption(upgrade_id: UpgradeId, slider_value: number): MenuOption {
+        const current_level = this.upgrade_tree.getUpgradeLevel(upgrade_id);
+        const upgrade = UPGRADES[upgrade_id];
+        let possible_upgrade;
+        let disabled = false;
+        const max_upgrade = upgrade.getMaxPurchaseable(current_level, Game.game_state.ops.value());
+        if (max_upgrade === null) {
+            possible_upgrade = {level: current_level+1, cost: upgrade.getCost(current_level+1)};;
+            disabled = true;
+        } else {
+            const max_amount = max_upgrade.level - current_level;
+            const amount = Math.max(1, Math.floor(max_amount * slider_value));
+            const cost = UPGRADES[upgrade_id].getCostRange(current_level, current_level + amount);
+            possible_upgrade = {level: current_level + amount, cost: cost};
         }
-        // TODO: show locked ones with requirement
+        return {
+            label: this.generateLabel(upgrade_id, possible_upgrade),
+            callback: () => this.applyUpgrade(upgrade_id, possible_upgrade),
+            sliderCallback: (new_slider_value: number) => {
+                return this.generateUpgradeMenuOption(upgrade_id, new_slider_value);
+            },
+            disabled: disabled,
+            preventCloseOnClick: disabled,
+        };
+    }
+
+    getUpgradeMenuItems(slider_value: number): MenuItem[] {
+        let ret: MenuItem[] = [];
+        for (const upgrade_id of this.upgrade_tree.getUnlockedIds()) {
+            ret.push(this.generateUpgradeMenuOption(upgrade_id, slider_value));
+        }
         return ret;
     }
 
+
+    // TODO: Add some sort of visual to the cell
     applyUpgrade(key: UpgradeId, possible_upgrade: PossibleUpgradeState) {
         Game.purchase(possible_upgrade);
         this.upgrade_tree.applyUpgrade(key, possible_upgrade);
@@ -227,7 +249,8 @@ class ProducerClock extends Clock {
         }
 
         // TODO: animate the cell multiple times, or show a different color based on ratio 
-        // of applied ops to requested ops
+        // of applied ops to requested ops.
+        // Or just chose number of sucessful and failed ops in the cell somewhere
         const success = applied_ops > 0;
         Game.table_view.animateCellSuccess(this.options.position, success);
     }

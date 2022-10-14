@@ -73,12 +73,14 @@ class Upgrade {
         }
         return this.purchased_counts.get(level);
     }
+    // Cost to buy the given level
     getCost(level) {
         return Math.round(this.options.base_cost * (Math.pow(this.options.level_multiplier, level)) * (Math.pow(this.options.purchased_multiplier, this.getPurchasedCount(level))));
     }
+    // Cost to buy the given level range (inclusive)
     getCostRange(from, to) {
         let ret = 0;
-        for (const i of range(from, to)) {
+        for (const i of range(from, to + 1)) {
             ret += this.getCost(i);
         }
         return ret;
@@ -86,16 +88,16 @@ class Upgrade {
     // TODO: see if it's worth it to avoid half-1 of the pow calls 
     // by doing the multiplcation for level_multiplier instead of calling getCost
     getMaxPurchaseable(current_level, money) {
-        const MAX_ITERATIONS = 1000; // in case I messed something up
+        const MAX_ITERATIONS = 100000; // in case I messed something up
         let cost = 0;
-        let i = current_level;
+        let i = current_level + 1;
         let level_cost = this.getCost(i);
-        while (cost + level_cost < money && i < this.options.max_level && i < MAX_ITERATIONS) {
+        while (cost + level_cost < money && i <= this.options.max_level && i < current_level + MAX_ITERATIONS) {
             cost += level_cost;
             i++;
             level_cost = this.getCost(i);
         }
-        return { level: i, cost: cost };
+        return cost > 0 ? { level: i - 1, cost: cost } : null;
     }
 }
 function upgradeIds(obj) {
@@ -137,6 +139,20 @@ class UpgradeTree {
         }
         return possible_upgrades;
     }
+    getUnlockedIds() {
+        return upgradeIds(this.unlocked);
+    }
+    getMaxPossibleUpgrades(currency) {
+        const possible_upgrades = {};
+        for (const upgrade_id in this.unlocked) {
+            const upgrade = UPGRADES[upgrade_id];
+            const max_purchaseable = upgrade.getMaxPurchaseable(this.unlocked[upgrade_id].level, currency);
+            if (max_purchaseable) {
+                possible_upgrades[upgrade_id] = max_purchaseable;
+            }
+        }
+        return possible_upgrades;
+    }
     applyUnlocks(unlocks, old_level, new_level) {
         for (const level_prop in unlocks) {
             const level = parseInt(level_prop);
@@ -156,9 +172,15 @@ class UpgradeTree {
         const state = this.unlocked[id];
         const old_level = state.level;
         const new_level = u.level;
-        state.level = u.level;
         if ('unlocks' in upgrade_options) {
             this.applyUnlocks(upgrade_options.unlocks, old_level, new_level);
+        }
+        if (new_level >= upgrade_options.max_level) {
+            delete this.unlocked[id];
+            this.maxed[id] = { level: new_level };
+        }
+        else {
+            state.level = u.level;
         }
         UPGRADES[id].recordPurchaseRange(old_level, new_level);
     }

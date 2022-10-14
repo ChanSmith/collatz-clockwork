@@ -4,12 +4,16 @@ interface CoreOptions {
 }
 interface DefaultOptions {
     transitionDuration: number;
-    addCancel: boolean;
     additionalScopeClass: string;
     theme: 'black' | 'white';
 }
 
-type MenuItemGenerator = () => MenuItem[];
+interface MenuInstanceOptions {
+    title: string;
+    items: MenuItem[];
+}
+
+type MenuItemGenerator = (slider_value: number) => MenuInstanceOptions;
 
 interface ConfigurableOptions extends Partial<DefaultOptions> {
     scope: HTMLElement;
@@ -26,15 +30,21 @@ interface Options extends ConfigurableOptions, CoreOptions {
 }
 interface MenuOption {
     label: string;
+    // Called when the option is chosen
     callback: (ev: MouseEvent) => any;
+    // Called when the option menu slider is changed, if the option has a slider
+    sliderCallback?: (value: number) => MenuOption;
     //TODO: add suboptions
     iconClass?: string;
     preventCloseOnClick?: boolean;
     disabled?: boolean;
 }
-type MenuItem = MenuOption | 'hr';
+type MenuItem = MenuOption | 'hr' | 'slider';
 
-
+interface MenuOptionAndElement {
+    option: MenuOption;
+    element: HTMLElement;
+}
 interface State {
     defaultMenuItems: MenuItem[];
 }
@@ -46,8 +56,12 @@ class ContextMenu {
     #state: State = { defaultMenuItems: [] };
 
     #contextMenuElement: HTMLElement | null = null;
+    #titleElement: HTMLElement | null = null;
+    #currentMenuOptions: MenuOptionAndElement[] | null = null;
 
     static currentContextMenu: ContextMenu | undefined;
+    // 0 = 1, 0.5 = 1/2 Max, 1 = Max,
+    static sliderValue = 0.5;
 
     #coreOptions: CoreOptions = {
         transformOrigin: ['top', 'left'],
@@ -57,7 +71,6 @@ class ContextMenu {
         theme: 'black',
         transitionDuration: 200,
         additionalScopeClass: "selected",
-        addCancel: true,
     };
 
     // will be populated in constructor
@@ -66,16 +79,100 @@ class ContextMenu {
 
     // private methods
 
-    #generateCancelItems(): MenuItem[] {
-        return [
-            {
-                label: 'Close Menu',
-                callback: () => { },
-                preventCloseOnClick: false,
-            },
-            "hr"
+    #generateCloseButton(): HTMLElement {
+        const close_button = document.createElement('button');
+        close_button.textContent = "X";
+        close_button.classList.add('context-menu-close-button');
+        close_button.addEventListener('click', () => {
+            ContextMenu.removeExistingContextMenu();
+        });
+        return close_button;
+    }
 
-        ]
+    #generateTitleElement(initial_title: string): HTMLElement {
+        const title = document.createElement('div');
+        title.classList.add('context-menu-title');
+        this.#titleElement = document.createElement('span');
+        this.#titleElement.classList.add('context-menu-title-text');
+        this.#titleElement.innerText = initial_title;
+        title.appendChild(this.#titleElement);
+        return title;
+    }
+
+    // TODO: add option for the slider to be 
+    // relative (1 -> max)
+    //   - represented by a slider from 0 to 1
+    //   - final value is max puchasable * slider value
+    // or absolute (1, 10, 100, etc)
+    //   - represented by a slider from 0 to log10(max(max purchasable))+1 with ticks of 1
+    //   - final value is 10^slider value
+    // Would need to change callback parameter to be more structured to tell what type of slider it is
+
+    #generateSlider(): HTMLElement {
+        const slider_container = document.createElement('div');
+        slider_container.classList.add('context-menu-slider');
+
+        const min_label = document.createElement('span');
+        min_label.classList.add('context-menu-slider-min-label');
+        min_label.innerText = "1";
+
+        const max_label = document.createElement('span');
+        max_label.classList.add('context-menu-slider-max-label');
+        max_label.innerText = "Max";
+        
+        const slider = document.createElement('input');
+        slider.type = "range";
+        slider.min = "0";
+        slider.max = "1";
+        slider.step = "0.01";
+        slider.value = ContextMenu.sliderValue.toString();
+        slider.addEventListener('input', (ev) => {
+            ContextMenu.sliderValue = parseFloat((ev.target as HTMLInputElement).value);
+            this.#updateMenuItems(ContextMenu.sliderValue);
+            // Update the menu options to reflect new cost/amount
+            
+        });
+        slider_container.appendChild(min_label);
+        slider_container.appendChild(slider);
+        slider_container.appendChild(max_label);
+        return slider_container;
+    }
+
+    //TODO: call this when money changes (or just periodically)
+    #updateMenuItems(slider_value: number): void {
+        let newMenuOptions: MenuOptionAndElement[] = [];
+        for (const item of this.#currentMenuOptions!) {
+            if (item.option.sliderCallback) {
+                const new_option = item.option.sliderCallback(slider_value);
+                const new_element = this.#generateMenuItem(new_option);
+                newMenuOptions.push({
+                    option: item.option,
+                    element: new_element,
+                });
+                item.element.replaceWith(new_element);
+            } else {
+                newMenuOptions.push(item);
+            }
+        }
+        this.#currentMenuOptions = newMenuOptions;
+    }
+
+    #generateMenuItem(option: MenuOption): HTMLElement {
+        const menuItem = document.createElement('div');
+        
+        menuItem.classList.add('menu-item');
+        if (option.disabled) {
+            menuItem.classList.add('disabled');
+        }
+        const label = document.createElement('span');
+        label.classList.add('label');
+        label.textContent = option.label;
+        menuItem.appendChild(label);
+        if (!option.disabled) {
+            this.#bindCallbacks(menuItem, option);
+        }
+
+        return menuItem
     }
 
     /**
@@ -85,37 +182,38 @@ class ContextMenu {
         const contextMenu: HTMLElement = document.createElement('div');
         // wrapper.innerHTML = template(this.#state);
         contextMenu.classList.add('context-menu');
-        let menuItems: MenuItem[] = [];
+
+        contextMenu.appendChild(this.#generateCloseButton());
+        
+
+        let menuItems: MenuItem[];
+        let menuOptionElements: {option: MenuOption, element: HTMLElement}[] = [];
+        let title: string = "";
         if (button === 0 && this.#options.generatePrimaryMenuItems) {
-            menuItems = this.#options.generatePrimaryMenuItems();
+            const instanceOptions = this.#options.generatePrimaryMenuItems(ContextMenu.sliderValue);
+            menuItems = instanceOptions.items;
+            title = instanceOptions.title;
         } else if (button === 2 && this.#options.generateSecondaryMenuItems) {
-            menuItems = this.#options.generateSecondaryMenuItems();
+            const instanceOptions = this.#options.generateSecondaryMenuItems(ContextMenu.sliderValue);
+            menuItems = instanceOptions.items;
+            title = instanceOptions.title;
         } else {
             menuItems = this.#state.defaultMenuItems;
         }
-        if (this.#options.addCancel) {
-            menuItems = this.#generateCancelItems().concat(menuItems);
-        }
+        contextMenu.appendChild(this.#generateTitleElement(title));
         for (const item of menuItems) {
             if (item === 'hr') {
                 const hr = document.createElement('hr');
                 contextMenu.appendChild(hr);
+            } else if (item === 'slider') {
+                contextMenu.appendChild(this.#generateSlider()); 
             } else {
-                const menuItem = document.createElement('div');
-                menuItem.classList.add('menu-item');
-                if (item.disabled) {
-                    menuItem.classList.add('disabled');
-                }
-                const label = document.createElement('span');
-                label.classList.add('label');
-                label.textContent = item.label;
-                menuItem.appendChild(label);
+                const menuItem = this.#generateMenuItem(item);
+                menuOptionElements.push({ option: item, element: menuItem });
                 contextMenu.appendChild(menuItem);
-                if (!item.disabled) {
-                    this.#bindCallbacks(menuItem, item);
-                }
             }
         }
+        this.#currentMenuOptions = menuOptionElements;
 
         // const contextMenu: HTMLElement = wrapper.children[0] as HTMLElement;
         return contextMenu;
@@ -297,7 +395,7 @@ class ContextMenu {
     #onDocumentClick = (event: MouseEvent): void => {
         const clickedTarget: HTMLElement = event.target as HTMLElement;
 
-        if (clickedTarget.closest("[context-menu]")) {
+        if (clickedTarget.closest(".context-menu")) {
             return;
         }
         ContextMenu.removeExistingContextMenu();
@@ -333,5 +431,9 @@ class ContextMenu {
         Object.assign(this.#options, this.#coreOptions);
 
         this.#state.defaultMenuItems = this.#options.defaultMenuItems;
+    }
+
+    updateTitle(title: string): void {
+        this.#titleElement!.innerText = title;
     }
 }

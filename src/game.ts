@@ -143,36 +143,49 @@ class Game {
         }
     }
 
-    static getClockUpgradeMenuItems(pos: Position): MenuItem[] {
+    static getClockUpgradeMenuItems(pos: Position, slider_value: number): MenuItem[] {
         const clock = Game.clock_manager.getClock(pos);
         if (clock) {
-            return clock.getUpgradeMenuItems();
+            return clock.getUpgradeMenuItems(slider_value);
         }
         return [];
     }
 
     static primaryMenuItemGenerator(pos: Position): MenuItemGenerator {
-        return () => {
+        return (slider_value: number) => {
+            let title: string;
             let items: Array<MenuItem> = [];
             if (Game.table_view.canAddClock(pos)) {
+                title = "Add Clock";
                 items.push(...Game.getNewClockMenuItems(pos));
             }
             else {
-                items.push(...Game.getPauseClockMenuItems(pos));
-                items.push("hr");
-                items.push(...Game.getClockUpgradeMenuItems(pos));
+                title = "Upgrade Clock";
+                const upgradeMenuItems = Game.getClockUpgradeMenuItems(pos, slider_value);
+                if (upgradeMenuItems.length > 0) {
+                    items.push("slider");
+                    items.push("hr");
+                    items.push(...upgradeMenuItems);
+                } else { 
+                    items.push({
+                        label: "No Upgrades Available",
+                        callback: () => {},
+                        disabled: true,
+                    });
+                }
             }
-            return items;
+            return {title: title, items:items};
         }
     }
 
     static secondaryMenuItemGenerator(pos: Position): MenuItemGenerator {
-        return () => {
+        return (slider_value: number) => {
             let items: Array<MenuItem> = [];
             if (!Game.table_view.canAddClock(pos)) {
+                items.push(...Game.getPauseClockMenuItems(pos));
                 items.push(...Game.getRemoveClockMenuItems(pos));
             }
-            return items;
+            return {title: "Other options", items:items};
         };
     }
 

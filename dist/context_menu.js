@@ -9,7 +9,7 @@ var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
     return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
 };
-var _ContextMenu_instances, _ContextMenu_initialContextMenuEvent, _ContextMenu_state, _ContextMenu_contextMenuElement, _ContextMenu_coreOptions, _ContextMenu_defaultOptions, _ContextMenu_options, _ContextMenu_generateCancelItems, _ContextMenu_buildContextMenu, _ContextMenu_normalizePozition, _ContextMenu_applyStyleOnContextMenu, _ContextMenu_bindCallbacks, _ContextMenu_onShowContextMenu, _ContextMenu_onDocumentClick;
+var _ContextMenu_instances, _ContextMenu_initialContextMenuEvent, _ContextMenu_state, _ContextMenu_contextMenuElement, _ContextMenu_titleElement, _ContextMenu_currentMenuOptions, _ContextMenu_coreOptions, _ContextMenu_defaultOptions, _ContextMenu_options, _ContextMenu_generateCloseButton, _ContextMenu_generateTitleElement, _ContextMenu_generateSlider, _ContextMenu_updateMenuItems, _ContextMenu_generateMenuItem, _ContextMenu_buildContextMenu, _ContextMenu_normalizePozition, _ContextMenu_applyStyleOnContextMenu, _ContextMenu_bindCallbacks, _ContextMenu_onShowContextMenu, _ContextMenu_onDocumentClick;
 class ContextMenu {
     constructor(configurableOptions) {
         _ContextMenu_instances.add(this);
@@ -17,6 +17,8 @@ class ContextMenu {
         _ContextMenu_initialContextMenuEvent.set(this, void 0);
         _ContextMenu_state.set(this, { defaultMenuItems: [] });
         _ContextMenu_contextMenuElement.set(this, null);
+        _ContextMenu_titleElement.set(this, null);
+        _ContextMenu_currentMenuOptions.set(this, null);
         _ContextMenu_coreOptions.set(this, {
             transformOrigin: ['top', 'left'],
         });
@@ -24,7 +26,6 @@ class ContextMenu {
             theme: 'black',
             transitionDuration: 200,
             additionalScopeClass: "selected",
-            addCancel: true,
         });
         // will be populated in constructor
         //@ts-ignore
@@ -36,40 +37,39 @@ class ContextMenu {
             const contextMenu = document.createElement('div');
             // wrapper.innerHTML = template(this.#state);
             contextMenu.classList.add('context-menu');
-            let menuItems = [];
+            contextMenu.appendChild(__classPrivateFieldGet(this, _ContextMenu_instances, "m", _ContextMenu_generateCloseButton).call(this));
+            let menuItems;
+            let menuOptionElements = [];
+            let title = "";
             if (button === 0 && __classPrivateFieldGet(this, _ContextMenu_options, "f").generatePrimaryMenuItems) {
-                menuItems = __classPrivateFieldGet(this, _ContextMenu_options, "f").generatePrimaryMenuItems();
+                const instanceOptions = __classPrivateFieldGet(this, _ContextMenu_options, "f").generatePrimaryMenuItems(ContextMenu.sliderValue);
+                menuItems = instanceOptions.items;
+                title = instanceOptions.title;
             }
             else if (button === 2 && __classPrivateFieldGet(this, _ContextMenu_options, "f").generateSecondaryMenuItems) {
-                menuItems = __classPrivateFieldGet(this, _ContextMenu_options, "f").generateSecondaryMenuItems();
+                const instanceOptions = __classPrivateFieldGet(this, _ContextMenu_options, "f").generateSecondaryMenuItems(ContextMenu.sliderValue);
+                menuItems = instanceOptions.items;
+                title = instanceOptions.title;
             }
             else {
                 menuItems = __classPrivateFieldGet(this, _ContextMenu_state, "f").defaultMenuItems;
             }
-            if (__classPrivateFieldGet(this, _ContextMenu_options, "f").addCancel) {
-                menuItems = __classPrivateFieldGet(this, _ContextMenu_instances, "m", _ContextMenu_generateCancelItems).call(this).concat(menuItems);
-            }
+            contextMenu.appendChild(__classPrivateFieldGet(this, _ContextMenu_instances, "m", _ContextMenu_generateTitleElement).call(this, title));
             for (const item of menuItems) {
                 if (item === 'hr') {
                     const hr = document.createElement('hr');
                     contextMenu.appendChild(hr);
                 }
+                else if (item === 'slider') {
+                    contextMenu.appendChild(__classPrivateFieldGet(this, _ContextMenu_instances, "m", _ContextMenu_generateSlider).call(this));
+                }
                 else {
-                    const menuItem = document.createElement('div');
-                    menuItem.classList.add('menu-item');
-                    if (item.disabled) {
-                        menuItem.classList.add('disabled');
-                    }
-                    const label = document.createElement('span');
-                    label.classList.add('label');
-                    label.textContent = item.label;
-                    menuItem.appendChild(label);
+                    const menuItem = __classPrivateFieldGet(this, _ContextMenu_instances, "m", _ContextMenu_generateMenuItem).call(this, item);
+                    menuOptionElements.push({ option: item, element: menuItem });
                     contextMenu.appendChild(menuItem);
-                    if (!item.disabled) {
-                        __classPrivateFieldGet(this, _ContextMenu_bindCallbacks, "f").call(this, menuItem, item);
-                    }
                 }
             }
+            __classPrivateFieldSet(this, _ContextMenu_currentMenuOptions, menuOptionElements, "f");
             // const contextMenu: HTMLElement = wrapper.children[0] as HTMLElement;
             return contextMenu;
         });
@@ -176,7 +176,7 @@ class ContextMenu {
          */
         _ContextMenu_onDocumentClick.set(this, (event) => {
             const clickedTarget = event.target;
-            if (clickedTarget.closest("[context-menu]")) {
+            if (clickedTarget.closest(".context-menu")) {
                 return;
             }
             ContextMenu.removeExistingContextMenu();
@@ -204,17 +204,84 @@ class ContextMenu {
         Object.assign(__classPrivateFieldGet(this, _ContextMenu_options, "f"), __classPrivateFieldGet(this, _ContextMenu_coreOptions, "f"));
         __classPrivateFieldGet(this, _ContextMenu_state, "f").defaultMenuItems = __classPrivateFieldGet(this, _ContextMenu_options, "f").defaultMenuItems;
     }
+    updateTitle(title) {
+        __classPrivateFieldGet(this, _ContextMenu_titleElement, "f").innerText = title;
+    }
 }
-_ContextMenu_initialContextMenuEvent = new WeakMap(), _ContextMenu_state = new WeakMap(), _ContextMenu_contextMenuElement = new WeakMap(), _ContextMenu_coreOptions = new WeakMap(), _ContextMenu_defaultOptions = new WeakMap(), _ContextMenu_options = new WeakMap(), _ContextMenu_buildContextMenu = new WeakMap(), _ContextMenu_normalizePozition = new WeakMap(), _ContextMenu_applyStyleOnContextMenu = new WeakMap(), _ContextMenu_bindCallbacks = new WeakMap(), _ContextMenu_onShowContextMenu = new WeakMap(), _ContextMenu_onDocumentClick = new WeakMap(), _ContextMenu_instances = new WeakSet(), _ContextMenu_generateCancelItems = function _ContextMenu_generateCancelItems() {
-    return [
-        {
-            label: 'Close Menu',
-            callback: () => { },
-            preventCloseOnClick: false,
-        },
-        "hr"
-    ];
+_ContextMenu_initialContextMenuEvent = new WeakMap(), _ContextMenu_state = new WeakMap(), _ContextMenu_contextMenuElement = new WeakMap(), _ContextMenu_titleElement = new WeakMap(), _ContextMenu_currentMenuOptions = new WeakMap(), _ContextMenu_coreOptions = new WeakMap(), _ContextMenu_defaultOptions = new WeakMap(), _ContextMenu_options = new WeakMap(), _ContextMenu_buildContextMenu = new WeakMap(), _ContextMenu_normalizePozition = new WeakMap(), _ContextMenu_applyStyleOnContextMenu = new WeakMap(), _ContextMenu_bindCallbacks = new WeakMap(), _ContextMenu_onShowContextMenu = new WeakMap(), _ContextMenu_onDocumentClick = new WeakMap(), _ContextMenu_instances = new WeakSet(), _ContextMenu_generateCloseButton = function _ContextMenu_generateCloseButton() {
+    const close_button = document.createElement('button');
+    close_button.textContent = "X";
+    close_button.classList.add('context-menu-close-button');
+    close_button.addEventListener('click', () => {
+        ContextMenu.removeExistingContextMenu();
+    });
+    return close_button;
+}, _ContextMenu_generateTitleElement = function _ContextMenu_generateTitleElement(initial_title) {
+    const title = document.createElement('div');
+    title.classList.add('context-menu-title');
+    __classPrivateFieldSet(this, _ContextMenu_titleElement, document.createElement('span'), "f");
+    __classPrivateFieldGet(this, _ContextMenu_titleElement, "f").classList.add('context-menu-title-text');
+    __classPrivateFieldGet(this, _ContextMenu_titleElement, "f").innerText = initial_title;
+    title.appendChild(__classPrivateFieldGet(this, _ContextMenu_titleElement, "f"));
+    return title;
+}, _ContextMenu_generateSlider = function _ContextMenu_generateSlider() {
+    const slider_container = document.createElement('div');
+    slider_container.classList.add('context-menu-slider');
+    const min_label = document.createElement('span');
+    min_label.classList.add('context-menu-slider-min-label');
+    min_label.innerText = "1";
+    const max_label = document.createElement('span');
+    max_label.classList.add('context-menu-slider-max-label');
+    max_label.innerText = "Max";
+    const slider = document.createElement('input');
+    slider.type = "range";
+    slider.min = "0";
+    slider.max = "1";
+    slider.step = "0.01";
+    slider.value = ContextMenu.sliderValue.toString();
+    slider.addEventListener('input', (ev) => {
+        ContextMenu.sliderValue = parseFloat(ev.target.value);
+        __classPrivateFieldGet(this, _ContextMenu_instances, "m", _ContextMenu_updateMenuItems).call(this, ContextMenu.sliderValue);
+        // Update the menu options to reflect new cost/amount
+    });
+    slider_container.appendChild(min_label);
+    slider_container.appendChild(slider);
+    slider_container.appendChild(max_label);
+    return slider_container;
+}, _ContextMenu_updateMenuItems = function _ContextMenu_updateMenuItems(slider_value) {
+    let newMenuOptions = [];
+    for (const item of __classPrivateFieldGet(this, _ContextMenu_currentMenuOptions, "f")) {
+        if (item.option.sliderCallback) {
+            const new_option = item.option.sliderCallback(slider_value);
+            const new_element = __classPrivateFieldGet(this, _ContextMenu_instances, "m", _ContextMenu_generateMenuItem).call(this, new_option);
+            newMenuOptions.push({
+                option: item.option,
+                element: new_element,
+            });
+            item.element.replaceWith(new_element);
+        }
+        else {
+            newMenuOptions.push(item);
+        }
+    }
+    __classPrivateFieldSet(this, _ContextMenu_currentMenuOptions, newMenuOptions, "f");
+}, _ContextMenu_generateMenuItem = function _ContextMenu_generateMenuItem(option) {
+    const menuItem = document.createElement('div');
+    menuItem.classList.add('menu-item');
+    if (option.disabled) {
+        menuItem.classList.add('disabled');
+    }
+    const label = document.createElement('span');
+    label.classList.add('label');
+    label.textContent = option.label;
+    menuItem.appendChild(label);
+    if (!option.disabled) {
+        __classPrivateFieldGet(this, _ContextMenu_bindCallbacks, "f").call(this, menuItem, option);
+    }
+    return menuItem;
 };
+// 0 = 1, 0.5 = 1/2 Max, 1 = Max,
+ContextMenu.sliderValue = 0.5;
 ContextMenu.removeExistingContextMenu = () => {
     var _a;
     if (!ContextMenu.currentContextMenu) {
