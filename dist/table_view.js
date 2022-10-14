@@ -80,22 +80,27 @@ class StatisticView extends HTMLDivElement {
         this.name_element.classList.add("statistic-name");
         this.name_element.setAttribute("x", "50%");
         this.name_element.setAttribute("y", "0%");
+        this.name_element.textContent = this.stat.displayName();
         this.svg_element.appendChild(this.name_element);
         this.value_element = document.createElementNS(SVG_NS, "text");
         this.value_element.classList.add("statistic-value");
         this.value_element.setAttribute("x", "95%");
         this.value_element.setAttribute("y", "100%");
-        this.svg_element.appendChild(this.value_element);
-        this.update();
-    }
-    // Make display update itself every STATS_UPDATE_INTERVAL ms
-    // TODO: look into only resizing when things change (e.g. cell resize or text length changes)
-    update() {
-        this.name_element.textContent = this.stat.displayName();
-        sizeTextToFitParent(this.name_element);
         this.value_element.textContent = this.stat.value().toString();
+        this.svg_element.appendChild(this.value_element);
+        window.requestAnimationFrame(() => this.update());
+    }
+    // TODO: look into only updating text and size when a value changes or the size changes
+    // Since calculating the actual text width is pretty expensive it seems
+    update() {
+        // this.name_element.textContent = this.stat.displayName();
+        sizeTextToFitParent(this.name_element);
+        if (this.stat.changed()) {
+            this.value_element.textContent = this.stat.value().toString();
+        }
         sizeTextToFitParent(this.value_element);
-        window.setTimeout(() => this.update(), STATS_UPDATE_INTERVAL);
+        // window.setTimeout(() => this.update(), STATS_UPDATE_INTERVAL);
+        window.requestAnimationFrame(() => this.update());
     }
 }
 customElements.define('statistic-view', StatisticView, { extends: 'div' });

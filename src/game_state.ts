@@ -1,13 +1,16 @@
 class DisplayableNumber {
     #display_name: string;
     #value: number;
+    #changed: boolean;
     constructor(display_name: string, value: number) {
         this.#display_name = display_name;
         this.#value = value;
+        this.#changed = false;
     }
 
     set(value: number) {
         this.#value = value;
+        this.#changed = true;
     }
 
     add(value: number) {
@@ -23,6 +26,13 @@ class DisplayableNumber {
 
     value(): number {
         return this.#value;
+    }
+
+    // Returns whether the value changed since the last call to this function
+    changed(): boolean {
+        const changed = this.#changed;
+        this.#changed = false;
+        return changed;
     }
 
     toString(): string {

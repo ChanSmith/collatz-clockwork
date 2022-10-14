@@ -9,16 +9,19 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _DisplayableNumber_display_name, _DisplayableNumber_value;
+var _DisplayableNumber_display_name, _DisplayableNumber_value, _DisplayableNumber_changed;
 class DisplayableNumber {
     constructor(display_name, value) {
         _DisplayableNumber_display_name.set(this, void 0);
         _DisplayableNumber_value.set(this, void 0);
+        _DisplayableNumber_changed.set(this, void 0);
         __classPrivateFieldSet(this, _DisplayableNumber_display_name, display_name, "f");
         __classPrivateFieldSet(this, _DisplayableNumber_value, value, "f");
+        __classPrivateFieldSet(this, _DisplayableNumber_changed, false, "f");
     }
     set(value) {
         __classPrivateFieldSet(this, _DisplayableNumber_value, value, "f");
+        __classPrivateFieldSet(this, _DisplayableNumber_changed, true, "f");
     }
     add(value) {
         this.set(__classPrivateFieldGet(this, _DisplayableNumber_value, "f") + value);
@@ -32,6 +35,12 @@ class DisplayableNumber {
     value() {
         return __classPrivateFieldGet(this, _DisplayableNumber_value, "f");
     }
+    // Returns whether the value changed since the last call to this function
+    changed() {
+        const changed = __classPrivateFieldGet(this, _DisplayableNumber_changed, "f");
+        __classPrivateFieldSet(this, _DisplayableNumber_changed, false, "f");
+        return changed;
+    }
     toString() {
         return __classPrivateFieldGet(this, _DisplayableNumber_display_name, "f") + ": " + __classPrivateFieldGet(this, _DisplayableNumber_value, "f");
     }
@@ -44,7 +53,7 @@ class DisplayableNumber {
         }
     }
 }
-_DisplayableNumber_display_name = new WeakMap(), _DisplayableNumber_value = new WeakMap();
+_DisplayableNumber_display_name = new WeakMap(), _DisplayableNumber_value = new WeakMap(), _DisplayableNumber_changed = new WeakMap();
 class Statistic extends DisplayableNumber {
     set(value) {
         super.set(value);
