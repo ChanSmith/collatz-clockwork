@@ -41,6 +41,7 @@ type UpgradeGraphicsState = {
 
 abstract class Clock {
 
+
     static readonly clockType: ClockType;
 
     animation?: Animation;
@@ -53,6 +54,7 @@ abstract class Clock {
 
     #paused: boolean = false;
     manually_paused: boolean = false;
+    // TODO: keep track of money spent on upgrades -- maybe in the upgrade tree?
     upgrade_tree: UpgradeTree;
 
 

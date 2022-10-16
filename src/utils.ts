@@ -62,3 +62,105 @@ function* range(start: number, end: number, step: number = 1) {
         yield i;
     }
 }
+
+function leftChildIndex(i: number) {
+    return 2 * i + 1;
+}
+function rightChildIndex(i: number) {
+    return 2 * i + 2;
+}
+function parentIndex(i: number) {
+    return Math.floor((i - 1) / 2);
+}
+
+class PriorityQueue<T> {
+    #heap: Array<T>;
+    #map: Map<T, number>; 
+    #priorityFunction: (a: T) => number;
+
+    constructor(priorityFunction: (a: T) => number) {
+        this.#heap = [];
+        this.#priorityFunction = priorityFunction;
+    }
+
+    reset(values: Array<T>) {
+        this.#heap = values.slice();
+        this.#map = new Map();
+        for (let i = 0; i < this.#heap.length; i++) {
+            this.#map.set(this.#heap[i], i);
+        }
+        for (let i = Math.floor(this.#heap.length / 2); i >= 0; i--) {
+            this.#bubbleDown(i);
+        }
+    }
+
+    push(...values: Array<T>) {
+        for (const v of values) {
+            this.#heap.push(v);
+            this.#map.set(v, this.#heap.length - 1);
+            this.#bubbleUp(this.#heap.length - 1);
+        }
+    }
+
+    pop(): T | undefined {
+        if (this.#heap.length === 0) {
+            return undefined;
+        }
+        const result = this.#heap[0];
+        this.#map.delete(result);
+        const last = this.#heap.pop() as T;
+        if (last !== result) {
+            this.#heap[0] = last;
+            this.#map.set(last, 0);
+            this.#bubbleDown(0);
+        }
+        return result
+    }
+
+    #bubbleUp(i: number) {
+        const parent = parentIndex(i);
+        if (parent >= 0 && this.#priorityFunction(this.#heap[parent]) > this.#priorityFunction(this.#heap[i])) {
+            this.#swap(parent, i);
+            this.#bubbleUp(parent);
+        }
+    }
+
+    #bubbleDown(i: number) {
+        const left = leftChildIndex(i);
+        const right = rightChildIndex(i);
+        let min = i;
+        let minPri = this.#priorityFunction(this.#heap[i]);
+        let leftPri;
+        if (left < this.#heap.length && (leftPri = this.#priorityFunction(this.#heap[left])) < minPri) {
+            min = left;
+            minPri = leftPri;
+        }
+        if (right < this.#heap.length && this.#priorityFunction(this.#heap[right]) < minPri) {
+            min = right;
+        }
+        if (min !== i) {
+            this.#swap(min, i);
+            this.#bubbleDown(min);
+        }
+    }
+
+    updatePriority(v: T) {
+        const i = this.#map.get(v);
+        if (i !== undefined) {
+            this.#bubbleUp(i);
+            this.#bubbleDown(i);
+        }
+    }
+
+    #swap(i: number, j: number) {
+        const temp = this.#heap[i];
+        this.#heap[i] = this.#heap[j];
+        this.#heap[j] = temp;
+        this.#map.set(this.#heap[i], i);
+        this.#map.set(this.#heap[j], j);
+    }
+
+    get length(): number {
+        return this.#heap.length;
+    }
+}

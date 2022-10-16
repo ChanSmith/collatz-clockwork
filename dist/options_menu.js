@@ -31,6 +31,15 @@ const CLOCK_COLOR_OPTION = {
         },
     ],
 };
+// const  = {
+//     id: "buy-all-method",
+//     name: "Buy All Method",
+//     sub_options: [
+//         {
+//             id: "",
+//         },
+//     ],
+// }
 const OPTIONS = [
     CELL_SIZE_OPTION,
     CLOCK_COLOR_OPTION,

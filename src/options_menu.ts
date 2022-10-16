@@ -6,10 +6,15 @@ interface InputOptions {
 interface GameOption {
     name: string;
     id: string;
-    default?: string;
+    // Type of input element
     input_type?: string;
+    // Default value for the input
+    default?: string;
+    // Attributes for input elements
     input_options?: InputOptions;
+    // Function to turn the value from the input into the value used in the css variable
     input_transformer?: (s: string) => string;
+    // css variable to update
     css_variable?: string;
     sub_options?: GameOption[];
 }
@@ -49,6 +54,17 @@ const CLOCK_COLOR_OPTION = {
         },
     ],
 }
+
+// const  = {
+//     id: "buy-all-method",
+//     name: "Buy All Method",
+
+//     sub_options: [
+//         {
+//             id: "",
+//         },
+//     ],
+// }
 
 const OPTIONS = [
     CELL_SIZE_OPTION,

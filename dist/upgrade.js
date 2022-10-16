@@ -27,7 +27,7 @@ const UPGRADES_OPTIONS = {
         name: "Money per application",
         description: "Doubles the amount of money gained each time this clock applies f.",
         base_cost: 100,
-        level_multiplier: 2.25,
+        level_multiplier: 2.5,
         purchased_multiplier: 1.15,
         max_level: 20,
         max_graphics_level: 20,
