@@ -112,7 +112,7 @@ class Clock {
         use.setAttribute("y", "0");
         use.setAttribute("width", "100%");
         use.setAttribute("height", "100%");
-        this.svg_element.insertBefore(use, this.circle_element);
+        this.svg_element.insertBefore(use, this.svg_element.firstChild);
     }
     addPlaybackSpeedGraphic(applied_level, new_level) {
         for (let i = applied_level + 1; i <= new_level; i++) {
@@ -144,6 +144,15 @@ class Clock {
         }
         this.graphics_state[id] = { applied_level: new_level };
     }
+    reapplyUpgradeGraphics() {
+        this.graphics_state = {};
+        for (const id of this.upgrade_tree.getUnlockedIds()) {
+            this.addUpgradeGraphic(id, this.upgrade_tree.getUpgradeLevel(id));
+        }
+        for (const id of this.upgrade_tree.getMaxedIds()) {
+            this.addUpgradeGraphic(id, UPGRADES_OPTIONS[id].max_graphics_level);
+        }
+    }
     tick() {
         tickLog === null || tickLog === void 0 ? void 0 : tickLog("tick from " + this.toString());
     }
@@ -158,7 +167,7 @@ class Clock {
         if (this.animation) {
             this.animation.cancel();
         }
-        this.animation = this.circle_element.animate(clock_background_keyframes, clock_background_timing);
+        this.animation = this.mask_circle.animate(clock_background_keyframes, clock_background_timing);
         this.animation.updatePlaybackRate(this.playback_rate);
         this.animation.addEventListener("finish", () => this.tickAndReset());
         if (__classPrivateFieldGet(this, _Clock_paused, "f")) {
@@ -306,7 +315,7 @@ class ReferenceClock extends Clock {
         s.classList.add("clock");
         s.classList.add(this.getType());
         let timer_background = document.createElementNS(SVG_NS, "circle");
-        timer_background.classList.add("timer-background");
+        timer_background.classList.add("clock-mask");
         timer_background.classList.add(this.getType());
         timer_background.setAttribute("fill", "transparent");
         // timer_background.setAttribute("stroke", CLOCK_PALETTE[clock.getType()]);

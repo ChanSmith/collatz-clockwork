@@ -44,6 +44,10 @@ const verticalRatio = (element) => {
     const parent = element.parentElement;
     return element.clientHeight / parent.clientHeight;
 };
+const clockMaskId = (clock) => {
+    const p = clock.getPosition();
+    return `clock-mask-${p.row}-${p.col}`;
+};
 // Returns whether the ratio of both targets to actuals is greater than max_difference
 const needsResize = (element, max_horizontal, max_vertical, max_difference = 0.1 /* 10% */) => {
     if (horizontalRatio(element) > max_horizontal || verticalRatio(element) > max_vertical) {
@@ -378,31 +382,43 @@ class TableView {
         });
     }
     createClockElement(clock, animationStart = 0) {
-        let s = document.createElementNS(SVG_NS, "svg");
-        s.classList.add("clock");
+        const s = document.createElementNS(SVG_NS, "svg");
         s.classList.add(clock.getType());
-        let timer_background = document.createElementNS(SVG_NS, "circle");
-        timer_background.classList.add("timer-background");
-        timer_background.classList.add(clock.getType());
-        timer_background.setAttribute("fill", "transparent");
-        timer_background.setAttribute("cx", "50%");
-        timer_background.setAttribute("cy", "50%");
-        timer_background.setAttribute("r", "25%");
+        // const clockFace = document.createElementNS(SVG_NS, "use") as SVGUseElement;
+        // clockFace.setAttribute("href", "#clockFace");
+        // clockFace.setAttribute("x", "0");
+        // clockFace.setAttribute("y", "0");
+        // clockFace.setAttribute("width", "100%");
+        // clockFace.setAttribute("height", "100%");
+        // s.appendChild(clockFace);
+        const mask = document.createElementNS(SVG_NS, "mask");
+        const mask_id = clockMaskId(clock);
+        mask.setAttribute("id", mask_id);
+        const mask_circle = document.createElementNS(SVG_NS, "circle");
+        mask_circle.classList.add("clock-mask");
+        mask_circle.classList.add(clock.getType());
+        mask_circle.setAttribute("fill", "transparent");
+        mask_circle.setAttribute("cx", "50%");
+        mask_circle.setAttribute("cy", "50%");
+        mask_circle.setAttribute("r", "25%");
+        mask.appendChild(mask_circle);
+        s.appendChild(mask);
+        const background = document.createElementNS(SVG_NS, "use");
+        background.setAttribute("href", "#clockBackground");
+        background.setAttribute("x", "0");
+        background.setAttribute("y", "0");
+        background.setAttribute("width", "100%");
+        background.setAttribute("height", "100%");
+        background.setAttribute("mask", `url(#${mask_id})`);
+        background.classList.add(clock.getType());
+        s.appendChild(background);
         clock.svg_element = s;
-        clock.circle_element = timer_background;
+        clock.mask_circle = mask_circle;
         clock.animate();
         // this.animateClock(timer_background, clock);
         if (animationStart > 0) {
             clock.animation.currentTime = animationStart;
         }
-        s.appendChild(timer_background);
-        let clockFace = document.createElementNS(SVG_NS, "use");
-        clockFace.setAttribute("href", "#clockFace");
-        clockFace.setAttribute("x", "0");
-        clockFace.setAttribute("y", "0");
-        clockFace.setAttribute("width", "100%");
-        clockFace.setAttribute("height", "100%");
-        s.appendChild(clockFace);
         return s;
     }
     generateTableRow(row, size) {
@@ -415,6 +431,9 @@ class TableView {
         return r;
     }
     moveClock(from, to) {
+        if (from.equals(to)) {
+            return;
+        }
         let from_cell = this.getCell(from);
         let to_cell = this.getCell(to);
         if (!from_cell || !to_cell) {
@@ -431,9 +450,10 @@ class TableView {
             const to_start = to_clock.animation.currentTime;
             this.clearElementAndAnimations(to_cell);
             from_cell.appendChild(this.createClockElement(to_clock, to_start));
+            to_clock.reapplyUpgradeGraphics();
         }
-        const startTime = from_clock.animation.currentTime;
         to_cell.appendChild(this.createClockElement(from_clock, from_start));
+        from_clock.reapplyUpgradeGraphics();
     }
     generateTableCell(pos) {
         let cell = document.createElement("div");

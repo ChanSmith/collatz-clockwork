@@ -7,9 +7,11 @@
     --chevron-color: #00FF00;
     --background-color: #808080;
 
+    --major-tick-color: #000000;
+    --minor-tick-color: #000000;
+
+
     --hidden_z_index: -1;
-    --connector_z_index: 1;
-    --clock_z_index: 5;
     --foreground_z_index: 10000;
 }
 
@@ -17,9 +19,10 @@ body {
     background: var(--background-color);
 }
 
-.timer-background {
+.clock-mask {
     transform: rotate(-90deg) translateX(-100%);
     stroke-width:50%;
+    stroke: white;
 }
 
 #game-container {
@@ -352,18 +355,12 @@ body {
     }
 }
 
-.clock{
-    display:block;
-    &.Producer {
-        & circle {
-            stroke: var(--producer-color);
-            z-index: var(--clock_z_index);
-        }
-    }
-    &.Verifier {
-        & circle {
-            stroke: var(--verifier-color);
-            z-index: var(--clock_z_index);
-        }
-    }
+
+use.Producer {
+    --color: var(--producer-color);
+}
+
+
+use.Verifier {
+    --color: var(--verifier-color);
 }

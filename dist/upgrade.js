@@ -145,8 +145,14 @@ class UpgradeTree {
         }
         return possible_upgrades;
     }
+    getLockedIds() {
+        return upgradeIds(this.locked);
+    }
     getUnlockedIds() {
         return upgradeIds(this.unlocked);
+    }
+    getMaxedIds() {
+        return upgradeIds(this.maxed);
     }
     getMaxPossibleUpgrades(currency) {
         const possible_upgrades = {};

@@ -214,8 +214,16 @@ class UpgradeTree {
         return possible_upgrades;
     }
 
+    getLockedIds(): readonly UpgradeId[] {
+        return upgradeIds(this.locked);
+    }
+
     getUnlockedIds(): readonly UpgradeId[] {
         return upgradeIds(this.unlocked);
+    }
+
+    getMaxedIds(): readonly UpgradeId[] {
+        return upgradeIds(this.maxed);
     }
 
     getMaxPossibleUpgrades(currency: number): PossibleUpgrades {

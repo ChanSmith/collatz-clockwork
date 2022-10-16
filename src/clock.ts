@@ -47,7 +47,7 @@ abstract class Clock {
     // SVG Element this clock is displayed in
     svg_element: SVGSVGElement;
     // SVG Element used to display progress for this clock
-    circle_element: SVGCircleElement;
+    mask_circle: SVGCircleElement;
     graphics_state: UpgradeGraphicsState;
     playback_rate: number = 1;
 
@@ -137,7 +137,7 @@ abstract class Clock {
         use.setAttribute("y", "0");
         use.setAttribute("width", "100%");
         use.setAttribute("height", "100%");
-        this.svg_element.insertBefore(use, this.circle_element);
+        this.svg_element.insertBefore(use, this.svg_element.firstChild);
     }
 
     addPlaybackSpeedGraphic(applied_level: number, new_level:number) {
@@ -170,6 +170,16 @@ abstract class Clock {
         this.graphics_state[id] = {applied_level: new_level};
     }
 
+    reapplyUpgradeGraphics() {
+        this.graphics_state = {};
+        for (const id of this.upgrade_tree.getUnlockedIds()) {
+            this.addUpgradeGraphic(id, this.upgrade_tree.getUpgradeLevel(id));
+        }
+        for (const id of this.upgrade_tree.getMaxedIds()) {
+            this.addUpgradeGraphic(id, UPGRADES_OPTIONS[id].max_graphics_level);
+        }
+    }
+
     tick() {
         tickLog?.("tick from " + this.toString());
     }
@@ -187,7 +197,7 @@ abstract class Clock {
         if (this.animation) {
             this.animation.cancel();
         }
-        this.animation = this.circle_element.animate(clock_background_keyframes, clock_background_timing);
+        this.animation = this.mask_circle.animate(clock_background_keyframes, clock_background_timing);
         this.animation.updatePlaybackRate(this.playback_rate);
         this.animation.addEventListener("finish", () => this.tickAndReset());
         if (this.#paused) {
@@ -364,7 +374,7 @@ class ReferenceClock extends Clock {
         s.classList.add(this.getType());
 
         let timer_background = document.createElementNS(SVG_NS, "circle") as SVGCircleElement;
-        timer_background.classList.add("timer-background");
+        timer_background.classList.add("clock-mask");
         timer_background.classList.add(this.getType());
 
         timer_background.setAttribute("fill", "transparent");

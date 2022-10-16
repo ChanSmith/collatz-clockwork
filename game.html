@@ -29,14 +29,13 @@
                 </g>
                 
             </symbol>
-
+            <symbol id="majorTick" viewBox="0 0 100 100">
+                <line x1="50" y1="0" x2="50" y2="10" stroke="var(--major-tick-color)" stroke-width="2" />
+            </symbol>
+            <symbol id="minorTick" viewBox="0 0 100 100">
+                <line x1="50" y1="0" x2="50" y2="10" stroke="var(--minor-tick-color)" stroke-width="1" />
+            </symbol>
             <symbol id="clockFace" viewBox="0 0 100 100">
-                <symbol id="majorTick" viewBox="0 0 100 100">
-                    <line x1="50" y1="0" x2="50" y2="10" stroke="var(--background-color)" stroke-width="2" />
-                </symbol>
-                <symbol id="minorTick" viewBox="0 0 100 100">
-                    <line x1="50" y1="0" x2="50" y2="10" stroke="var(--background-color)" stroke-width="1" />
-                </symbol>
                 <g>
                     <use href="#majorTick" x="0" y="0" transform="rotate(0, 50, 50)" />
                     <use href="#minorTick" x="0" y="0" transform="rotate(30, 50, 50)" />
@@ -52,6 +51,10 @@
                     <use href="#minorTick" x="0" y="0" transform="rotate(330, 50, 50)" />
                 </g>
             </symbol>
+
+            <symbol id="clockBackground" viewBox="0 0 100 100">
+                <circle class="clock-background" cx="50" cy="50" r="50" fill="var(--color)"/>
+                <use href="#clockFace" x="0" y="0" width="100" height="100"/>
         </defs>
     </svg>
 
