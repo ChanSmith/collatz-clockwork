@@ -292,5 +292,9 @@ use.Verifier {
 
 use.playback-speed-chevron {
   --transform: rotate(90deg);
+  --chevron-color: #faf606;
+}
+
+use.money-chevron {
   --chevron-color: #00FF00;
 }

@@ -4,7 +4,7 @@
 // Level effects start at 1 (i.e. 0 is unpurchased)
 const UPGRADES_OPTIONS = {
     applications_per_cycle: {
-        name: "Applications per cycle",
+        name: "Extra f per cycle",
         description: "Applies f an additional time each cycle.",
         base_cost: 1,
         level_multiplier: 1.5,
