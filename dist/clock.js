@@ -34,8 +34,6 @@ class Position {
         return new Position(this.row, this.col);
     }
 }
-class UpgradeInfo {
-}
 class Clock {
     constructor(options) {
         this.options = options;
@@ -43,6 +41,7 @@ class Clock {
         _Clock_paused.set(this, false);
         this.manually_paused = false;
         this.upgrade_tree = new UpgradeTree(new.target.clockType);
+        this.graphics_state = {};
     }
     getType() {
         // Ugly, but doesn't seem to be another way to refer to a static member polymorphically
@@ -96,13 +95,54 @@ class Clock {
         return ret;
     }
     // TODO: Add some sort of visual to the cell
-    applyUpgrade(key, possible_upgrade) {
+    applyUpgrade(id, possible_upgrade) {
         Game.purchase(possible_upgrade);
-        this.upgrade_tree.applyUpgrade(key, possible_upgrade);
-        if (key == "playback_speed") {
+        const current_level = this.upgrade_tree.getUpgradeLevel(id);
+        this.upgrade_tree.applyUpgrade(id, possible_upgrade);
+        if (id == "playback_speed") {
             this.playback_rate = Math.pow(2, possible_upgrade.level);
             this.animation.updatePlaybackRate(this.playback_rate);
         }
+        this.addUpgradeGraphic(id, possible_upgrade.level);
+    }
+    addConnectorGraphic() {
+        const use = document.createElementNS(SVG_NS, "use");
+        use.setAttribute("href", "#connectAdjacent");
+        use.setAttribute("x", "0");
+        use.setAttribute("y", "0");
+        use.setAttribute("width", "100%");
+        use.setAttribute("height", "100%");
+        this.svg_element.insertBefore(use, this.circle_element);
+    }
+    addPlaybackSpeedGraphic(applied_level, new_level) {
+        for (let i = applied_level + 1; i <= new_level; i++) {
+            const y_offset = 5 * i;
+            const use = document.createElementNS(SVG_NS, "use");
+            use.setAttribute("href", "#chevron");
+            use.setAttribute("x", "90%");
+            use.setAttribute("y", y_offset + "%");
+            use.setAttribute("width", "10%");
+            use.setAttribute("height", "10%");
+            this.svg_element.appendChild(use);
+        }
+    }
+    addUpgradeGraphic(id, new_level) {
+        var _a, _b;
+        const applied_level = (_b = (_a = this.graphics_state[id]) === null || _a === void 0 ? void 0 : _a.applied_level) !== null && _b !== void 0 ? _b : 0;
+        const max_graphics_level = UPGRADES_OPTIONS[id].max_graphics_level;
+        if (applied_level >= max_graphics_level) {
+            return;
+        }
+        new_level = Math.min(new_level, max_graphics_level);
+        if (id === "playback_speed") {
+            this.addPlaybackSpeedGraphic(applied_level, new_level);
+        }
+        else if (id === "advance_adjacent") {
+            this.addConnectorGraphic();
+        }
+        else if (id === "applications_per_cycle") {
+        }
+        this.graphics_state[id] = { applied_level: new_level };
     }
     tick() {
         tickLog === null || tickLog === void 0 ? void 0 : tickLog("tick from " + this.toString());

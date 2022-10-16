@@ -471,6 +471,7 @@ class TableView {
         timer_background.setAttribute("cy", "50%");
         timer_background.setAttribute("r", "25%");
 
+        clock.svg_element = s;
         clock.circle_element = timer_background;
         clock.animate();
         // this.animateClock(timer_background, clock);
@@ -479,6 +480,15 @@ class TableView {
         }
 
         s.appendChild(timer_background);
+
+
+        let clockFace = document.createElementNS(SVG_NS, "use") as SVGUseElement;
+        clockFace.setAttribute("href", "#clockFace");
+        clockFace.setAttribute("x", "0");
+        clockFace.setAttribute("y", "0");
+        clockFace.setAttribute("width", "100%");
+        clockFace.setAttribute("height", "100%");
+        s.appendChild(clockFace);
 
         return s;
     }

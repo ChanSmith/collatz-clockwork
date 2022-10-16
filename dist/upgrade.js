@@ -1,4 +1,7 @@
-// TODO: decide if the upgrade effects should be here or in the Clock class
+// Cost model: cost(level) = base_cost * (level_multiplier^level) * (purchased_multiplier ^ x)
+// Rounded to the nearest integer
+// Where x is the number of times this upgrade has been purchased at level
+// Level effects start at 1 (i.e. 0 is unpurchased)
 const UPGRADES_OPTIONS = {
     applications_per_cycle: {
         name: "Applications per cycle",
@@ -7,6 +10,7 @@ const UPGRADES_OPTIONS = {
         level_multiplier: 1.5,
         purchased_multiplier: 1.10,
         max_level: Infinity,
+        max_graphics_level: Infinity,
         unlocks: {
             4: ["advance_adjacent"],
         },
@@ -24,6 +28,7 @@ const UPGRADES_OPTIONS = {
         level_multiplier: 10.0,
         purchased_multiplier: 1.5,
         max_level: 3,
+        max_graphics_level: 3,
         applies_to: {
             Producer: true,
             Verifier: true
@@ -39,6 +44,7 @@ const UPGRADES_OPTIONS = {
         level_multiplier: 2.0,
         purchased_multiplier: 1.25,
         max_level: 10,
+        max_graphics_level: 1,
         unlocks: {
             4: ["playback_speed"],
         },

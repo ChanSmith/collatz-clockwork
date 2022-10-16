@@ -35,16 +35,20 @@ interface ClockOptions {
     position: Position;
 }
 
-class UpgradeInfo {
-
-}
+type UpgradeGraphicsState = {
+    [U in UpgradeId]?: {applied_level: number};
+};
 
 abstract class Clock {
 
     static readonly clockType: ClockType;
 
     animation?: Animation;
+    // SVG Element this clock is displayed in
+    svg_element: SVGSVGElement;
+    // SVG Element used to display progress for this clock
     circle_element: SVGCircleElement;
+    graphics_state: UpgradeGraphicsState;
     playback_rate: number = 1;
 
     #paused: boolean = false;
@@ -54,6 +58,7 @@ abstract class Clock {
 
     constructor(public options: ClockOptions) { 
         this.upgrade_tree = new UpgradeTree(new.target.clockType);
+        this.graphics_state = {};
     }
 
     getType(): ClockType {
@@ -114,13 +119,55 @@ abstract class Clock {
 
 
     // TODO: Add some sort of visual to the cell
-    applyUpgrade(key: UpgradeId, possible_upgrade: PossibleUpgradeState) {
+    applyUpgrade(id: UpgradeId, possible_upgrade: PossibleUpgradeState) {
         Game.purchase(possible_upgrade);
-        this.upgrade_tree.applyUpgrade(key, possible_upgrade);
-        if (key == "playback_speed") {
+        const current_level = this.upgrade_tree.getUpgradeLevel(id);
+        this.upgrade_tree.applyUpgrade(id, possible_upgrade);
+        if (id == "playback_speed") {
             this.playback_rate = 2 ** possible_upgrade.level;
             this.animation!.updatePlaybackRate(this.playback_rate);
         }
+        this.addUpgradeGraphic(id, possible_upgrade.level);
+    }
+
+    addConnectorGraphic() {
+        const use = document.createElementNS(SVG_NS, "use");
+        use.setAttribute("href", "#connectAdjacent");
+        use.setAttribute("x", "0");
+        use.setAttribute("y", "0");
+        use.setAttribute("width", "100%");
+        use.setAttribute("height", "100%");
+        this.svg_element.insertBefore(use, this.circle_element);
+    }
+
+    addPlaybackSpeedGraphic(applied_level: number, new_level:number) {
+        for (let i = applied_level + 1; i <= new_level; i++) {
+            const y_offset = 5 * i;
+            const use = document.createElementNS(SVG_NS, "use");
+            use.setAttribute("href", "#chevron");
+            use.setAttribute("x", "90%");
+            use.setAttribute("y", y_offset + "%");
+            use.setAttribute("width", "10%");
+            use.setAttribute("height", "10%");
+            this.svg_element.appendChild(use);
+        }
+    }
+
+    addUpgradeGraphic(id: UpgradeId, new_level: number) {
+        const applied_level = this.graphics_state[id]?.applied_level ?? 0;
+        const max_graphics_level = UPGRADES_OPTIONS[id].max_graphics_level;
+        if (applied_level >= max_graphics_level) {
+            return;
+        }
+        new_level = Math.min(new_level, max_graphics_level);
+        if (id === "playback_speed") {
+            this.addPlaybackSpeedGraphic(applied_level, new_level);
+        } else if (id === "advance_adjacent") {
+            this.addConnectorGraphic();
+        } else if (id === "applications_per_cycle") {
+            
+        }
+        this.graphics_state[id] = {applied_level: new_level};
     }
 
     tick() {

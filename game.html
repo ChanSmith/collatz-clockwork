@@ -9,6 +9,52 @@
 </head>
 
 <body>
+    <svg hidden="true" width="0" height="0">
+        <defs>
+            <symbol id="chevron" viewBox="0 0 9 6" width="9" height="6">
+                <polygon style="fill: var(--chevron-color);" class="chevron" points="0,6 4.5,0 9,6 7.5,6 4.5,2 1.5,6" />
+            </symbol>
+
+            <symbol class="connector" id="connectAdjacent" viewBox="0 0 10 10" z-index="0">
+                <!-- Triangles on sides -->
+                <g style="fill: var(--connector-color);">
+                    <!-- Left -->
+                    <polygon points="0,1 0,2 1,2" />
+                    <!-- Right -->
+                    <polygon points="10,9 10,8 9,8" />
+                    <!-- Top -->
+                    <polygon points="8,0 9,0 8,1" />
+                    <!-- Bottom -->
+                    <polygon points="2,10 1,10 2,9" />
+                </g>
+                
+            </symbol>
+
+            <symbol id="clockFace" viewBox="0 0 100 100">
+                <symbol id="majorTick" viewBox="0 0 100 100">
+                    <line x1="50" y1="0" x2="50" y2="10" stroke="var(--background-color)" stroke-width="2" />
+                </symbol>
+                <symbol id="minorTick" viewBox="0 0 100 100">
+                    <line x1="50" y1="0" x2="50" y2="10" stroke="var(--background-color)" stroke-width="1" />
+                </symbol>
+                <g>
+                    <use href="#majorTick" x="0" y="0" transform="rotate(0, 50, 50)" />
+                    <use href="#minorTick" x="0" y="0" transform="rotate(30, 50, 50)" />
+                    <use href="#minorTick" x="0" y="0" transform="rotate(60, 50, 50)" />
+                    <use href="#majorTick" x="0" y="0" transform="rotate(90, 50, 50)" />
+                    <use href="#minorTick" x="0" y="0" transform="rotate(120, 50, 50)" />
+                    <use href="#minorTick" x="0" y="0" transform="rotate(150, 50, 50)" />
+                    <use href="#majorTick" x="0" y="0" transform="rotate(180, 50, 50)" />
+                    <use href="#minorTick" x="0" y="0" transform="rotate(210, 50, 50)" />
+                    <use href="#minorTick" x="0" y="0" transform="rotate(240, 50, 50)" />
+                    <use href="#majorTick" x="0" y="0" transform="rotate(270, 50, 50)" />
+                    <use href="#minorTick" x="0" y="0" transform="rotate(300, 50, 50)" />
+                    <use href="#minorTick" x="0" y="0" transform="rotate(330, 50, 50)" />
+                </g>
+            </symbol>
+        </defs>
+    </svg>
+
     <img src="./assets/shortcut_collatz_equation.svg" alt="Collatz Equation" class="collatz-equation">
     <br>
     <button id="open-options" class="btn btn-primary" onclick="Game.toggleOptionsMenu()">Options</button>

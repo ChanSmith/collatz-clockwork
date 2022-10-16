@@ -3,13 +3,18 @@
     // --clock-table-cell-size: 128px;
     // --producer-color: #FF55FF;
     // --verifier-color: #00FF00;
+    --connector-color: #00FF00;
+    --chevron-color: #00FF00;
+    --background-color: #808080;
 
     --hidden_z_index: -1;
+    --connector_z_index: 1;
+    --clock_z_index: 5;
     --foreground_z_index: 10000;
 }
 
 body {
-    background: rgb(128, 128, 128);
+    background: var(--background-color);
 }
 
 .timer-background {
@@ -352,11 +357,13 @@ body {
     &.Producer {
         & circle {
             stroke: var(--producer-color);
+            z-index: var(--clock_z_index);
         }
     }
     &.Verifier {
         & circle {
             stroke: var(--verifier-color);
+            z-index: var(--clock_z_index);
         }
     }
 }

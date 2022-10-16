@@ -94,11 +94,11 @@ class StatisticView extends HTMLDivElement {
     // Since calculating the actual text width is pretty expensive it seems
     update() {
         // this.name_element.textContent = this.stat.displayName();
-        sizeTextToFitParent(this.name_element);
+        sizeTextToFitParent(this.name_element); // Should only need to update when cell size changes (title doesn't change)
         if (this.stat.changed()) {
             this.value_element.textContent = this.stat.value().toString();
         }
-        sizeTextToFitParent(this.value_element);
+        sizeTextToFitParent(this.value_element); // Needs to update when cell size changes or when value changes
         // window.setTimeout(() => this.update(), STATS_UPDATE_INTERVAL);
         window.requestAnimationFrame(() => this.update());
     }
@@ -388,6 +388,7 @@ class TableView {
         timer_background.setAttribute("cx", "50%");
         timer_background.setAttribute("cy", "50%");
         timer_background.setAttribute("r", "25%");
+        clock.svg_element = s;
         clock.circle_element = timer_background;
         clock.animate();
         // this.animateClock(timer_background, clock);
@@ -395,6 +396,13 @@ class TableView {
             clock.animation.currentTime = animationStart;
         }
         s.appendChild(timer_background);
+        let clockFace = document.createElementNS(SVG_NS, "use");
+        clockFace.setAttribute("href", "#clockFace");
+        clockFace.setAttribute("x", "0");
+        clockFace.setAttribute("y", "0");
+        clockFace.setAttribute("width", "100%");
+        clockFace.setAttribute("height", "100%");
+        s.appendChild(clockFace);
         return s;
     }
     generateTableRow(row, size) {
