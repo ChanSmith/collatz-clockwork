@@ -88,14 +88,14 @@ abstract class Clock {
         const upgrade = UPGRADES[upgrade_id];
         let possible_upgrade;
         let disabled = false;
-        const max_upgrade = upgrade.getMaxPurchaseable(current_level, Game.game_state.ops.value());
+        const max_upgrade = upgrade.getMaxPurchaseable(current_level, Game.game_state.money.value());
         if (max_upgrade === null) {
             possible_upgrade = {level: current_level+1, cost: upgrade.getCost(current_level+1)};;
             disabled = true;
         } else {
             const max_amount = max_upgrade.level - current_level;
             const amount = Math.max(1, Math.floor(max_amount * slider_value));
-            const cost = UPGRADES[upgrade_id].getCostRange(current_level, current_level + amount);
+            const cost = UPGRADES[upgrade_id].getCostRange(current_level+1, current_level + amount);
             possible_upgrade = {level: current_level + amount, cost: cost};
         }
         return {
@@ -142,11 +142,26 @@ abstract class Clock {
 
     addPlaybackSpeedGraphic(applied_level: number, new_level:number) {
         for (let i = applied_level + 1; i <= new_level; i++) {
-            const y_offset = 5 * i;
+            const offset = 5 * i;
             const use = document.createElementNS(SVG_NS, "use");
+            use.classList.add("playback-speed-chevron");
+            use.setAttribute("href", "#chevron");
+            use.setAttribute("x", `${90-offset}%`);
+            use.setAttribute("y", "90%");
+            use.setAttribute("width", "10%");
+            use.setAttribute("height", "10%");
+            this.svg_element.appendChild(use);
+        }
+    }
+
+    addMoneyUpgradeGraphic(applied_level: number, new_level: number) {
+        for (let i = applied_level + 1; i <= new_level; i++) {
+            const offset = 4 * i;
+            const use = document.createElementNS(SVG_NS, "use");
+            use.classList.add("money-chevron");
             use.setAttribute("href", "#chevron");
             use.setAttribute("x", "90%");
-            use.setAttribute("y", y_offset + "%");
+            use.setAttribute("y", `${offset}%`);
             use.setAttribute("width", "10%");
             use.setAttribute("height", "10%");
             this.svg_element.appendChild(use);
@@ -165,7 +180,9 @@ abstract class Clock {
         } else if (id === "advance_adjacent") {
             this.addConnectorGraphic();
         } else if (id === "applications_per_cycle") {
-            
+            // TODO: Add some sort of visual to the svg
+        } else if (id === "money_per_application") {
+            this.addMoneyUpgradeGraphic(applied_level, new_level);
         }
         this.graphics_state[id] = {applied_level: new_level};
     }
@@ -299,21 +316,25 @@ class ProducerClock extends Clock {
     tick() {
         super.tick();
         const op_count = this.getOpCount();
-        const applied_ops = Game.applyOps(op_count);
-
-        if (applied_ops > 0) {
+        const money_multiplier = this.getMoneyMultiplier();
+        const applied_ops = Game.applyOps(op_count, money_multiplier);
+        const success = applied_ops > 0;
+        if (success) {
             this.advanceAdjacent();
         }
 
         // TODO: animate the cell multiple times, or show a different color based on ratio 
         // of applied ops to requested ops.
         // Or just chose number of sucessful and failed ops in the cell somewhere
-        const success = applied_ops > 0;
         Game.table_view.animateCellSuccess(this.options.position, success);
     }
 
     getOpCount(): number {
         return 1 + this.upgrade_tree.getUpgradeLevel("applications_per_cycle");
+    }
+
+    getMoneyMultiplier(): number {
+        return 1 << this.upgrade_tree.getUpgradeLevel("money_per_application");
     }
 
     advanceAdjacent() {

@@ -8,7 +8,7 @@ class Game {
         Game.table_view = new TableView();
         Game.clock_manager = new ClockManager();
         Game.game_state = new GameState();
-        Game.table_view.addStatistic(Game.game_state.ops);
+        Game.table_view.addStatistic(Game.game_state.money);
         Game.table_view.addStatistic(Game.game_state.checking);
         Game.table_view.addStatistic(Game.game_state.n);
     }
@@ -168,10 +168,11 @@ class Game {
     static purchase(possible_upgrade) {
         Game.game_state.purchase(possible_upgrade);
     }
-    static applyOps(amount) {
+    static applyOps(amount, money_multiplier = 1) {
         const seq = Game.generator.getSequence(Game.game_state.n.value(), amount);
         if (seq.length > 0) {
             Game.game_state.applySequence(seq);
+            Game.game_state.money.add(Math.floor(amount * money_multiplier));
             return seq.length;
         }
         return 0;

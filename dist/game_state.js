@@ -72,7 +72,7 @@ class Resource extends DisplayableNumber {
 }
 class GameState {
     constructor() {
-        this.ops = new Resource('Money', 0);
+        this.money = new Resource('Money', 0);
         this.n = new Statistic('n', 2);
         this.checking = new Statistic('Checking', 2);
         this.length = new Statistic('Length', 1);
@@ -84,7 +84,6 @@ class GameState {
         this.length.set(this.current_seq.push(...seq));
         this.current_iter += applied;
         this.n.set(seq[seq.length - 1]);
-        this.ops.add(applied);
     }
     resetSequence(from) {
         this.current_seq = [from];
@@ -93,10 +92,10 @@ class GameState {
         this.length.set(1);
     }
     canPurchase(possible_upgrade) {
-        return this.ops.value() >= possible_upgrade.cost;
+        return this.money.value() >= possible_upgrade.cost;
     }
     purchase(possible_upgrade) {
-        this.ops.subtract(possible_upgrade.cost);
+        this.money.subtract(possible_upgrade.cost);
     }
     canVerify() {
         return this.n.equals(1);

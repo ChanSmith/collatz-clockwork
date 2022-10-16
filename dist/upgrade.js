@@ -1,4 +1,4 @@
-// Cost model: cost(level) = base_cost * (level_multiplier^level) * (purchased_multiplier ^ x)
+// Cost model: cost(level) = base_cost * (level_multiplier^level-1) * (purchased_multiplier ^ x)
 // Rounded to the nearest integer
 // Where x is the number of times this upgrade has been purchased at level
 // Level effects start at 1 (i.e. 0 is unpurchased)
@@ -8,11 +8,13 @@ const UPGRADES_OPTIONS = {
         description: "Applies f an additional time each cycle.",
         base_cost: 1,
         level_multiplier: 1.5,
-        purchased_multiplier: 1.10,
+        purchased_multiplier: 1.5,
         max_level: Infinity,
         max_graphics_level: Infinity,
         unlocks: {
-            4: ["advance_adjacent"],
+            5: ["advance_adjacent"],
+            // Can also be unlocked by advance_adjacent level 5
+            10: ["money_per_application"],
         },
         applies_to: {
             Producer: true,
@@ -21,10 +23,24 @@ const UPGRADES_OPTIONS = {
             Producer: true,
         },
     },
+    money_per_application: {
+        name: "Money per application",
+        description: "Doubles the amount of money gained each time this clock applies f.",
+        base_cost: 100,
+        level_multiplier: 2.25,
+        purchased_multiplier: 1.15,
+        max_level: 20,
+        max_graphics_level: 20,
+        unlocks: {},
+        applies_to: {
+            Producer: true,
+        },
+        starts_unlocked_for: {},
+    },
     playback_speed: {
         name: "Playback speed",
         description: "Doubles the speed at which the clock cycles.",
-        base_cost: 1e3,
+        base_cost: 1000,
         level_multiplier: 10.0,
         purchased_multiplier: 1.5,
         max_level: 3,
@@ -46,7 +62,9 @@ const UPGRADES_OPTIONS = {
         max_level: 10,
         max_graphics_level: 1,
         unlocks: {
-            4: ["playback_speed"],
+            5: ["playback_speed",
+                // Can also be unlocked by applications_per_cycle level 10
+                "money_per_application"],
         },
         applies_to: {
             Producer: true,
@@ -81,7 +99,7 @@ class Upgrade {
     }
     // Cost to buy the given level
     getCost(level) {
-        return Math.round(this.options.base_cost * (Math.pow(this.options.level_multiplier, level)) * (Math.pow(this.options.purchased_multiplier, this.getPurchasedCount(level))));
+        return Math.round(this.options.base_cost * (Math.pow(this.options.level_multiplier, (level - 1))) * (Math.pow(this.options.purchased_multiplier, this.getPurchasedCount(level))));
     }
     // Cost to buy the given level range (inclusive)
     getCostRange(from, to) {
@@ -98,7 +116,7 @@ class Upgrade {
         let cost = 0;
         let i = current_level + 1;
         let level_cost = this.getCost(i);
-        while (cost + level_cost < money && i <= this.options.max_level && i < current_level + MAX_ITERATIONS) {
+        while (cost + level_cost <= money && i <= this.options.max_level && i < current_level + MAX_ITERATIONS) {
             cost += level_cost;
             i++;
             level_cost = this.getCost(i);
@@ -216,8 +234,9 @@ const upgrade_test = {
     a: new Upgrade(UPGRADES_OPTIONS.applications_per_cycle),
     b: new Upgrade(UPGRADES_OPTIONS.playback_speed),
     c: new Upgrade(UPGRADES_OPTIONS.advance_adjacent),
-    d: new UpgradeTree("Producer"),
-    e: new UpgradeTree("Verifier"),
+    d: new Upgrade(UPGRADES_OPTIONS.money_per_application),
+    x: new UpgradeTree("Producer"),
+    y: new UpgradeTree("Verifier"),
 };
 function buildUpgrades() {
     const ret = {};

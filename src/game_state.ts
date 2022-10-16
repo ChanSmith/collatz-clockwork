@@ -73,7 +73,7 @@ class Resource extends DisplayableNumber {
 
 class GameState {
 
-    ops: Resource;
+    money: Resource;
     
     // TODO: track failed ops (e.g max consecutive failed ops would be a stat)
     n: Statistic;
@@ -85,7 +85,7 @@ class GameState {
     length: Statistic;
 
     constructor() {
-        this.ops = new Resource('Money', 0);
+        this.money = new Resource('Money', 0);
 
         this.n = new Statistic('n', 2);
         this.checking = new Statistic('Checking', 2);
@@ -101,8 +101,6 @@ class GameState {
         this.length.set(this.current_seq.push(...seq));
         this.current_iter += applied;
         this.n.set(seq[seq.length - 1]);
-
-        this.ops.add(applied);
     }
 
     resetSequence(from: number) {
@@ -113,11 +111,11 @@ class GameState {
     }
 
     canPurchase(possible_upgrade: PossibleUpgradeState): boolean {
-        return this.ops.value() >= possible_upgrade.cost;
+        return this.money.value() >= possible_upgrade.cost;
     }
 
     purchase(possible_upgrade: PossibleUpgradeState) {
-        this.ops.subtract(possible_upgrade.cost);
+        this.money.subtract(possible_upgrade.cost);
     }
 
     canVerify(): boolean {

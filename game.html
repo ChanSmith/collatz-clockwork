@@ -12,7 +12,9 @@
     <svg hidden="true" width="0" height="0">
         <defs>
             <symbol id="chevron" viewBox="0 0 9 6" width="9" height="6">
-                <polygon style="fill: var(--chevron-color);" class="chevron" points="0,6 4.5,0 9,6 7.5,6 4.5,2 1.5,6" />
+                <g style="transform: var(--transform);" transform-origin="center">
+                    <polygon style="fill: var(--chevron-color);" class="chevron" points="0,6 4.5,0 9,6 7.5,6 4.5,2 1.5,6" />
+                </g>
             </symbol>
 
             <symbol class="connector" id="connectAdjacent" viewBox="0 0 10 10" z-index="0">
@@ -67,7 +69,7 @@
     <button id="add-col-button" class="btn btn-primary" onclick="Game.addColumn()">Add column</button>
     <button id="fill-grid-button" class="btn btn-primary" onclick="Game.fillGrid()">Fill grid</button>
     <button id="redist-time-button" class="btn btn-primary" onclick="Game.redistributeTimes()">Redistribute times</button>
-    <button id="add-money-button" class="btn btn-primary" onclick="Game.game_state.ops.add(1000000)">Add money</button>
+    <button id="add-money-button" class="btn btn-primary" onclick="Game.game_state.money.add(1000000 + Game.game_state.money.value())">Add money</button>
 
     <div id="options-menu" is="options-menu"></div>
     <div id="game-container">

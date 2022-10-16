@@ -4,7 +4,7 @@
     // --producer-color: #FF55FF;
     // --verifier-color: #00FF00;
     --connector-color: #00FF00;
-    --chevron-color: #00FF00;
+    
     --background-color: #808080;
 
     --major-tick-color: #000000;
@@ -363,4 +363,9 @@ use.Producer {
 
 use.Verifier {
     --color: var(--verifier-color);
+}
+
+use.playback-speed-chevron {
+    --transform: rotate(90deg);
+    --chevron-color: #00FF00;
 }
