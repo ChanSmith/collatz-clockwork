@@ -82,6 +82,9 @@ class PriorityQueue {
     reset(values) {
         __classPrivateFieldSet(this, _PriorityQueue_heap, values.slice(), "f");
         __classPrivateFieldSet(this, _PriorityQueue_map, new Map(), "f");
+        if (values.length === 0) {
+            return;
+        }
         for (let i = 0; i < __classPrivateFieldGet(this, _PriorityQueue_heap, "f").length; i++) {
             __classPrivateFieldGet(this, _PriorityQueue_map, "f").set(__classPrivateFieldGet(this, _PriorityQueue_heap, "f")[i], i);
         }
@@ -95,6 +98,12 @@ class PriorityQueue {
             __classPrivateFieldGet(this, _PriorityQueue_map, "f").set(v, __classPrivateFieldGet(this, _PriorityQueue_heap, "f").length - 1);
             __classPrivateFieldGet(this, _PriorityQueue_instances, "m", _PriorityQueue_bubbleUp).call(this, __classPrivateFieldGet(this, _PriorityQueue_heap, "f").length - 1);
         }
+    }
+    peek() {
+        return __classPrivateFieldGet(this, _PriorityQueue_heap, "f")[0];
+    }
+    peekPriority() {
+        return __classPrivateFieldGet(this, _PriorityQueue_priorityFunction, "f").call(this, __classPrivateFieldGet(this, _PriorityQueue_heap, "f")[0]);
     }
     pop() {
         if (__classPrivateFieldGet(this, _PriorityQueue_heap, "f").length === 0) {
@@ -114,6 +123,11 @@ class PriorityQueue {
         const i = __classPrivateFieldGet(this, _PriorityQueue_map, "f").get(v);
         if (i !== undefined) {
             __classPrivateFieldGet(this, _PriorityQueue_instances, "m", _PriorityQueue_bubbleUp).call(this, i);
+            __classPrivateFieldGet(this, _PriorityQueue_instances, "m", _PriorityQueue_bubbleDown).call(this, i);
+        }
+    }
+    updateAllPriorities() {
+        for (let i = Math.floor(__classPrivateFieldGet(this, _PriorityQueue_heap, "f").length / 2); i >= 0; i--) {
             __classPrivateFieldGet(this, _PriorityQueue_instances, "m", _PriorityQueue_bubbleDown).call(this, i);
         }
     }

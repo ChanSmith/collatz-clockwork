@@ -73,7 +73,8 @@ const UPGRADES_OPTIONS = {
 };
 const ADVANCE_ADJACENT_AMOUNT = 250;
 class Upgrade {
-    constructor(options) {
+    constructor(id, options) {
+        this.id = id;
         this.options = Object.assign({}, options);
         this.purchased_counts = new Map();
     }
@@ -121,7 +122,7 @@ class Upgrade {
             i++;
             level_cost = this.getCost(i);
         }
-        return cost > 0 ? { level: i - 1, cost: cost } : null;
+        return cost > 0 ? { level: i - 1, cost: cost, id: this.id } : null;
     }
 }
 function upgradeIds(obj) {
@@ -153,9 +154,10 @@ class UpgradeTree {
         const possible_upgrades = {};
         for (const upgrade_id in this.unlocked) {
             const upgrade = UPGRADES[upgrade_id];
-            // TODO: check if the player has enough resources
             if (upgrade.options.max_level > this.unlocked[upgrade_id].level) {
                 possible_upgrades[upgrade_id] = {
+                    // Why didn't I get a type error for not including id?
+                    id: upgrade_id,
                     level: this.unlocked[upgrade_id].level + 1,
                     cost: upgrade.getCost(this.unlocked[upgrade_id].level + 1)
                 };
@@ -200,6 +202,9 @@ class UpgradeTree {
     applyUpgrade(id, u) {
         const upgrade_options = UPGRADES_OPTIONS[id];
         const state = this.unlocked[id];
+        if (!state) {
+            throw new Error(`Upgrade ${id} is not unlocked. Trying to apply upgrade ${u.level} to it.`);
+        }
         const old_level = state.level;
         const new_level = u.level;
         if ('unlocks' in upgrade_options) {
@@ -229,19 +234,10 @@ class UpgradeTree {
         }
     }
 }
-const upgrade_test = {
-    // Just to test types are correct
-    a: new Upgrade(UPGRADES_OPTIONS.applications_per_cycle),
-    b: new Upgrade(UPGRADES_OPTIONS.playback_speed),
-    c: new Upgrade(UPGRADES_OPTIONS.advance_adjacent),
-    d: new Upgrade(UPGRADES_OPTIONS.money_per_application),
-    x: new UpgradeTree("Producer"),
-    y: new UpgradeTree("Verifier"),
-};
 function buildUpgrades() {
     const ret = {};
     for (const upgrade_id in UPGRADES_OPTIONS) {
-        ret[upgrade_id] = new Upgrade(UPGRADES_OPTIONS[upgrade_id]);
+        ret[upgrade_id] = new Upgrade(upgrade_id, UPGRADES_OPTIONS[upgrade_id]);
     }
     return ret;
 }

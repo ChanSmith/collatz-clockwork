@@ -47,6 +47,9 @@ class ClockManager {
     getClock(pos) {
         return this.grid.get(pos.toString());
     }
+    getClocks() {
+        return Array.from(this.grid.values());
+    }
     moveClock(from, to) {
         let c = this.removeClock(from);
         if (!c) {

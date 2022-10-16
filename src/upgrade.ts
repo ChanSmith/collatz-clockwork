@@ -108,218 +108,216 @@ type UpgradeOptions = {
 }
 
 class Upgrade {
+
+    id: UpgradeId;
     options: UpgradeOptions;
     // The number of times this upgrade has been purchased at the given level
     purchased_counts: Map<number, number>;
     
-    constructor(
-        options: UpgradeOptions
-        ) {
-            this.options = {...options};
-            this.purchased_counts = new Map();
+    constructor(id:UpgradeId, options: UpgradeOptions) {
+        this.id = id;
+        this.options = {...options};
+        this.purchased_counts = new Map();
+    }
+    
+    // Record a purchase of upgrade at level
+    recordPurchase(level: number) {
+        if (!this.purchased_counts.has(level)) {
+            this.purchased_counts.set(level, 0);
         }
-        
-        // Record a purchase of upgrade at level
-        recordPurchase(level: number) {
-            if (!this.purchased_counts.has(level)) {
-                this.purchased_counts.set(level, 0);
-            }
-            this.purchased_counts.set(level, this.purchased_counts.get(level)! + 1);
-        }
-        
-        // Record a purchase of upgrade from old_level to new_level
-        recordPurchaseRange(old_level: number, new_level: number) {
-            for (const i of range(old_level + 1, new_level + 1)) {
-                this.recordPurchase(i);
-            }
-        }
-        
-        // Get the number of times this upgrade has been purchased at the given level
-        getPurchasedCount(level: number): number {
-            if (!this.purchased_counts.has(level)) {
-                return 0;
-            }
-            return this.purchased_counts.get(level)!;
-        }
-        
-        // Cost to buy the given level
-        getCost(level:number): number {
-            return Math.round(this.options.base_cost * (this.options.level_multiplier ** (level-1)) * (this.options.purchased_multiplier ** this.getPurchasedCount(level)));
-        }
-        
-        // Cost to buy the given level range (inclusive)
-        getCostRange(from: number, to: number): number {
-            let ret = 0;
-            for (const i of range(from, to+1)) {
-                ret += this.getCost(i);
-            }
-            return ret;
-        }
-        
-        // TODO: see if it's worth it to avoid half-1 of the pow calls 
-        // by doing the multiplcation for level_multiplier instead of calling getCost
-        getMaxPurchaseable(current_level: number, money: number): PossibleUpgradeState | null {
-            const MAX_ITERATIONS = 100000; // in case I messed something up
-            let cost = 0;
-            let i = current_level + 1;
-            let level_cost = this.getCost(i);
-            while (cost + level_cost <= money && i <= this.options.max_level && i < current_level + MAX_ITERATIONS) {
-                cost += level_cost;
-                i++;
-                level_cost = this.getCost(i);
-            }
-            
-            return  cost > 0 ? {level: i-1, cost: cost} : null;
+        this.purchased_counts.set(level, this.purchased_counts.get(level)! + 1);
+    }
+    
+    // Record a purchase of upgrade from old_level to new_level
+    recordPurchaseRange(old_level: number, new_level: number) {
+        for (const i of range(old_level + 1, new_level + 1)) {
+            this.recordPurchase(i);
         }
     }
     
-    interface UpgradeState {
-        level: number,
+    // Get the number of times this upgrade has been purchased at the given level
+    getPurchasedCount(level: number): number {
+        if (!this.purchased_counts.has(level)) {
+            return 0;
+        }
+        return this.purchased_counts.get(level)!;
     }
     
-    // type UpgradeStateMap = Map<UpgradeId, UpgradeState>;
-    type UpgradeStateMap = {
-        [U in UpgradeId]?: UpgradeState;
+    // Cost to buy the given level
+    getCost(level:number): number {
+        return Math.round(this.options.base_cost * (this.options.level_multiplier ** (level-1)) * (this.options.purchased_multiplier ** this.getPurchasedCount(level)));
     }
     
-    interface PossibleUpgradeState extends UpgradeState {
-        cost: number,
-    }
-    type PossibleUpgrades = {
-        [U in UpgradeId]?: PossibleUpgradeState;
-    }
-    
-    type HasUpgradeKeys = {
-        [U in UpgradeId]?: any
-    }
-    
-    function upgradeIds(obj: HasUpgradeKeys) : readonly UpgradeId[]  {
-        return Object.keys(obj).filter(x => x in UPGRADES_OPTIONS) as readonly UpgradeId[];
-    }
-    
-    class UpgradeTree {
-        // Upgrades that can be purchased / leveled up
-        unlocked: UpgradeStateMap = {};
-        // Upgrades that can't be purchased yet
-        locked: UpgradeStateMap = {};
-        // Upgrades that have reached the max level
-        maxed: UpgradeStateMap = {};
-        
-        constructor(public type: ClockType) {
-            for (const upgrade_id in UPGRADES_OPTIONS) {
-                const upgrade_options = UPGRADES_OPTIONS[upgrade_id];
-                if (upgrade_options.applies_to[type]) {
-                    if ('starts_unlocked_for' in upgrade_options && upgrade_options.starts_unlocked_for[type]) {
-                        this.unlocked[upgrade_id] = {level: 0};
-                    } else {
-                        this.locked[upgrade_id] = {level: 0};
-                    }
-                }
-            }
-        }
-        // TODO: make this take in the resources and a setting for quantity (1, 10, 100, max)
-        getPossibleUpgrades(): PossibleUpgrades {
-            const possible_upgrades: PossibleUpgrades = {};
-            for (const upgrade_id in this.unlocked) {
-                const upgrade = UPGRADES[upgrade_id];
-                // TODO: check if the player has enough resources
-                if(upgrade.options.max_level > this.unlocked[upgrade_id]!.level) {
-                    possible_upgrades[upgrade_id] = {
-                        level: this.unlocked[upgrade_id]!.level + 1,
-                        cost: upgrade.getCost(this.unlocked[upgrade_id]!.level + 1)
-                    };
-                }
-            }
-            return possible_upgrades;
-        }
-        
-        getLockedIds(): readonly UpgradeId[] {
-            return upgradeIds(this.locked);
-        }
-        
-        getUnlockedIds(): readonly UpgradeId[] {
-            return upgradeIds(this.unlocked);
-        }
-        
-        getMaxedIds(): readonly UpgradeId[] {
-            return upgradeIds(this.maxed);
-        }
-        
-        getMaxPossibleUpgrades(currency: number): PossibleUpgrades {
-            const possible_upgrades: PossibleUpgrades = {};
-            for (const upgrade_id in this.unlocked) {
-                const upgrade = UPGRADES[upgrade_id];
-                
-                const max_purchaseable = upgrade.getMaxPurchaseable(this.unlocked[upgrade_id]!.level, currency);
-                if (max_purchaseable) {
-                    possible_upgrades[upgrade_id] = max_purchaseable;
-                }
-            }
-            return possible_upgrades;
-        }
-        
-        applyUnlocks(unlocks: Unlocks, old_level: number, new_level: number) {
-            for (const level_prop in unlocks) {
-                const level = parseInt(level_prop);
-                if (level <= old_level || level > new_level) continue;
-                for (const unlock_id of unlocks[level]) {
-                    const unlock_options = UPGRADES_OPTIONS[unlock_id];
-                    if (unlock_options.applies_to[this.type]) {
-                        this.unlocked[unlock_id] = { level: 0 };
-                        delete this.locked[unlock_id];
-                    }
-                }
-                
-            }
-        }
-        
-        applyUpgrade(id: UpgradeId, u: PossibleUpgradeState) {
-            const upgrade_options = UPGRADES_OPTIONS[id];
-            const state = this.unlocked[id]!;
-            const old_level = state.level;
-            const new_level = u.level;
-            if ('unlocks' in upgrade_options) {
-                this.applyUnlocks(upgrade_options.unlocks, old_level, new_level);
-            }
-            if (new_level >= upgrade_options.max_level) {
-                delete this.unlocked[id];
-                this.maxed[id] = {level: new_level};
-            } else {
-                state.level = u.level;
-            }
-            UPGRADES[id].recordPurchaseRange(old_level, new_level);
-        }
-        
-        getUpgradeLevel(id: UpgradeId): number {
-            if (id in this.unlocked) {
-                return this.unlocked[id]!.level;
-            } else if (id in this.locked) {
-                return this.locked[id]!.level;
-            } else if (id in this.maxed) {
-                return this.maxed[id]!.level;
-            } else {
-                return 0;
-            }
-        }
-        
-    }
-    const upgrade_test = {
-        // Just to test types are correct
-        a : new Upgrade(UPGRADES_OPTIONS.applications_per_cycle),
-        b : new Upgrade(UPGRADES_OPTIONS.playback_speed),
-        c : new Upgrade(UPGRADES_OPTIONS.advance_adjacent),
-        d : new Upgrade(UPGRADES_OPTIONS.money_per_application),
-        x : new UpgradeTree("Producer"),
-        y : new UpgradeTree("Verifier"),
-    }
-    
-    function buildUpgrades() {
-        const ret = {};
-        for (const upgrade_id in UPGRADES_OPTIONS) {
-            ret[upgrade_id] = new Upgrade(UPGRADES_OPTIONS[upgrade_id]);
+    // Cost to buy the given level range (inclusive)
+    getCostRange(from: number, to: number): number {
+        let ret = 0;
+        for (const i of range(from, to+1)) {
+            ret += this.getCost(i);
         }
         return ret;
     }
-    type Upgrades = { [U in UpgradeId]: Upgrade } 
     
-    const UPGRADES: Upgrades = buildUpgrades() as Upgrades;
+    // TODO: see if it's worth it to avoid half-1 of the pow calls 
+    // by doing the multiplcation for level_multiplier instead of calling getCost
+    getMaxPurchaseable(current_level: number, money: number): PossibleUpgradeState | null {
+        const MAX_ITERATIONS = 100000; // in case I messed something up
+        let cost = 0;
+        let i = current_level + 1;
+        let level_cost = this.getCost(i);
+        while (cost + level_cost <= money && i <= this.options.max_level && i < current_level + MAX_ITERATIONS) {
+            cost += level_cost;
+            i++;
+            level_cost = this.getCost(i);
+        }
+        
+        return  cost > 0 ? {level: i-1, cost: cost, id: this.id} : null;
+    }
+}
+
+interface UpgradeState {
+    level: number,
+}
+
+// type UpgradeStateMap = Map<UpgradeId, UpgradeState>;
+type UpgradeStateMap = {
+    [U in UpgradeId]?: UpgradeState;
+}
+
+interface PossibleUpgradeState extends UpgradeState {
+    id: UpgradeId,
+    cost: number,
+}
+type PossibleUpgrades = {
+    [U in UpgradeId]?: PossibleUpgradeState;
+}
+
+
+type HasUpgradeKeys = {
+    [U in UpgradeId]?: any
+}
+
+function upgradeIds(obj: HasUpgradeKeys) : readonly UpgradeId[]  {
+    return Object.keys(obj).filter(x => x in UPGRADES_OPTIONS) as readonly UpgradeId[];
+}
+
+class UpgradeTree {
+    // Upgrades that can be purchased / leveled up
+    unlocked: UpgradeStateMap = {};
+    // Upgrades that can't be purchased yet
+    locked: UpgradeStateMap = {};
+    // Upgrades that have reached the max level
+    maxed: UpgradeStateMap = {};
+    
+    constructor(public type: ClockType) {
+        for (const upgrade_id in UPGRADES_OPTIONS) {
+            const upgrade_options = UPGRADES_OPTIONS[upgrade_id];
+            if (upgrade_options.applies_to[type]) {
+                if ('starts_unlocked_for' in upgrade_options && upgrade_options.starts_unlocked_for[type]) {
+                    this.unlocked[upgrade_id] = {level: 0};
+                } else {
+                    this.locked[upgrade_id] = {level: 0};
+                }
+            }
+        }
+    }
+    // TODO: make this take in the resources and a setting for quantity (1, 10, 100, max)
+    getPossibleUpgrades(): PossibleUpgrades {
+        const possible_upgrades: PossibleUpgrades = {};
+        for (const upgrade_id in this.unlocked) {
+            const upgrade = UPGRADES[upgrade_id];
+            if(upgrade.options.max_level > this.unlocked[upgrade_id]!.level) {
+                possible_upgrades[upgrade_id] = {
+                    // Why didn't I get a type error for not including id?
+                    id: upgrade_id,
+                    level: this.unlocked[upgrade_id]!.level + 1,
+                    cost: upgrade.getCost(this.unlocked[upgrade_id]!.level + 1)
+                };
+            }
+        }
+        return possible_upgrades;
+    }
+    
+    getLockedIds(): readonly UpgradeId[] {
+        return upgradeIds(this.locked);
+    }
+    
+    getUnlockedIds(): readonly UpgradeId[] {
+        return upgradeIds(this.unlocked);
+    }
+    
+    getMaxedIds(): readonly UpgradeId[] {
+        return upgradeIds(this.maxed);
+    }
+    
+    getMaxPossibleUpgrades(currency: number): PossibleUpgrades {
+        const possible_upgrades: PossibleUpgrades = {};
+        for (const upgrade_id in this.unlocked) {
+            const upgrade = UPGRADES[upgrade_id];
+            
+            const max_purchaseable = upgrade.getMaxPurchaseable(this.unlocked[upgrade_id]!.level, currency);
+            if (max_purchaseable) {
+                possible_upgrades[upgrade_id] = max_purchaseable;
+            }
+        }
+        return possible_upgrades;
+    }
+    
+    applyUnlocks(unlocks: Unlocks, old_level: number, new_level: number) {
+        for (const level_prop in unlocks) {
+            const level = parseInt(level_prop);
+            if (level <= old_level || level > new_level) continue;
+            for (const unlock_id of unlocks[level]) {
+                const unlock_options = UPGRADES_OPTIONS[unlock_id];
+                if (unlock_options.applies_to[this.type]) {
+                    this.unlocked[unlock_id] = { level: 0 };
+                    delete this.locked[unlock_id];
+                }
+            }
+            
+        }
+    }
+    
+    applyUpgrade(id: UpgradeId, u: PossibleUpgradeState) {
+        const upgrade_options = UPGRADES_OPTIONS[id];
+        const state = this.unlocked[id];
+        if (!state) {
+            throw new Error(`Upgrade ${id} is not unlocked. Trying to apply upgrade ${u.level} to it.`);
+        }
+        const old_level = state.level;
+        const new_level = u.level;
+        if ('unlocks' in upgrade_options) {
+            this.applyUnlocks(upgrade_options.unlocks, old_level, new_level);
+        }
+        if (new_level >= upgrade_options.max_level) {
+            delete this.unlocked[id];
+            this.maxed[id] = {level: new_level};
+        } else {
+            state.level = u.level;
+        }
+        UPGRADES[id].recordPurchaseRange(old_level, new_level);
+    }
+    
+    getUpgradeLevel(id: UpgradeId): number {
+        if (id in this.unlocked) {
+            return this.unlocked[id]!.level;
+        } else if (id in this.locked) {
+            return this.locked[id]!.level;
+        } else if (id in this.maxed) {
+            return this.maxed[id]!.level;
+        } else {
+            return 0;
+        }
+    }
+    
+}
+
+function buildUpgrades() {
+    const ret = {};
+    for (const upgrade_id in UPGRADES_OPTIONS) {
+        ret[upgrade_id] = new Upgrade(upgrade_id as UpgradeId, UPGRADES_OPTIONS[upgrade_id]);
+    }
+    return ret;
+}
+type Upgrades = { [U in UpgradeId]: Upgrade } 
+
+const UPGRADES: Upgrades = buildUpgrades() as Upgrades;

@@ -53,6 +53,31 @@ class Clock {
     getMaxPossibleUpgrades(currency) {
         return this.upgrade_tree.getMaxPossibleUpgrades(currency);
     }
+    getCheapestUpgrade() {
+        const possible_upgrades = this.upgrade_tree.getPossibleUpgrades();
+        let cheapest = null;
+        for (const id of Object.keys(possible_upgrades)) {
+            const possible_upgrade = possible_upgrades[id];
+            if (cheapest === null
+                || possible_upgrade.cost < cheapest.cost
+                // Prefer upgrades that are lower level (just to make it consistent)
+                || (possible_upgrade.cost == cheapest.cost && possible_upgrade.level < cheapest.level)) {
+                cheapest = possible_upgrade;
+            }
+        }
+        return cheapest;
+    }
+    getMostExpensiveUpgrade() {
+        const possible_upgrades = this.upgrade_tree.getPossibleUpgrades();
+        let most_expensive = null;
+        for (const id of Object.keys(possible_upgrades)) {
+            const possible_upgrade = possible_upgrades[id];
+            if (most_expensive === null || possible_upgrade.cost > most_expensive.cost) {
+                most_expensive = possible_upgrade;
+            }
+        }
+        return most_expensive;
+    }
     generateLabel(upgrade_id, possible_upgrade) {
         const current_level = this.upgrade_tree.getUpgradeLevel(upgrade_id);
         const amount = possible_upgrade.level - current_level;
@@ -67,7 +92,7 @@ class Clock {
         let disabled = false;
         const max_upgrade = upgrade.getMaxPurchaseable(current_level, Game.game_state.money.value());
         if (max_upgrade === null) {
-            possible_upgrade = { level: current_level + 1, cost: upgrade.getCost(current_level + 1) };
+            possible_upgrade = { level: current_level + 1, cost: upgrade.getCost(current_level + 1), id: upgrade_id };
             ;
             disabled = true;
         }
@@ -75,11 +100,11 @@ class Clock {
             const max_amount = max_upgrade.level - current_level;
             const amount = Math.max(1, Math.floor(max_amount * slider_value));
             const cost = UPGRADES[upgrade_id].getCostRange(current_level + 1, current_level + amount);
-            possible_upgrade = { level: current_level + amount, cost: cost };
+            possible_upgrade = { level: current_level + amount, cost: cost, id: upgrade_id };
         }
         return {
             label: this.generateLabel(upgrade_id, possible_upgrade),
-            callback: () => this.applyUpgrade(upgrade_id, possible_upgrade),
+            callback: () => this.applyUpgrade(possible_upgrade),
             sliderCallback: (new_slider_value) => {
                 return this.generateUpgradeMenuOption(upgrade_id, new_slider_value);
             },
@@ -95,8 +120,9 @@ class Clock {
         return ret;
     }
     // TODO: Add some sort of visual to the cell
-    applyUpgrade(id, possible_upgrade) {
+    applyUpgrade(possible_upgrade) {
         Game.purchase(possible_upgrade);
+        const id = possible_upgrade.id;
         const current_level = this.upgrade_tree.getUpgradeLevel(id);
         this.upgrade_tree.applyUpgrade(id, possible_upgrade);
         if (id == "playback_speed") {

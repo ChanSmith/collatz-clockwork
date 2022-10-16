@@ -86,6 +86,9 @@ class PriorityQueue<T> {
     reset(values: Array<T>) {
         this.#heap = values.slice();
         this.#map = new Map();
+        if (values.length === 0) {
+            return;
+        }
         for (let i = 0; i < this.#heap.length; i++) {
             this.#map.set(this.#heap[i], i);
         }
@@ -100,6 +103,14 @@ class PriorityQueue<T> {
             this.#map.set(v, this.#heap.length - 1);
             this.#bubbleUp(this.#heap.length - 1);
         }
+    }
+
+    peek(): T | undefined {
+        return this.#heap[0];
+    }
+
+    peekPriority(): number {
+        return this.#priorityFunction(this.#heap[0]);
     }
 
     pop(): T | undefined {
@@ -148,6 +159,12 @@ class PriorityQueue<T> {
         const i = this.#map.get(v);
         if (i !== undefined) {
             this.#bubbleUp(i);
+            this.#bubbleDown(i);
+        }
+    }
+
+    updateAllPriorities() {
+        for (let i = Math.floor(this.#heap.length / 2); i >= 0; i--) {
             this.#bubbleDown(i);
         }
     }

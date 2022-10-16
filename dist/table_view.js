@@ -518,6 +518,38 @@ class TableView {
             this.getRow(i).appendChild(cell);
         }
     }
-    updateTable() {
+    buyAllUpgrades(cheapest_first = false) {
+        // keep track of clocks upgrades in priority queue sorted by cheapest available upgrade
+        // Repeatedly buy the cheapest upgrade until we can't afford it
+        // Since costs depend on the number of upgrades, we need to recompute the costs.
+        const clocks = Game.clock_manager.getClocks();
+        const priorityFunction = cheapest_first ? cheapestFirst : mostExpensiveFirst;
+        const pq = new PriorityQueue(priorityFunction);
+        pq.reset(clocks);
+        let clock = pq.pop();
+        let upgrade = clock === null || clock === void 0 ? void 0 : clock.getCheapestUpgrade();
+        const MAX_PURCHASES = 100000; // Mostly case I messed up
+        let purchased = 0;
+        while (clock && upgrade && Game.canPurchase(upgrade) && purchased < MAX_PURCHASES) {
+            clock.applyUpgrade(upgrade);
+            pq.push(clock);
+            purchased++;
+            clock = pq.pop();
+            upgrade = clock === null || clock === void 0 ? void 0 : clock.getCheapestUpgrade();
+        }
     }
 }
+const cheapestFirst = (clock) => {
+    const cheapest = clock.getCheapestUpgrade();
+    if (cheapest) {
+        return cheapest.cost;
+    }
+    return Infinity;
+};
+const mostExpensiveFirst = (clock) => {
+    const priciest = clock.getMostExpensiveUpgrade();
+    if (priciest) {
+        return -priciest.cost;
+    }
+    return Infinity;
+};

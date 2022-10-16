@@ -355,9 +355,6 @@ class TableView {
 
     }
 
-
-
-
     animateClock(element: SVGCircleElement, clock: Clock, offset: number = 0) {
         let background_anim = element.animate(clock_background_keyframes, clock_background_timing);
         background_anim.currentTime = offset;
@@ -629,6 +626,42 @@ class TableView {
         }
     }
 
-    updateTable() {
+    buyAllUpgrades(cheapest_first: boolean = false) {
+        // keep track of clocks upgrades in priority queue sorted by cheapest available upgrade
+        // Repeatedly buy the cheapest upgrade until we can't afford it
+        // Since costs depend on the number of upgrades, we need to recompute the costs.
+
+        const clocks = Game.clock_manager.getClocks();
+        const priorityFunction = cheapest_first ? cheapestFirst : mostExpensiveFirst;
+        const pq = new PriorityQueue<Clock>(priorityFunction);
+        pq.reset(clocks);
+        let clock = pq.pop();
+        let upgrade = clock?.getCheapestUpgrade();
+        const MAX_PURCHASES = 100000; // Mostly case I messed up
+        let purchased = 0;
+        while (clock && upgrade && Game.canPurchase(upgrade) && purchased < MAX_PURCHASES) {
+                clock.applyUpgrade(upgrade);
+                pq.push(clock);
+                purchased++;
+                clock = pq.pop();
+                upgrade = clock?.getCheapestUpgrade();
+        }
     }
 }
+
+
+const cheapestFirst = (clock: Clock) => {
+    const cheapest = clock.getCheapestUpgrade();
+    if (cheapest) {
+        return cheapest.cost;
+    }
+    return Infinity;
+};
+
+const mostExpensiveFirst = (clock: Clock) => {
+    const priciest = clock.getMostExpensiveUpgrade();
+    if (priciest) {
+        return -priciest.cost;
+    }
+    return Infinity;
+};
