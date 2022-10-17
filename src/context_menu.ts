@@ -34,6 +34,8 @@ interface MenuOption {
     callback: (ev: MouseEvent) => any;
     // Called when the option menu slider is changed, if the option has a slider
     sliderCallback?: (value: number) => MenuOption;
+    // Additional info to display when the option is hovered
+    description?: string;
     //TODO: add suboptions
     iconClass?: string;
     preventCloseOnClick?: boolean;
@@ -97,6 +99,13 @@ class ContextMenu {
         this.#titleElement.innerText = initial_title;
         title.appendChild(this.#titleElement);
         return title;
+    }
+
+    #generateTooltipElement(description: string) {
+        const tooltip = document.createElement('div');
+        tooltip.classList.add('context-menu-tooltip');
+        tooltip.innerText = description;
+        return tooltip;
     }
 
     // TODO: add option for the slider to be 
@@ -313,6 +322,19 @@ class ContextMenu {
             contextMenu.classList.add(this.#options.customClass);
     };
 
+    #showDescription = (desc: string): void => {
+        const tooltip = this.#generateTooltipElement(desc);
+        this.#contextMenuElement?.appendChild(tooltip);
+
+    }
+
+    #hideDescription = (): void => {
+        const tooltip = document.querySelector('.tooltip');
+        if (tooltip) {
+            tooltip.remove();
+        }
+    }
+
     #bindCallbacks = (htmlEl: HTMLElement, menuOption: MenuOption): void => {
         htmlEl.onclick = () => {
             if (!this.#initialContextMenuEvent) {
@@ -330,6 +352,15 @@ class ContextMenu {
                 ContextMenu.removeExistingContextMenu();
             }
         };
+        if (menuOption.description) {
+            htmlEl.title = menuOption.description;
+            // htmlEl.onmouseover = () => {
+            //     this.#showDescription(menuOption.description!);
+            // };
+            // htmlEl.onmouseout = () => {
+            //     this.#hideDescription();
+            // };
+        }
     };
 
     #onShowContextMenu = (event: MouseEvent): void => {

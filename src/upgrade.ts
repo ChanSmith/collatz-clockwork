@@ -2,8 +2,7 @@
 // Rounded to the nearest integer
 // Where x is the number of times this upgrade has been purchased at level
 // Level effects start at 1 (i.e. 0 is unpurchased)
-
-const UPGRADES_OPTIONS = {
+const UPGRADE_OPTIONS = {
     applications_per_cycle: {
         name: "Extra f per cycle",
         description: "Applies f an additional time each cycle.",
@@ -17,8 +16,7 @@ const UPGRADES_OPTIONS = {
             5: ["advance_adjacent"],
             // Can also be unlocked by advance_adjacent level 5
             10: ["money_per_application"],
-        }
-        ,
+        } as const,
         applies_to: {
             Producer: true,
         },
@@ -68,21 +66,24 @@ const UPGRADES_OPTIONS = {
             5: ["playback_speed",
             // Can also be unlocked by applications_per_cycle level 10
             "money_per_application"],
-        }
+        } as const
         ,
         applies_to: {
             Producer: true,
         }
     },
-} as const;
+};
 
 const ADVANCE_ADJACENT_AMOUNT = 250;
 
 type Unlocks = {
     readonly [key: number]: readonly UpgradeId[];
 }
+type UnlockSources = {
+    [key in UpgradeId]?: number;
+}
 
-type UpgradeId = keyof typeof UPGRADES_OPTIONS;
+type UpgradeId = keyof typeof UPGRADE_OPTIONS;
 
 
 type UpgradeOptions = {
@@ -101,6 +102,7 @@ type UpgradeOptions = {
     max_graphics_level: number,
     // What other upgrades are unlocked by this upgrade at each level
     unlocks?: Unlocks,
+    unlocked_by?: UnlockSources,
     // Types of clocks that can get this upgrade
     applies_to: ClockTypeSet,
     // Types of clocks that start with this upgrade
@@ -113,11 +115,24 @@ class Upgrade {
     options: UpgradeOptions;
     // The number of times this upgrade has been purchased at the given level
     purchased_counts: Map<number, number>;
-    
+
+    // Add to child's options that it can be unlocked by parent at level
+    static addUnlockSource(parent: UpgradeId, child: UpgradeId, level: number) {
+        if (!("unlocked_by" in UPGRADE_OPTIONS[child]) || !UPGRADE_OPTIONS[child]["unlocked_by"]) {
+            UPGRADE_OPTIONS[child]["unlocked_by"] = {};
+        }
+        UPGRADE_OPTIONS[child]["unlocked_by"][parent] = level;
+    }
+
     constructor(id:UpgradeId, options: UpgradeOptions) {
         this.id = id;
-        this.options = {...options};
+        this.options = options;
         this.purchased_counts = new Map();
+        for (const level in options.unlocks) {
+            for (const child of options.unlocks[level]) {
+                Upgrade.addUnlockSource(id, child, parseInt(level));
+            }
+        }
     }
     
     // Record a purchase of upgrade at level
@@ -127,11 +142,25 @@ class Upgrade {
         }
         this.purchased_counts.set(level, this.purchased_counts.get(level)! + 1);
     }
+
+    unrecordPurchase(level: number) {
+        if (!this.purchased_counts.has(level)) {
+            return;
+        }
+        this.purchased_counts.set(level, this.purchased_counts.get(level)! - 1);
+    }
     
     // Record a purchase of upgrade from old_level to new_level
     recordPurchaseRange(old_level: number, new_level: number) {
         for (const i of range(old_level + 1, new_level + 1)) {
             this.recordPurchase(i);
+        }
+    }
+
+    // Unrecord all purchases from 1 to level
+    unrecordPurchasesTo(level: number) {
+        for (const i of range(1, level + 1)) {
+            this.unrecordPurchase(i);
         }
     }
     
@@ -197,9 +226,10 @@ type HasUpgradeKeys = {
 }
 
 function upgradeIds(obj: HasUpgradeKeys) : readonly UpgradeId[]  {
-    return Object.keys(obj).filter(x => x in UPGRADES_OPTIONS) as readonly UpgradeId[];
+    return Object.keys(obj).filter(x => x in UPGRADE_OPTIONS) as readonly UpgradeId[];
 }
 
+const REFUND_RATIO = 0.5;
 class UpgradeTree {
     // Upgrades that can be purchased / leveled up
     unlocked: UpgradeStateMap = {};
@@ -207,10 +237,13 @@ class UpgradeTree {
     locked: UpgradeStateMap = {};
     // Upgrades that have reached the max level
     maxed: UpgradeStateMap = {};
+
+    // Total amount spend on this tree
+    spent: number = 0;
     
     constructor(public type: ClockType) {
-        for (const upgrade_id in UPGRADES_OPTIONS) {
-            const upgrade_options = UPGRADES_OPTIONS[upgrade_id];
+        for (const upgrade_id in UPGRADE_OPTIONS) {
+            const upgrade_options = UPGRADE_OPTIONS[upgrade_id];
             if (upgrade_options.applies_to[type]) {
                 if ('starts_unlocked_for' in upgrade_options && upgrade_options.starts_unlocked_for[type]) {
                     this.unlocked[upgrade_id] = {level: 0};
@@ -267,7 +300,7 @@ class UpgradeTree {
             const level = parseInt(level_prop);
             if (level <= old_level || level > new_level) continue;
             for (const unlock_id of unlocks[level]) {
-                const unlock_options = UPGRADES_OPTIONS[unlock_id];
+                const unlock_options = UPGRADE_OPTIONS[unlock_id];
                 if (unlock_options.applies_to[this.type]) {
                     this.unlocked[unlock_id] = { level: 0 };
                     delete this.locked[unlock_id];
@@ -278,7 +311,7 @@ class UpgradeTree {
     }
     
     applyUpgrade(id: UpgradeId, u: PossibleUpgradeState) {
-        const upgrade_options = UPGRADES_OPTIONS[id];
+        const upgrade_options = UPGRADE_OPTIONS[id];
         const state = this.unlocked[id];
         if (!state) {
             throw new Error(`Upgrade ${id} is not unlocked. Trying to apply upgrade ${u.level} to it.`);
@@ -295,7 +328,35 @@ class UpgradeTree {
             state.level = u.level;
         }
         UPGRADES[id].recordPurchaseRange(old_level, new_level);
+        this.spent += u.cost;
     }
+
+    getAmountSpent(): number {
+        return this.spent;
+    }
+
+    getRefundAmount(): number {
+        return Math.floor(this.spent * REFUND_RATIO);
+    }
+
+    #remove(id: UpgradeId) {
+        const upgrade = UPGRADES[id];
+        const level = this.unlocked[id]!.level;
+        upgrade.unrecordPurchasesTo(level);
+    }
+    // Remove the purchases that were recorded for this tree
+    reset() {
+        for (const id of upgradeIds(this.unlocked)) {
+            this.#remove(id);
+        }
+        for (const id of upgradeIds(this.maxed)) {
+            this.#remove(id);
+        }
+    }
+
+    
+
+
     
     getUpgradeLevel(id: UpgradeId): number {
         if (id in this.unlocked) {
@@ -313,8 +374,8 @@ class UpgradeTree {
 
 function buildUpgrades() {
     const ret = {};
-    for (const upgrade_id in UPGRADES_OPTIONS) {
-        ret[upgrade_id] = new Upgrade(upgrade_id as UpgradeId, UPGRADES_OPTIONS[upgrade_id]);
+    for (const upgrade_id in UPGRADE_OPTIONS) {
+        ret[upgrade_id] = new Upgrade(upgrade_id as UpgradeId, UPGRADE_OPTIONS[upgrade_id]);
     }
     return ret;
 }

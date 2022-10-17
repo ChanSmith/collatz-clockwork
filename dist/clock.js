@@ -104,6 +104,7 @@ class Clock {
         }
         return {
             label: this.generateLabel(upgrade_id, possible_upgrade),
+            description: UPGRADES_OPTIONS[upgrade_id].description,
             callback: () => this.applyUpgrade(possible_upgrade),
             sliderCallback: (new_slider_value) => {
                 return this.generateUpgradeMenuOption(upgrade_id, new_slider_value);
@@ -119,7 +120,6 @@ class Clock {
         }
         return ret;
     }
-    // TODO: Add some sort of visual to the cell
     applyUpgrade(possible_upgrade) {
         Game.purchase(possible_upgrade);
         const id = possible_upgrade.id;
@@ -310,6 +310,10 @@ class Clock {
             this.pause_element.remove();
             this.pause_element = null;
         }
+    }
+    refund() {
+        Game.game_state.money.add(this.upgrade_tree.getRefundAmount());
+        this.upgrade_tree.reset();
     }
 }
 _Clock_paused = new WeakMap();

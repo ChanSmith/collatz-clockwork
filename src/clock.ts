@@ -108,8 +108,8 @@ abstract class Clock {
     generateLabel(upgrade_id: UpgradeId,  possible_upgrade: PossibleUpgradeState): string {
         const current_level = this.upgrade_tree.getUpgradeLevel(upgrade_id); 
         const amount = possible_upgrade.level - current_level;
-        const name = UPGRADES_OPTIONS[upgrade_id].name;
-        const max = UPGRADES_OPTIONS[upgrade_id].max_level === Infinity ? "∞" : UPGRADES_OPTIONS[upgrade_id].max_level;
+        const name = UPGRADE_OPTIONS[upgrade_id].name;
+        const max = UPGRADE_OPTIONS[upgrade_id].max_level === Infinity ? "∞" : UPGRADE_OPTIONS[upgrade_id].max_level;
         return `${name} x${amount} (${current_level}→${possible_upgrade.level}/${max}) - $${possible_upgrade.cost}`;
     }
 
@@ -130,6 +130,7 @@ abstract class Clock {
         }
         return {
             label: this.generateLabel(upgrade_id, possible_upgrade),
+            description: UPGRADE_OPTIONS[upgrade_id].description,
             callback: () => this.applyUpgrade(possible_upgrade),
             sliderCallback: (new_slider_value: number) => {
                 return this.generateUpgradeMenuOption(upgrade_id, new_slider_value);
@@ -148,8 +149,7 @@ abstract class Clock {
     }
 
 
-    // TODO: Add some sort of visual to the cell
-    applyUpgrade( possible_upgrade: PossibleUpgradeState) {
+    applyUpgrade(possible_upgrade: PossibleUpgradeState) {
         Game.purchase(possible_upgrade);
         const id = possible_upgrade.id;
         const current_level = this.upgrade_tree.getUpgradeLevel(id);
@@ -201,7 +201,7 @@ abstract class Clock {
 
     addUpgradeGraphic(id: UpgradeId, new_level: number) {
         const applied_level = this.upgrade_graphics_state[id]?.applied_level ?? 0;
-        const max_graphics_level = UPGRADES_OPTIONS[id].max_graphics_level;
+        const max_graphics_level = UPGRADE_OPTIONS[id].max_graphics_level;
         if (applied_level >= max_graphics_level) {
             return;
         }
@@ -224,7 +224,7 @@ abstract class Clock {
             this.addUpgradeGraphic(id, this.upgrade_tree.getUpgradeLevel(id));
         }
         for (const id of this.upgrade_tree.getMaxedIds()) {
-            this.addUpgradeGraphic(id, UPGRADES_OPTIONS[id].max_graphics_level);
+            this.addUpgradeGraphic(id, UPGRADE_OPTIONS[id].max_graphics_level);
         }
     }
 
@@ -356,6 +356,11 @@ abstract class Clock {
             this.pause_element.remove();
             this.pause_element = null;
         }
+    }
+
+    refund() {
+        Game.game_state.money.add(this.upgrade_tree.getRefundAmount());
+        this.upgrade_tree.reset();
     }
 
 }

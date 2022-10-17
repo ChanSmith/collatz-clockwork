@@ -1,3 +1,6 @@
+var logPauseInfo: Logger;
+// logPauseInfo = console.log;
+
 var logUnpauseInfo: Logger;
 // logUnpauseInfo = console.log;
 
@@ -35,6 +38,11 @@ class Game {
 
     static addColumn() {
         Game.table_view.addColumn();
+    }
+
+    static expandGrid() {
+        Game.table_view.addColumn();
+        Game.table_view.addRow();
     }
 
     static addClock(pos: Position, opts: ClockOptions) {
@@ -110,6 +118,10 @@ class Game {
         Game.table_view.removeClock(pos);
     }
 
+    static refundClock(pos: Position) {
+        Game.table_view.refundClock(pos);
+    }
+
     static getRemoveClockMenuItems(pos: Position): Array<MenuItem> {
         return [
             {
@@ -119,6 +131,18 @@ class Game {
                 }
             }
         ];
+    }
+
+    static getRefundClockMenuItems(pos: Position): Array<MenuItem> {
+        return [
+            {
+                label: "Refund Clock",
+                description: "Remove the clock and get back half the amount spent on its upgrades.",
+                callback: () => {
+                    Game.refundClock(pos);
+                }
+            }
+        ]
     }
 
     static getPauseClockMenuItems(pos: Position): Array<MenuItem> {
@@ -135,6 +159,11 @@ class Game {
             return [
                 {
                     label: "Pause Clock",
+                    description: (
+                        "Stop the clock's movement. Clocks with the '" +
+                        UPGRADE_OPTIONS["advance_adjacent"].name + 
+                        "' upgrade will not advance it either."
+                        ),
                     callback: () => {
                         Game.table_view.pauseClock(pos);
                     }
@@ -181,9 +210,11 @@ class Game {
     static secondaryMenuItemGenerator(pos: Position): MenuItemGenerator {
         return (slider_value: number) => {
             let items: Array<MenuItem> = [];
-            if (!Game.table_view.canAddClock(pos)) {
+            if (Game.clock_manager.hasClock(pos)) {
                 items.push(...Game.getPauseClockMenuItems(pos));
-                items.push(...Game.getRemoveClockMenuItems(pos));
+                items.push("hr");
+                // items.push(...Game.getRemoveClockMenuItems(pos));
+                items.push(...Game.getRefundClockMenuItems(pos));
             }
             return {title: "Other options", items:items};
         };
@@ -300,7 +331,7 @@ window.addEventListener("blur", () => {
     getChange();
     pauseIntervalId = window.setInterval(() => {
         const delay = getChange();
-        console.log("delay: " + delay);
+        logPauseInfo?.("delay: " + delay);
         // TODO: maybe show something in the tab to indicate that the game is paused but updating
         Game.advancePausedGame(delay);
         Game.pause_time = lastChange;

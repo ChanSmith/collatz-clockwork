@@ -58,7 +58,7 @@
                 <circle class="clock-background" cx="50" cy="50" r="50" fill="var(--color)"/>
                 <use href="#clockFace" x="0" y="0" width="100" height="100"/>
             </symbol>
-            
+
             <symbol id="pauseSign" viewBox="0 0 10 10">
                 <rect x="0" y="0" width="3" height="10" fill="red" />
                 <rect x="7" y="0" width="3" height="10" fill="red" />
@@ -71,8 +71,9 @@
     <button id="open-options" class="btn btn-primary" onclick="Game.toggleOptionsMenu()">Options</button>
     <button id="pause-button" class="btn btn-primary" onclick="Game.pause()">Pause all</button>
     <button id="unpause-button" class="btn btn-primary" onclick="Game.unpause()">Unpause all</button>
-    <button id="add-row-button" class="btn btn-primary" onclick="Game.addRow()">Add row</button>
-    <button id="add-col-button" class="btn btn-primary" onclick="Game.addColumn()">Add column</button>
+    <!-- <button id="add-row-button" class="btn btn-primary" onclick="Game.addRow()">Add row</button>
+    <button id="add-col-button" class="btn btn-primary" onclick="Game.addColumn()">Add column</button> -->
+    <button id="add-col-button" class="btn btn-primary" onclick="Game.expandGrid()">Expand Grid</button>
     <button id="fill-grid-button" class="btn btn-primary" onclick="Game.fillGrid()">Fill grid</button>
     <button id="redist-time-button" class="btn btn-primary" onclick="Game.redistributeTimes()">Redistribute times</button>
     <button id="add-money-button" class="btn btn-primary" onclick="Game.game_state.money.add(1000000 + Game.game_state.money.value())">Add money</button>

@@ -293,6 +293,20 @@ class TableView {
         const c = Game.clock_manager.removeClock(pos);
     }
 
+    refundClock(pos: Position) {
+        const cell = this.getCell(pos);
+        if (!cell) {
+            return;
+        }
+        this.clearElementAndAnimations(cell);
+
+        const c = Game.clock_manager.removeClock(pos);
+        if (c) {
+            c.refund();
+        }
+
+    }
+
     getNearbyClocks(pos: Position, radius: number = 1): Array<Clock> {
         let clocks = new Array<Clock>();
         const width = this.getColumns();

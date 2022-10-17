@@ -1,3 +1,9 @@
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _UpgradeTree_instances, _UpgradeTree_remove;
 // Cost model: cost(level) = base_cost * (level_multiplier^level-1) * (purchased_multiplier ^ x)
 // Rounded to the nearest integer
 // Where x is the number of times this upgrade has been purchased at level
@@ -85,10 +91,22 @@ class Upgrade {
         }
         this.purchased_counts.set(level, this.purchased_counts.get(level) + 1);
     }
+    unrecordPurchase(level) {
+        if (!this.purchased_counts.has(level)) {
+            return;
+        }
+        this.purchased_counts.set(level, this.purchased_counts.get(level) - 1);
+    }
     // Record a purchase of upgrade from old_level to new_level
     recordPurchaseRange(old_level, new_level) {
         for (const i of range(old_level + 1, new_level + 1)) {
             this.recordPurchase(i);
+        }
+    }
+    // Unrecord all purchases from 1 to level
+    unrecordPurchasesTo(level) {
+        for (const i of range(1, level + 1)) {
+            this.unrecordPurchase(i);
         }
     }
     // Get the number of times this upgrade has been purchased at the given level
@@ -128,15 +146,19 @@ class Upgrade {
 function upgradeIds(obj) {
     return Object.keys(obj).filter(x => x in UPGRADES_OPTIONS);
 }
+const REFUND_RATIO = 0.5;
 class UpgradeTree {
     constructor(type) {
         this.type = type;
+        _UpgradeTree_instances.add(this);
         // Upgrades that can be purchased / leveled up
         this.unlocked = {};
         // Upgrades that can't be purchased yet
         this.locked = {};
         // Upgrades that have reached the max level
         this.maxed = {};
+        // Total amount spend on this tree
+        this.spent = 0;
         for (const upgrade_id in UPGRADES_OPTIONS) {
             const upgrade_options = UPGRADES_OPTIONS[upgrade_id];
             if (upgrade_options.applies_to[type]) {
@@ -218,6 +240,22 @@ class UpgradeTree {
             state.level = u.level;
         }
         UPGRADES[id].recordPurchaseRange(old_level, new_level);
+        this.spent += u.cost;
+    }
+    getAmountSpent() {
+        return this.spent;
+    }
+    getRefundAmount() {
+        return Math.floor(this.spent * REFUND_RATIO);
+    }
+    // Remove the purchases that were recorded for this tree
+    reset() {
+        for (const id of upgradeIds(this.unlocked)) {
+            __classPrivateFieldGet(this, _UpgradeTree_instances, "m", _UpgradeTree_remove).call(this, id);
+        }
+        for (const id of upgradeIds(this.maxed)) {
+            __classPrivateFieldGet(this, _UpgradeTree_instances, "m", _UpgradeTree_remove).call(this, id);
+        }
     }
     getUpgradeLevel(id) {
         if (id in this.unlocked) {
@@ -234,6 +272,11 @@ class UpgradeTree {
         }
     }
 }
+_UpgradeTree_instances = new WeakSet(), _UpgradeTree_remove = function _UpgradeTree_remove(id) {
+    const upgrade = UPGRADES[id];
+    const level = this.unlocked[id].level;
+    upgrade.unrecordPurchasesTo(level);
+};
 function buildUpgrades() {
     const ret = {};
     for (const upgrade_id in UPGRADES_OPTIONS) {

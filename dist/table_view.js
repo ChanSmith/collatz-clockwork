@@ -1,4 +1,4 @@
-// Generate the table body as an NxN grid
+// Generate the initial table body as an NxN grid
 const TABLE_BODY_SIZE = 2;
 // const CELL_SIZE = 64;
 const SVG_NS = "http://www.w3.org/2000/svg"; // Making this https breaks it, at least when running locally
@@ -225,6 +225,17 @@ class TableView {
         }
         this.clearElementAndAnimations(cell);
         const c = Game.clock_manager.removeClock(pos);
+    }
+    refundClock(pos) {
+        const cell = this.getCell(pos);
+        if (!cell) {
+            return;
+        }
+        this.clearElementAndAnimations(cell);
+        const c = Game.clock_manager.removeClock(pos);
+        if (c) {
+            c.refund();
+        }
     }
     getNearbyClocks(pos, radius = 1) {
         let clocks = new Array();
