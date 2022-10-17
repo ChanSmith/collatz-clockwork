@@ -1,5 +1,5 @@
-const TABLE_HEAD_SIZE = 2;
-const TABLE_BODY_SIZE = 4;
+// Generate the table body as an NxN grid
+const TABLE_BODY_SIZE = 2;
 // const CELL_SIZE = 64;
 const SVG_NS = "http://www.w3.org/2000/svg"; // Making this https breaks it, at least when running locally
 var dragLog;

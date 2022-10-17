@@ -54,7 +54,7 @@ const UPGRADES_OPTIONS = {
         }
     },
     advance_adjacent: {
-        name: "Advance Adjacent",
+        name: "Advance adjacent",
         description: "Each time this clock cycles sucessfully, advance adjacent (top, bottom, left, right) clocks by a small amount per level.",
         base_cost: 10,
         level_multiplier: 2.0,

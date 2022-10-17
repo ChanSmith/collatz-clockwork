@@ -49,7 +49,8 @@ abstract class Clock {
     svg_element: SVGSVGElement;
     // SVG Element used to display progress for this clock
     mask_circle: SVGCircleElement;
-    graphics_state: UpgradeGraphicsState;
+    pause_element: SVGUseElement | null;
+    upgrade_graphics_state: UpgradeGraphicsState;
     playback_rate: number = 1;
 
     #paused: boolean = false;
@@ -60,7 +61,7 @@ abstract class Clock {
 
     constructor(public options: ClockOptions) { 
         this.upgrade_tree = new UpgradeTree(new.target.clockType);
-        this.graphics_state = {};
+        this.upgrade_graphics_state = {};
     }
 
     getType(): ClockType {
@@ -199,7 +200,7 @@ abstract class Clock {
     }
 
     addUpgradeGraphic(id: UpgradeId, new_level: number) {
-        const applied_level = this.graphics_state[id]?.applied_level ?? 0;
+        const applied_level = this.upgrade_graphics_state[id]?.applied_level ?? 0;
         const max_graphics_level = UPGRADES_OPTIONS[id].max_graphics_level;
         if (applied_level >= max_graphics_level) {
             return;
@@ -214,11 +215,11 @@ abstract class Clock {
         } else if (id === "money_per_application") {
             this.addMoneyUpgradeGraphic(applied_level, new_level);
         }
-        this.graphics_state[id] = {applied_level: new_level};
+        this.upgrade_graphics_state[id] = {applied_level: new_level};
     }
 
     reapplyUpgradeGraphics() {
-        this.graphics_state = {};
+        this.upgrade_graphics_state = {};
         for (const id of this.upgrade_tree.getUnlockedIds()) {
             this.addUpgradeGraphic(id, this.upgrade_tree.getUpgradeLevel(id));
         }
@@ -310,8 +311,23 @@ abstract class Clock {
         return 1;
     }
 
+    addPauseGraphic() {
+        const use = document.createElementNS(SVG_NS, "use");
+        use.classList.add("pauseSign");
+        use.setAttribute("href", "#pauseSign");
+        use.setAttribute("x", "0");
+        use.setAttribute("y", "0");
+        use.setAttribute("width", "10%");
+        use.setAttribute("height", "10%");
+        this.pause_element = use;
+        this.svg_element.appendChild(use);
+    }
+
     pause(manual: boolean = true) {
-        this.manually_paused = manual || this.manually_paused;
+        if (manual && !this.manually_paused) {
+            this.manually_paused = true;
+            this.addPauseGraphic();
+        }
         this.#paused = true;
         if (this.animation) {
             this.animation.pause();
@@ -336,6 +352,10 @@ abstract class Clock {
         }
         this.manually_paused = false;
         this.#paused = false;
+        if (this.pause_element) {
+            this.pause_element.remove();
+            this.pause_element = null;
+        }
     }
 
 }
@@ -372,7 +392,9 @@ class ProducerClock extends Clock {
         if (upgrade_level <= 0) { return;}
         const nearby = Game.table_view.getAdjacentClocks(this.options.position);
         for (const clock of nearby) {
-            clock.advanceByUnscaled(upgrade_level * ADVANCE_ADJACENT_AMOUNT);
+            if (!clock.manually_paused) {
+                clock.advanceByUnscaled(upgrade_level * ADVANCE_ADJACENT_AMOUNT);
+            }
         }
     }
 
