@@ -7,6 +7,10 @@ class ClockManager {
         this.counts.set("Producer", 0);
         this.counts.set("Verifier", 0);
     }
+    teardown() {
+        this.forEachClock(c => c.refund());
+        this.grid.clear();
+    }
     hasClock(pos) {
         return this.grid.has(pos.toString());
     }

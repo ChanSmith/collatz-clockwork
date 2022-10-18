@@ -206,6 +206,10 @@ class TableView {
         this.generateFlexTable();
     }
 
+    teardown() {
+        this.table.remove();
+    }
+
     saveState(): TableViewSaveState {
         return {
             rows: this.getRows(),

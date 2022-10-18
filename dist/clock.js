@@ -337,6 +337,8 @@ class Clock {
         }
     }
     refund() {
+        var _a;
+        (_a = this.animation) === null || _a === void 0 ? void 0 : _a.cancel();
         Game.game_state.resources.money.add(this.upgrade_tree.getRefundAmount());
         this.upgrade_tree.reset();
     }

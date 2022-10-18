@@ -389,6 +389,7 @@ abstract class Clock {
     }
 
     refund() {
+        this.animation?.cancel();
         Game.game_state.resources.money.add(this.upgrade_tree.getRefundAmount());
         this.upgrade_tree.reset();
     }

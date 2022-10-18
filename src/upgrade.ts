@@ -399,4 +399,4 @@ function buildUpgrades() {
 }
 type Upgrades = { [U in UpgradeId]: Upgrade } 
 
-const UPGRADES: Upgrades = buildUpgrades() as Upgrades;
+const UPGRADES = buildUpgrades() as Upgrades;

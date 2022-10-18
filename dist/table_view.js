@@ -149,6 +149,9 @@ class TableView {
             }
         }
     }
+    teardown() {
+        this.table.remove();
+    }
     saveState() {
         return {
             rows: this.getRows(),

@@ -5,35 +5,45 @@ var logUnpauseInfo;
 var logFocusChange;
 //  logFocusChange = console.log;
 class Game {
-    constructor() {
+    static testAchievementUnlocked() {
+        return Game.test_achieve;
+    }
+    static initialize() {
         Game.generator = new CollatzGenerator();
         Game.table_view = new TableView();
         Game.clock_manager = new ClockManager();
         Game.game_state = new GameState();
+        Game.click_count = 0;
+        Game.auto_paused = false;
+        Game.pause_time = 0;
         Game.table_view.addStatistic(Game.game_state.resources.money);
         Game.table_view.addStatistic(Game.game_state.statistics.checking);
         Game.table_view.addStatistic(Game.game_state.statistics.n);
         if (localStorage.getItem("save_state")) {
-            const state = JSON.parse(localStorage.getItem("save_state"));
-            Game.table_view.restoreFrom(state.table_view);
-            Game.game_state.restoreFrom(state.game);
-            getOptionsMenu().restoreFrom(state.options);
-            for (const clock_state of state.clocks) {
-                const opts = {
-                    type: clock_state.type,
-                    position: new Position(clock_state.position.row, clock_state.position.col),
-                    offset: clock_state.time,
-                };
-                Game.addClock(opts.position, opts);
-                const clock = Game.clock_manager.getClock(opts.position);
-                if (clock) {
-                    clock.restoreFrom(clock_state);
-                }
-            }
+            Game.restoreFromLocalStorage();
         }
     }
-    static testAchievementUnlocked() {
-        return Game.test_achieve;
+    static teardown() {
+        Game.table_view.teardown();
+        Game.clock_manager.teardown();
+    }
+    static restoreFromLocalStorage() {
+        const state = JSON.parse(localStorage.getItem("save_state"));
+        Game.table_view.restoreFrom(state.table_view);
+        Game.game_state.restoreFrom(state.game);
+        getOptionsMenu().restoreFrom(state.options);
+        for (const clock_state of state.clocks) {
+            const opts = {
+                type: clock_state.type,
+                position: new Position(clock_state.position.row, clock_state.position.col),
+                offset: clock_state.time,
+            };
+            Game.addClock(opts.position, opts);
+            const clock = Game.clock_manager.getClock(opts.position);
+            if (clock) {
+                clock.restoreFrom(clock_state);
+            }
+        }
     }
     static addRow() {
         Game.table_view.addRow();
@@ -67,21 +77,24 @@ class Game {
     // TODO: make this only apply to some clocks?
     static redistributeTimes() {
         const count = Game.table_view.clockCount();
-        // Pause all clocks, set time to 0, then unpause on a delay
-        Game.pause(true);
-        Game.table_view.resetAll();
-        const offset = TEN_SECONDS / count;
-        var offsetCount = 0;
-        for (let i = 0; i < Game.table_view.getRows(); i++) {
-            for (let j = 0; j < Game.table_view.getColumns(); j++) {
-                const pos = new Position(i, j);
-                if (!Game.table_view.canAddClock(pos)) {
-                    // TODO: track these and cancel them if another unpause comes in 
-                    window.setTimeout(() => {
-                        Game.table_view.unpauseClock(pos);
-                    }, offset * offsetCount++);
-                }
-            }
+        // Go through the clocks in order of their elapsed time (i.e. lowest remaining time first)
+        // And move them backwards so they are equally spaced out
+        // The clock with lowest time remaining will not change, the one with the most time remaining
+        // will go to 0
+        const clocks = Game.clock_manager.getClocks();
+        if (!clocks) {
+            return;
+        } // nothing to do
+        const pq = new PriorityQueue((c) => c.remainingTime());
+        pq.reset(clocks);
+        let i = 0;
+        let clock = pq.pop();
+        const max = TEN_SECONDS - clock.unscaledRemainingTime();
+        const offset = max / count;
+        while (clock) {
+            clock.animation.currentTime = max - (i * offset);
+            i++;
+            clock = pq.pop();
         }
     }
     static canAddClock(pos, type) {
@@ -234,6 +247,9 @@ class Game {
     static pause(manual = true) {
         Game.pause_time = performance.now();
         Game.table_view.pauseAll(manual);
+        if (!manual) {
+            Game.auto_paused = true;
+        }
         // TODO: add an indicator that game is paused an progress will be updated when unpaused
     }
     static advancePausedGame(diff) {
@@ -281,6 +297,7 @@ class Game {
         if (!manual) {
             Game.advancePausedGame(diff);
         }
+        Game.auto_paused = false;
         Game.table_view.unpauseAll(manual);
     }
     static save() {
@@ -296,11 +313,52 @@ class Game {
         };
         localStorage.setItem("save_state", JSON.stringify(save_state));
     }
+    static resetSave() {
+        if (!confirm("Are you sure you want to delete your progress and start a new game?")) {
+            return;
+        }
+        Game.save();
+        Game.removed_save = localStorage.getItem("save_state");
+        localStorage.removeItem("save_state");
+        // https://alistapart.com/article/neveruseawarning/
+        if (Game.removed_save) {
+            Game.makeResetButtonUndoButton();
+        }
+        Game.teardown();
+        Game.initialize();
+    }
+    static undoResetSave() {
+        if (Game.removed_save) {
+            Game.teardown();
+            localStorage.setItem("save_state", Game.removed_save);
+            Game.initialize();
+            Game.removed_save = null;
+            Game.makeUndoButtonResetButton();
+        }
+    }
+    static makeResetButtonUndoButton() {
+        const reset_button = document.querySelector("#reset-save-button");
+        if (reset_button && reset_button instanceof HTMLButtonElement) {
+            reset_button.innerText = "Undo reset";
+            reset_button.onclick = Game.undoResetSave;
+            // Give 5 minutes to undo
+            window.setTimeout(Game.makeUndoButtonResetButton, 1000 * 60 * 2.5);
+        }
+    }
+    static makeUndoButtonResetButton() {
+        const reset_button = document.querySelector("#reset-save-button");
+        if (reset_button && reset_button instanceof HTMLButtonElement) {
+            reset_button.innerText = "Reset";
+            reset_button.onclick = Game.resetSave;
+        }
+    }
 }
 Game.click_count = 0;
+Game.auto_paused = false;
 Game.pause_time = 0;
 Game.test_achieve = false;
-let g = new Game();
+Game.removed_save = null;
+Game.initialize();
 var lastChange = performance.now();
 var getChange = () => {
     var now = performance.now();
