@@ -52,8 +52,15 @@ class Game {
         Game.table_view.addColumn();
     }
     static expandGrid() {
+        const rows = Game.table_view.getRows();
+        const next_level = rows - TABLE_BODY_SIZE + 1;
+        if (Game.game_state.resources.money.value() < Math.pow(10, next_level)) {
+            return;
+        }
+        Game.game_state.resources.money.subtract(Math.pow(10, next_level));
         Game.table_view.addColumn();
         Game.table_view.addRow();
+        Game.table_view.setButtonText();
     }
     static addClock(pos, opts) {
         Game.table_view.addClock(pos, opts);
@@ -348,7 +355,7 @@ class Game {
     static makeUndoButtonResetButton() {
         const reset_button = document.querySelector("#reset-save-button");
         if (reset_button && reset_button instanceof HTMLButtonElement) {
-            reset_button.innerText = "Reset";
+            reset_button.innerText = "Reset progress";
             reset_button.onclick = Game.resetSave;
         }
     }
@@ -388,8 +395,8 @@ window.addEventListener("focus", () => {
 });
 // Save every 5 minutes, or when the page is closed/hidden
 window.setInterval(Game.save, 1000 * 60 * 5);
-window.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") {
-        Game.save();
-    }
-});
+// window.addEventListener("visibilitychange", () => {
+//     if (document.visibilityState === "hidden") {
+//         Game.save();
+//     }
+// });

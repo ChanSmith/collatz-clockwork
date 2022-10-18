@@ -120,7 +120,7 @@ class PriorityQueue<T> {
         const result = this.#heap[0];
         this.#map.delete(result);
         const last = this.#heap.pop() as T;
-        if (last !== result) {
+        if (this.#heap.length !== 0) {
             this.#heap[0] = last;
             this.#map.set(last, 0);
             this.#bubbleDown(0);
@@ -137,6 +137,9 @@ class PriorityQueue<T> {
     }
 
     #bubbleDown(i: number) {
+        if (i >= this.#heap.length) {
+            return;
+        }
         const left = leftChildIndex(i);
         const right = rightChildIndex(i);
         let min = i;

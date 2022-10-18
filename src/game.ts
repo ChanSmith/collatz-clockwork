@@ -76,8 +76,16 @@ class Game {
     }
 
     static expandGrid() {
+
+        const rows = Game.table_view.getRows();
+        const next_level = rows - TABLE_BODY_SIZE + 1;
+        if (Game.game_state.resources.money.value() < 10 ** next_level) {
+            return;
+        }
+        Game.game_state.resources.money.subtract(10 ** next_level);
         Game.table_view.addColumn();
         Game.table_view.addRow();
+        Game.table_view.setButtonText();
     }
 
     static addClock(pos: Position, opts: ClockOptions) {
@@ -446,8 +454,8 @@ window.addEventListener("focus", () => {
 });
 // Save every 5 minutes, or when the page is closed/hidden
 window.setInterval(Game.save, 1000 * 60 * 5);
-window.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") {
-        Game.save();
-    }
-});
+// window.addEventListener("visibilitychange", () => {
+//     if (document.visibilityState === "hidden") {
+//         Game.save();
+//     }
+// });

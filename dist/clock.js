@@ -195,7 +195,7 @@ class Clock {
         var _a, _b;
         const applied_level = (_b = (_a = this.upgrade_graphics_state[id]) === null || _a === void 0 ? void 0 : _a.applied_level) !== null && _b !== void 0 ? _b : 0;
         const max_graphics_level = UPGRADE_OPTIONS[id].max_graphics_level;
-        if (applied_level >= max_graphics_level) {
+        if (applied_level >= max_graphics_level || new_level === 0) {
             return;
         }
         new_level = Math.min(new_level, max_graphics_level);
@@ -216,7 +216,9 @@ class Clock {
     reapplyUpgradeGraphics() {
         this.upgrade_graphics_state = {};
         for (const id of this.upgrade_tree.getUnlockedIds()) {
-            this.addUpgradeGraphic(id, this.upgrade_tree.getUpgradeLevel(id));
+            if (this.upgrade_tree.getUpgradeLevel(id) > 0) {
+                this.addUpgradeGraphic(id, this.upgrade_tree.getUpgradeLevel(id));
+            }
         }
         for (const id of this.upgrade_tree.getMaxedIds()) {
             this.addUpgradeGraphic(id, UPGRADE_OPTIONS[id].max_graphics_level);

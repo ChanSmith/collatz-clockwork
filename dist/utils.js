@@ -112,7 +112,7 @@ class PriorityQueue {
         const result = __classPrivateFieldGet(this, _PriorityQueue_heap, "f")[0];
         __classPrivateFieldGet(this, _PriorityQueue_map, "f").delete(result);
         const last = __classPrivateFieldGet(this, _PriorityQueue_heap, "f").pop();
-        if (last !== result) {
+        if (__classPrivateFieldGet(this, _PriorityQueue_heap, "f").length !== 0) {
             __classPrivateFieldGet(this, _PriorityQueue_heap, "f")[0] = last;
             __classPrivateFieldGet(this, _PriorityQueue_map, "f").set(last, 0);
             __classPrivateFieldGet(this, _PriorityQueue_instances, "m", _PriorityQueue_bubbleDown).call(this, 0);
@@ -142,6 +142,9 @@ _PriorityQueue_heap = new WeakMap(), _PriorityQueue_map = new WeakMap(), _Priori
         __classPrivateFieldGet(this, _PriorityQueue_instances, "m", _PriorityQueue_bubbleUp).call(this, parent);
     }
 }, _PriorityQueue_bubbleDown = function _PriorityQueue_bubbleDown(i) {
+    if (i >= __classPrivateFieldGet(this, _PriorityQueue_heap, "f").length) {
+        return;
+    }
     const left = leftChildIndex(i);
     const right = rightChildIndex(i);
     let min = i;

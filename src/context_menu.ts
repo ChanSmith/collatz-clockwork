@@ -180,6 +180,9 @@ class ContextMenu {
         if (!option.disabled) {
             this.#bindCallbacks(menuItem, option);
         }
+        if (option.description) {
+            menuItem.title = option.description;
+        }
 
         return menuItem
     }
@@ -322,19 +325,6 @@ class ContextMenu {
             contextMenu.classList.add(this.#options.customClass);
     };
 
-    #showDescription = (desc: string): void => {
-        const tooltip = this.#generateTooltipElement(desc);
-        this.#contextMenuElement?.appendChild(tooltip);
-
-    }
-
-    #hideDescription = (): void => {
-        const tooltip = document.querySelector('.tooltip');
-        if (tooltip) {
-            tooltip.remove();
-        }
-    }
-
     #bindCallbacks = (htmlEl: HTMLElement, menuOption: MenuOption): void => {
         htmlEl.onclick = () => {
             if (!this.#initialContextMenuEvent) {
@@ -352,15 +342,6 @@ class ContextMenu {
                 ContextMenu.removeExistingContextMenu();
             }
         };
-        if (menuOption.description) {
-            htmlEl.title = menuOption.description;
-            // htmlEl.onmouseover = () => {
-            //     this.#showDescription(menuOption.description!);
-            // };
-            // htmlEl.onmouseout = () => {
-            //     this.#hideDescription();
-            // };
-        }
     };
 
     #onShowContextMenu = (event: MouseEvent): void => {

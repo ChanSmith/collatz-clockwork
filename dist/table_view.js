@@ -116,6 +116,7 @@ class TableView {
         // TODO: implement/use this
         this.selected_cell = null;
         this.generateFlexTable();
+        this.setButtonText();
     }
     highlightRow(n) {
         const row = this.table_body.children[n];
@@ -158,8 +159,21 @@ class TableView {
             cols: this.getColumns(),
         };
     }
+    setButtonText() {
+        const next_level = this.getRows() - TABLE_BODY_SIZE + 1;
+        const button = document.getElementById("grow-grid-button");
+        if (button && button instanceof HTMLButtonElement) {
+            if (next_level > 1) {
+                button.innerHTML = `Expand Grid ($10<sup>${next_level}</sup>)`;
+            }
+            else {
+                button.innerHTML = "Expand Grid ($10)";
+            }
+        }
+    }
     restoreFrom(state) {
         this.growTo(state.rows, state.cols);
+        this.setButtonText();
     }
     generateMenuForCell(cell, pos) {
         let menu = new ContextMenu({

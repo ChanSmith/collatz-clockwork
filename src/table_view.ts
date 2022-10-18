@@ -131,6 +131,7 @@ class StatisticView extends HTMLDivElement {
         super();
 
         this.classList.add("statistic-box");
+        
 
     }
 
@@ -204,6 +205,7 @@ class TableView {
 
     constructor() {
         this.generateFlexTable();
+        this.setButtonText();
     }
 
     teardown() {
@@ -217,8 +219,21 @@ class TableView {
         }
     }
 
+    setButtonText() {
+        const next_level = this.getRows() - TABLE_BODY_SIZE + 1;
+        const button = document.getElementById("grow-grid-button")
+        if (button && button instanceof HTMLButtonElement) {
+            if (next_level > 1) {
+                button.innerHTML = `Expand Grid ($10<sup>${next_level}</sup>)`;
+            } else {
+                button.innerHTML = "Expand Grid ($10)";
+            }
+        }
+    }
+
     restoreFrom(state: TableViewSaveState) {
         this.growTo(state.rows, state.cols);
+        this.setButtonText();
     }
 
     generateMenuForCell(cell: HTMLElement, pos: Position) {

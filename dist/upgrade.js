@@ -14,7 +14,7 @@ const UPGRADE_OPTIONS = {
         description: "Applies f an additional time each cycle.",
         base_cost: 1,
         level_multiplier: 1.5,
-        purchased_multiplier: 1.5,
+        purchased_multiplier: 1.2,
         max_level: Infinity,
         max_graphics_level: Infinity,
         unlocks: {
@@ -34,7 +34,7 @@ const UPGRADE_OPTIONS = {
         description: "Doubles the amount of money gained each time this clock applies f.",
         base_cost: 100,
         level_multiplier: 2.5,
-        purchased_multiplier: 1.15,
+        purchased_multiplier: 1.3,
         max_level: 20,
         max_graphics_level: 20,
         unlocks: {},
@@ -64,7 +64,7 @@ const UPGRADE_OPTIONS = {
         description: "Each time this clock cycles sucessfully, advance adjacent (top, bottom, left, right) clocks by a small amount per level.",
         base_cost: 10,
         level_multiplier: 2.0,
-        purchased_multiplier: 1.25,
+        purchased_multiplier: 1.4,
         max_level: 10,
         max_graphics_level: 1,
         unlocks: {
@@ -277,10 +277,10 @@ class UpgradeTree {
     // Remove the purchases that were recorded for this tree
     reset() {
         for (const id of upgradeIds(this.unlocked)) {
-            __classPrivateFieldGet(this, _UpgradeTree_instances, "m", _UpgradeTree_remove).call(this, id);
+            __classPrivateFieldGet(this, _UpgradeTree_instances, "m", _UpgradeTree_remove).call(this, id, this.unlocked);
         }
         for (const id of upgradeIds(this.maxed)) {
-            __classPrivateFieldGet(this, _UpgradeTree_instances, "m", _UpgradeTree_remove).call(this, id);
+            __classPrivateFieldGet(this, _UpgradeTree_instances, "m", _UpgradeTree_remove).call(this, id, this.maxed);
         }
     }
     getUpgradeLevel(id) {
@@ -298,9 +298,9 @@ class UpgradeTree {
         }
     }
 }
-_UpgradeTree_instances = new WeakSet(), _UpgradeTree_remove = function _UpgradeTree_remove(id) {
+_UpgradeTree_instances = new WeakSet(), _UpgradeTree_remove = function _UpgradeTree_remove(id, map) {
     const upgrade = UPGRADES[id];
-    const level = this.unlocked[id].level;
+    const level = map[id].level;
     upgrade.unrecordPurchasesTo(level);
 };
 function buildUpgrades() {
