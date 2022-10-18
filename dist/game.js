@@ -10,9 +10,27 @@ class Game {
         Game.table_view = new TableView();
         Game.clock_manager = new ClockManager();
         Game.game_state = new GameState();
-        Game.table_view.addStatistic(Game.game_state.money);
-        Game.table_view.addStatistic(Game.game_state.checking);
-        Game.table_view.addStatistic(Game.game_state.n);
+        Game.table_view.addStatistic(Game.game_state.resources.money);
+        Game.table_view.addStatistic(Game.game_state.statistics.checking);
+        Game.table_view.addStatistic(Game.game_state.statistics.n);
+        if (localStorage.getItem("save_state")) {
+            const state = JSON.parse(localStorage.getItem("save_state"));
+            Game.table_view.restoreFrom(state.table_view);
+            Game.game_state.restoreFrom(state.game);
+            getOptionsMenu().restoreFrom(state.options);
+            for (const clock_state of state.clocks) {
+                const opts = {
+                    type: clock_state.type,
+                    position: new Position(clock_state.position.row, clock_state.position.col),
+                    offset: clock_state.time,
+                };
+                Game.addClock(opts.position, opts);
+                const clock = Game.clock_manager.getClock(opts.position);
+                if (clock) {
+                    clock.restoreFrom(clock_state);
+                }
+            }
+        }
     }
     static testAchievementUnlocked() {
         return Game.test_achieve;
@@ -132,7 +150,7 @@ class Game {
                 {
                     label: "Pause Clock",
                     description: ("Stop the clock's movement. Clocks with the '" +
-                        UPGRADES_OPTIONS["advance_adjacent"].name +
+                        UPGRADE_OPTIONS["advance_adjacent"].name +
                         "' upgrade will not advance it either."),
                     callback: () => {
                         Game.table_view.pauseClock(pos);
@@ -194,10 +212,10 @@ class Game {
         Game.game_state.purchase(possible_upgrade);
     }
     static applyOps(amount, money_multiplier = 1) {
-        const seq = Game.generator.getSequence(Game.game_state.n.value(), amount);
+        const seq = Game.generator.getSequence(Game.game_state.statistics.n.value(), amount);
         if (seq.length > 0) {
             Game.game_state.applySequence(seq);
-            Game.game_state.money.add(Math.floor(amount * money_multiplier));
+            Game.game_state.resources.money.add(Math.floor(amount * money_multiplier));
             return seq.length;
         }
         return 0;
@@ -265,6 +283,19 @@ class Game {
         }
         Game.table_view.unpauseAll(manual);
     }
+    static save() {
+        const clock_states = [];
+        Game.clock_manager.forEachClock(clock => {
+            clock_states.push(clock.saveState());
+        });
+        const save_state = {
+            options: getOptionsMenu().saveState(),
+            game: Game.game_state.saveState(),
+            table_view: Game.table_view.saveState(),
+            clocks: clock_states,
+        };
+        localStorage.setItem("save_state", JSON.stringify(save_state));
+    }
 }
 Game.click_count = 0;
 Game.pause_time = 0;
@@ -296,4 +327,11 @@ window.addEventListener("focus", () => {
         window.clearInterval(pauseIntervalId);
     }
     Game.unpause(false);
+});
+// Save every 5 minutes, or when the page is closed/hidden
+window.setInterval(Game.save, 1000 * 60 * 5);
+window.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+        Game.save();
+    }
 });

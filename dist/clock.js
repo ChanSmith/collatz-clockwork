@@ -17,6 +17,9 @@ class Position {
         this.row = row;
         this.col = col;
     }
+    saveState() {
+        return { row: this.row, col: this.col };
+    }
     toString() {
         return "(" + this.row + ", " + this.col + ")";
     }
@@ -42,6 +45,23 @@ class Clock {
         this.manually_paused = false;
         this.upgrade_tree = new UpgradeTree(new.target.clockType);
         this.upgrade_graphics_state = {};
+    }
+    saveState() {
+        var _a, _b;
+        return {
+            type: this.getType(),
+            position: this.options.position.saveState(),
+            upgrades: this.upgrade_tree.saveState(),
+            time: (_b = (_a = this.animation) === null || _a === void 0 ? void 0 : _a.currentTime) !== null && _b !== void 0 ? _b : 0,
+        };
+    }
+    restoreFrom(state) {
+        this.upgrade_tree.restoreFrom(state.upgrades);
+        for (const upgrade_id of this.upgrade_tree.getUnlockedIds()) {
+            const level = this.upgrade_tree.getUpgradeLevel(upgrade_id);
+            this.addUpgradeGraphic(upgrade_id, level);
+        }
+        this.updatePlaybackRate();
     }
     getType() {
         // Ugly, but doesn't seem to be another way to refer to a static member polymorphically
@@ -81,8 +101,8 @@ class Clock {
     generateLabel(upgrade_id, possible_upgrade) {
         const current_level = this.upgrade_tree.getUpgradeLevel(upgrade_id);
         const amount = possible_upgrade.level - current_level;
-        const name = UPGRADES_OPTIONS[upgrade_id].name;
-        const max = UPGRADES_OPTIONS[upgrade_id].max_level === Infinity ? "∞" : UPGRADES_OPTIONS[upgrade_id].max_level;
+        const name = UPGRADE_OPTIONS[upgrade_id].name;
+        const max = UPGRADE_OPTIONS[upgrade_id].max_level === Infinity ? "∞" : UPGRADE_OPTIONS[upgrade_id].max_level;
         return `${name} x${amount} (${current_level}→${possible_upgrade.level}/${max}) - $${possible_upgrade.cost}`;
     }
     generateUpgradeMenuOption(upgrade_id, slider_value) {
@@ -90,7 +110,7 @@ class Clock {
         const upgrade = UPGRADES[upgrade_id];
         let possible_upgrade;
         let disabled = false;
-        const max_upgrade = upgrade.getMaxPurchaseable(current_level, Game.game_state.money.value());
+        const max_upgrade = upgrade.getMaxPurchaseable(current_level, Game.game_state.resources.money.value());
         if (max_upgrade === null) {
             possible_upgrade = { level: current_level + 1, cost: upgrade.getCost(current_level + 1), id: upgrade_id };
             ;
@@ -104,7 +124,7 @@ class Clock {
         }
         return {
             label: this.generateLabel(upgrade_id, possible_upgrade),
-            description: UPGRADES_OPTIONS[upgrade_id].description,
+            description: UPGRADE_OPTIONS[upgrade_id].description,
             callback: () => this.applyUpgrade(possible_upgrade),
             sliderCallback: (new_slider_value) => {
                 return this.generateUpgradeMenuOption(upgrade_id, new_slider_value);
@@ -120,14 +140,18 @@ class Clock {
         }
         return ret;
     }
+    updatePlaybackRate() {
+        const level = this.upgrade_tree.getUpgradeLevel("playback_speed");
+        this.playback_rate = Math.pow(2, level);
+        this.animation.updatePlaybackRate(this.playback_rate);
+    }
     applyUpgrade(possible_upgrade) {
         Game.purchase(possible_upgrade);
         const id = possible_upgrade.id;
         const current_level = this.upgrade_tree.getUpgradeLevel(id);
         this.upgrade_tree.applyUpgrade(id, possible_upgrade);
         if (id == "playback_speed") {
-            this.playback_rate = Math.pow(2, possible_upgrade.level);
-            this.animation.updatePlaybackRate(this.playback_rate);
+            this.updatePlaybackRate();
         }
         this.addUpgradeGraphic(id, possible_upgrade.level);
     }
@@ -169,7 +193,7 @@ class Clock {
     addUpgradeGraphic(id, new_level) {
         var _a, _b;
         const applied_level = (_b = (_a = this.upgrade_graphics_state[id]) === null || _a === void 0 ? void 0 : _a.applied_level) !== null && _b !== void 0 ? _b : 0;
-        const max_graphics_level = UPGRADES_OPTIONS[id].max_graphics_level;
+        const max_graphics_level = UPGRADE_OPTIONS[id].max_graphics_level;
         if (applied_level >= max_graphics_level) {
             return;
         }
@@ -194,7 +218,7 @@ class Clock {
             this.addUpgradeGraphic(id, this.upgrade_tree.getUpgradeLevel(id));
         }
         for (const id of this.upgrade_tree.getMaxedIds()) {
-            this.addUpgradeGraphic(id, UPGRADES_OPTIONS[id].max_graphics_level);
+            this.addUpgradeGraphic(id, UPGRADE_OPTIONS[id].max_graphics_level);
         }
     }
     tick() {
@@ -312,7 +336,7 @@ class Clock {
         }
     }
     refund() {
-        Game.game_state.money.add(this.upgrade_tree.getRefundAmount());
+        Game.game_state.resources.money.add(this.upgrade_tree.getRefundAmount());
         this.upgrade_tree.reset();
     }
 }

@@ -27,9 +27,28 @@ class Game {
         Game.clock_manager = new ClockManager();
         Game.game_state = new GameState();
 
-        Game.table_view.addStatistic(Game.game_state.money);
-        Game.table_view.addStatistic(Game.game_state.checking);
-        Game.table_view.addStatistic(Game.game_state.n);
+        Game.table_view.addStatistic(Game.game_state.resources.money);
+        Game.table_view.addStatistic(Game.game_state.statistics.checking);
+        Game.table_view.addStatistic(Game.game_state.statistics.n);
+
+        if (localStorage.getItem("save_state")) {
+            const state: GameSaveState = JSON.parse(localStorage.getItem("save_state")!);
+            Game.table_view.restoreFrom(state.table_view);
+            Game.game_state.restoreFrom(state.game);
+            getOptionsMenu().restoreFrom(state.options);
+            for (const clock_state of state.clocks) {
+                const opts: ClockOptions = {
+                    type: clock_state.type,
+                    position: new Position(clock_state.position.row, clock_state.position.col),
+                    offset: clock_state.time,
+                };
+                Game.addClock(opts.position, opts);
+                const clock = Game.clock_manager.getClock(opts.position);
+                if (clock) {
+                    clock.restoreFrom(clock_state);
+                }
+            }
+        }
     }
 
     static addRow() {
@@ -229,10 +248,10 @@ class Game {
     }
 
     static applyOps(amount: number, money_multiplier: number = 1) {
-        const seq = Game.generator.getSequence(Game.game_state.n.value(), amount);
+        const seq = Game.generator.getSequence(Game.game_state.statistics.n.value(), amount);
         if (seq.length > 0) {
             Game.game_state.applySequence(seq);
-            Game.game_state.money.add(Math.floor(amount * money_multiplier));
+            Game.game_state.resources.money.add(Math.floor(amount * money_multiplier));
             return seq.length;
         }
         return 0;
@@ -311,6 +330,20 @@ class Game {
 
         Game.table_view.unpauseAll(manual);
     }
+
+    static save() {
+        const clock_states: Array<ClockSaveState> = [];
+        Game.clock_manager.forEachClock(clock => {
+            clock_states.push(clock.saveState());
+        });
+        const save_state: GameSaveState = {
+            options: getOptionsMenu().saveState(),
+            game: Game.game_state.saveState(),
+            table_view: Game.table_view.saveState(),
+            clocks: clock_states,
+        };
+        localStorage.setItem("save_state", JSON.stringify(save_state));
+    }
 }
 
 let g = new Game();
@@ -345,4 +378,11 @@ window.addEventListener("focus", () => {
         window.clearInterval(pauseIntervalId);
     }
     Game.unpause(false);
+});
+// Save every 5 minutes, or when the page is closed/hidden
+window.setInterval(Game.save, 1000 * 60 * 5);
+window.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+        Game.save();
+    }
 });

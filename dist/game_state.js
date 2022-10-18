@@ -61,6 +61,12 @@ class Statistic extends DisplayableNumber {
             this.max_value = value;
         }
     }
+    saveState() {
+        return {
+            value: this.value(),
+            max_value: this.max_value,
+        };
+    }
 }
 class Resource extends DisplayableNumber {
     set(value) {
@@ -69,42 +75,84 @@ class Resource extends DisplayableNumber {
             this.max_value = value;
         }
     }
+    saveState() {
+        return {
+            value: this.value(),
+            max_value: this.max_value,
+        };
+    }
+}
+function getResourcesSaveState(resources) {
+    return {
+        money: resources.money.saveState(),
+    };
+}
+function getStatisticsSaveState(statistics) {
+    return {
+        n: statistics.n.saveState(),
+        checking: statistics.checking.saveState(),
+        length: statistics.length.saveState(),
+    };
 }
 class GameState {
     constructor() {
-        this.money = new Resource('Money', 0);
-        this.n = new Statistic('n', 2);
-        this.checking = new Statistic('Checking', 2);
-        this.length = new Statistic('Length', 1);
+        this.resources = {
+            money: new Resource("Money", 0),
+        };
+        this.statistics = {
+            n: new Statistic("n", 2),
+            checking: new Statistic("Checking", 2),
+            length: new Statistic("Length", 1),
+        };
         this.current_seq = [2];
         this.current_iter = 0;
     }
+    saveState() {
+        return {
+            resources: getResourcesSaveState(this.resources),
+            statistics: getStatisticsSaveState(this.statistics),
+            current_seq: this.current_seq,
+            current_iter: this.current_iter,
+        };
+    }
+    restoreFrom(save_state) {
+        this.resources.money.set(save_state.resources.money.value);
+        this.resources.money.max_value = save_state.resources.money.max_value;
+        this.statistics.n.set(save_state.statistics.n.value);
+        this.statistics.n.max_value = save_state.statistics.n.max_value;
+        this.statistics.checking.set(save_state.statistics.checking.value);
+        this.statistics.checking.max_value = save_state.statistics.checking.max_value;
+        this.statistics.length.set(save_state.statistics.length.value);
+        this.statistics.length.max_value = save_state.statistics.length.max_value;
+        this.current_seq = save_state.current_seq;
+        this.current_iter = save_state.current_iter;
+    }
     applySequence(seq) {
         const applied = seq.length;
-        this.length.set(this.current_seq.push(...seq));
+        this.statistics.length.set(this.current_seq.push(...seq));
         this.current_iter += applied;
-        this.n.set(seq[seq.length - 1]);
+        this.statistics.n.set(seq[seq.length - 1]);
     }
     resetSequence(from) {
         this.current_seq = [from];
-        this.n.set(from);
-        this.checking.set(from);
-        this.length.set(1);
+        this.statistics.n.set(from);
+        this.statistics.checking.set(from);
+        this.statistics.length.set(1);
     }
     canPurchase(possible_upgrade) {
-        return this.money.value() >= possible_upgrade.cost;
+        return this.resources.money.value() >= possible_upgrade.cost;
     }
     purchase(possible_upgrade) {
-        this.money.subtract(possible_upgrade.cost);
+        this.resources.money.subtract(possible_upgrade.cost);
     }
     canVerify() {
-        return this.n.equals(1);
+        return this.statistics.n.equals(1);
     }
     verify() {
         if (!this.canVerify()) {
             return false;
         }
-        this.resetSequence(this.checking.value() + 1);
+        this.resetSequence(this.statistics.checking.value() + 1);
         return true;
     }
 }

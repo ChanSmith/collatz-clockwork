@@ -1,7 +1,12 @@
 var tickLog: Logger | undefined;
 // tickLog = console.log;
+
 class Position {
     constructor(public row: number, public col: number) { }
+
+    saveState(): PositionSaveState {
+        return { row: this.row, col: this.col };
+    }
 
     toString(): string {
         return "(" + this.row + ", " + this.col + ")";
@@ -33,6 +38,7 @@ type ClockTypeSet = {
 interface ClockOptions {
     type: ClockType;
     position: Position;
+    offset?: number;
 }
 
 type UpgradeGraphicsState = {
@@ -62,6 +68,24 @@ abstract class Clock {
     constructor(public options: ClockOptions) { 
         this.upgrade_tree = new UpgradeTree(new.target.clockType);
         this.upgrade_graphics_state = {};
+    }
+
+    saveState(): ClockSaveState {
+        return {
+            type: this.getType(),
+            position: this.options.position.saveState(),
+            upgrades: this.upgrade_tree.saveState(),
+            time: this.animation?.currentTime ?? 0,
+        };
+    }
+
+    restoreFrom(state: ClockSaveState) {
+        this.upgrade_tree.restoreFrom(state.upgrades);
+        for (const upgrade_id of this.upgrade_tree.getUnlockedIds()) {
+            const level = this.upgrade_tree.getUpgradeLevel(upgrade_id);
+            this.addUpgradeGraphic(upgrade_id, level);
+        }
+        this.updatePlaybackRate();
     }
 
     getType(): ClockType {
@@ -118,7 +142,7 @@ abstract class Clock {
         const upgrade = UPGRADES[upgrade_id];
         let possible_upgrade;
         let disabled = false;
-        const max_upgrade = upgrade.getMaxPurchaseable(current_level, Game.game_state.money.value());
+        const max_upgrade = upgrade.getMaxPurchaseable(current_level, Game.game_state.resources.money.value());
         if (max_upgrade === null) {
             possible_upgrade = {level: current_level+1, cost: upgrade.getCost(current_level+1), id: upgrade_id};;
             disabled = true;
@@ -148,6 +172,12 @@ abstract class Clock {
         return ret;
     }
 
+    updatePlaybackRate() {
+        const level = this.upgrade_tree.getUpgradeLevel("playback_speed");
+        this.playback_rate = 2 ** level;
+        this.animation!.updatePlaybackRate(this.playback_rate);
+    }
+
 
     applyUpgrade(possible_upgrade: PossibleUpgradeState) {
         Game.purchase(possible_upgrade);
@@ -155,8 +185,7 @@ abstract class Clock {
         const current_level = this.upgrade_tree.getUpgradeLevel(id);
         this.upgrade_tree.applyUpgrade(id, possible_upgrade);
         if (id == "playback_speed") {
-            this.playback_rate = 2 ** possible_upgrade.level;
-            this.animation!.updatePlaybackRate(this.playback_rate);
+            this.updatePlaybackRate();
         }
         this.addUpgradeGraphic(id, possible_upgrade.level);
     }
@@ -359,7 +388,7 @@ abstract class Clock {
     }
 
     refund() {
-        Game.game_state.money.add(this.upgrade_tree.getRefundAmount());
+        Game.game_state.resources.money.add(this.upgrade_tree.getRefundAmount());
         this.upgrade_tree.reset();
     }
 

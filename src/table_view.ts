@@ -206,6 +206,17 @@ class TableView {
         this.generateFlexTable();
     }
 
+    saveState(): TableViewSaveState {
+        return {
+            rows: this.getRows(),
+            cols: this.getColumns(),
+        }
+    }
+
+    restoreFrom(state: TableViewSaveState) {
+        this.growTo(state.rows, state.cols);
+    }
+
     generateMenuForCell(cell: HTMLElement, pos: Position) {
         let menu = new ContextMenu({
             scope: cell,
@@ -245,7 +256,7 @@ class TableView {
     addClock(pos: Position, opts: ClockOptions) {
         const clock = Game.clock_manager.addClock(pos, opts);
         let cell = this.getCell(pos);
-        cell?.appendChild(this.createClockElement(clock));
+        cell?.appendChild(this.createClockElement(clock, opts.offset ?? 0));
     }
 
     clearElementAndAnimations(element: Element) {
@@ -641,14 +652,42 @@ class TableView {
         }
     }
 
-    buyAllUpgrades(cheapest_first: boolean = false) {
+    growTo(rows: number, cols: number) {
+        while (this.getColumns() < cols) {
+            this.addColumn();
+        }
+        while (this.getRows() < rows) {
+            this.addRow();
+        }
+    }
+
+    buyallUpgradesPriciestFirst() {
+        // TODO: fix this. Shouldn't exit as soon as seen one that can't be bought (need to continue until it's 
+        // impossible to buy any, not just the most expensive)
+        // Maybe pass in the max price to the mostExpensive function so that impossible upgrades aren't even considered
+        const clocks = Game.clock_manager.getClocks();
+        const pq = new PriorityQueue<Clock>(mostExpensiveFirst);
+        pq.reset(clocks);
+        let clock = pq.pop();
+        let upgrade = clock?.getMostExpensiveUpgrade();
+        const MAX_PURCHASES = 100000; // Mostly case I messed up
+        let purchased = 0;
+        while (clock && upgrade && Game.canPurchase(upgrade) && purchased < MAX_PURCHASES) {
+            clock.applyUpgrade(upgrade);
+            pq.push(clock);
+            purchased++;
+            clock = pq.pop();
+            upgrade = clock?.getMostExpensiveUpgrade();
+        }
+    }
+    
+
+    buyAllUpgradesCheapestFirst() {
         // keep track of clocks upgrades in priority queue sorted by cheapest available upgrade
         // Repeatedly buy the cheapest upgrade until we can't afford it
         // Since costs depend on the number of upgrades, we need to recompute the costs.
-
         const clocks = Game.clock_manager.getClocks();
-        const priorityFunction = cheapest_first ? cheapestFirst : mostExpensiveFirst;
-        const pq = new PriorityQueue<Clock>(priorityFunction);
+        const pq = new PriorityQueue<Clock>(cheapestFirst);
         pq.reset(clocks);
         let clock = pq.pop();
         let upgrade = clock?.getCheapestUpgrade();
@@ -662,6 +701,14 @@ class TableView {
                 upgrade = clock?.getCheapestUpgrade();
         }
     }
+
+    buyAllUpgrades(cheapest_first:boolean = false) {
+        if (cheapest_first) {
+            this.buyAllUpgradesCheapestFirst();
+        } else {
+            this.buyallUpgradesPriciestFirst();
+        }
+    }
 }
 
 
@@ -673,6 +720,11 @@ const cheapestFirst = (clock: Clock) => {
     return Infinity;
 };
 
+const getCheapestUpgrade = (clock: Clock) => {
+    return clock.getCheapestUpgrade();
+
+};
+
 const mostExpensiveFirst = (clock: Clock) => {
     const priciest = clock.getMostExpensiveUpgrade();
     if (priciest) {
@@ -680,3 +732,7 @@ const mostExpensiveFirst = (clock: Clock) => {
     }
     return Infinity;
 };
+
+const getMostExpensiveUpgrade = (clock: Clock) => {
+    return clock.getMostExpensiveUpgrade();
+}

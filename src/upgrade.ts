@@ -253,6 +253,24 @@ class UpgradeTree {
             }
         }
     }
+
+    saveState(): UpgradeTreeSaveState {
+        return {
+            unlocked: this.unlocked,
+            locked: this.locked,
+            maxed: this.maxed,
+            spent: this.spent,
+        }
+    }
+
+    restoreFrom(state: UpgradeTreeSaveState) {
+        this.unlocked = {...state.unlocked};
+        this.locked = {...state.locked};
+        this.maxed = {...state.maxed};
+        this.spent = state.spent;
+    }
+
+
     // TODO: make this take in the resources and a setting for quantity (1, 10, 100, max)
     getPossibleUpgrades(): PossibleUpgrades {
         const possible_upgrades: PossibleUpgrades = {};

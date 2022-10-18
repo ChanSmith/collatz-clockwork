@@ -8,7 +8,7 @@ var _UpgradeTree_instances, _UpgradeTree_remove;
 // Rounded to the nearest integer
 // Where x is the number of times this upgrade has been purchased at level
 // Level effects start at 1 (i.e. 0 is unpurchased)
-const UPGRADES_OPTIONS = {
+const UPGRADE_OPTIONS = {
     applications_per_cycle: {
         name: "Extra f per cycle",
         description: "Applies f an additional time each cycle.",
@@ -81,8 +81,20 @@ const ADVANCE_ADJACENT_AMOUNT = 250;
 class Upgrade {
     constructor(id, options) {
         this.id = id;
-        this.options = Object.assign({}, options);
+        this.options = options;
         this.purchased_counts = new Map();
+        for (const level in options.unlocks) {
+            for (const child of options.unlocks[level]) {
+                Upgrade.addUnlockSource(id, child, parseInt(level));
+            }
+        }
+    }
+    // Add to child's options that it can be unlocked by parent at level
+    static addUnlockSource(parent, child, level) {
+        if (!("unlocked_by" in UPGRADE_OPTIONS[child]) || !UPGRADE_OPTIONS[child]["unlocked_by"]) {
+            UPGRADE_OPTIONS[child]["unlocked_by"] = {};
+        }
+        UPGRADE_OPTIONS[child]["unlocked_by"][parent] = level;
     }
     // Record a purchase of upgrade at level
     recordPurchase(level) {
@@ -144,7 +156,7 @@ class Upgrade {
     }
 }
 function upgradeIds(obj) {
-    return Object.keys(obj).filter(x => x in UPGRADES_OPTIONS);
+    return Object.keys(obj).filter(x => x in UPGRADE_OPTIONS);
 }
 const REFUND_RATIO = 0.5;
 class UpgradeTree {
@@ -159,8 +171,8 @@ class UpgradeTree {
         this.maxed = {};
         // Total amount spend on this tree
         this.spent = 0;
-        for (const upgrade_id in UPGRADES_OPTIONS) {
-            const upgrade_options = UPGRADES_OPTIONS[upgrade_id];
+        for (const upgrade_id in UPGRADE_OPTIONS) {
+            const upgrade_options = UPGRADE_OPTIONS[upgrade_id];
             if (upgrade_options.applies_to[type]) {
                 if ('starts_unlocked_for' in upgrade_options && upgrade_options.starts_unlocked_for[type]) {
                     this.unlocked[upgrade_id] = { level: 0 };
@@ -170,6 +182,20 @@ class UpgradeTree {
                 }
             }
         }
+    }
+    saveState() {
+        return {
+            unlocked: this.unlocked,
+            locked: this.locked,
+            maxed: this.maxed,
+            spent: this.spent,
+        };
+    }
+    restoreFrom(state) {
+        this.unlocked = Object.assign({}, state.unlocked);
+        this.locked = Object.assign({}, state.locked);
+        this.maxed = Object.assign({}, state.maxed);
+        this.spent = state.spent;
     }
     // TODO: make this take in the resources and a setting for quantity (1, 10, 100, max)
     getPossibleUpgrades() {
@@ -213,7 +239,7 @@ class UpgradeTree {
             if (level <= old_level || level > new_level)
                 continue;
             for (const unlock_id of unlocks[level]) {
-                const unlock_options = UPGRADES_OPTIONS[unlock_id];
+                const unlock_options = UPGRADE_OPTIONS[unlock_id];
                 if (unlock_options.applies_to[this.type]) {
                     this.unlocked[unlock_id] = { level: 0 };
                     delete this.locked[unlock_id];
@@ -222,7 +248,7 @@ class UpgradeTree {
         }
     }
     applyUpgrade(id, u) {
-        const upgrade_options = UPGRADES_OPTIONS[id];
+        const upgrade_options = UPGRADE_OPTIONS[id];
         const state = this.unlocked[id];
         if (!state) {
             throw new Error(`Upgrade ${id} is not unlocked. Trying to apply upgrade ${u.level} to it.`);
@@ -279,8 +305,8 @@ _UpgradeTree_instances = new WeakSet(), _UpgradeTree_remove = function _UpgradeT
 };
 function buildUpgrades() {
     const ret = {};
-    for (const upgrade_id in UPGRADES_OPTIONS) {
-        ret[upgrade_id] = new Upgrade(upgrade_id, UPGRADES_OPTIONS[upgrade_id]);
+    for (const upgrade_id in UPGRADE_OPTIONS) {
+        ret[upgrade_id] = new Upgrade(upgrade_id, UPGRADE_OPTIONS[upgrade_id]);
     }
     return ret;
 }

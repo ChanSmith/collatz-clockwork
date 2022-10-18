@@ -73,22 +73,86 @@ const OPTIONS = [
 
 const DEFAULT_CLOCK_TABLE_SIZE = 64;
 
-const COLOR_OPTIONS_MAP = new Map([
-    ["Producer", "--producer-color"],
-    ["Verifier", "--verifier-color"],
-]);
+function updateOption(option: GameOption, v: string) {
+    const value = option.input_transformer ? option.input_transformer(v) : v;
+    document.documentElement.style.setProperty(option.css_variable!, value);
+    
+}
+
+function getOptionSaveState(option: GameOption): OptionSaveState {
+    const state: OptionSaveState = {
+        id: option.id,
+    };
+    if ('sub_options' in option) {
+        state.sub_options = option.sub_options?.map(getOptionSaveState);
+    } else {
+        const input = document.getElementById(option.id) as HTMLInputElement;
+        state.value = input.value;
+    }
+    return state;
+}
+
+function optionFromId(id: string, from: GameOption[] = OPTIONS): GameOption | undefined {
+    for (const option of from) {
+        if (option.id === id) {
+            return option;
+        }
+        if ('sub_options' in option) {
+            return optionFromId(id, option.sub_options);
+        }
+    }
+}
+
+function restoreOptionFrom(state: OptionSaveState) {
+    const option = optionFromId(state.id);
+    if (option === undefined) {
+        console.error("Could not find option with id " + state.id);
+        return;
+    }
+    if ('sub_options' in state) {
+        state.sub_options?.forEach((sub_option) => {
+            restoreOptionFrom(sub_option);
+        });
+    } else {
+        const input = document.getElementById(option.id) as HTMLInputElement;
+        input.value = state.value ?? option.default ?? "";
+        updateOption(option, input.value);
+    }
+}
 
 // TODO: add a way to register/cancel a callback for when an option changes
 // e.g. to have stats title change when the clock table size changes
 class OptionsMenu extends HTMLDivElement {
 
     enabled: boolean;
+    connected: boolean = false;
+    restore_state:OptionsMenuSaveState | null;
 
     wrapper: HTMLDivElement;
 
     constructor() {
         super();
         this.disable();
+    }
+    saveState(): OptionsMenuSaveState {
+        const state: OptionsMenuSaveState = {
+            options: [],
+        };
+        for (const option of OPTIONS) {
+            state.options.push(getOptionSaveState(option));
+        }
+        return state;
+    }
+
+    restoreFrom(state: OptionsMenuSaveState) {
+        if(!this.connected) {
+            this.restore_state = state;
+            return;
+        }
+        for (const option of state.options) {
+            restoreOptionFrom(option);
+        }
+        this.restore_state = null;
     }
     enable() {
         this.classList.remove("disabled");
@@ -115,7 +179,7 @@ class OptionsMenu extends HTMLDivElement {
         this.wrapper.appendChild(close_button);
     }
     // TODO: actually compute/use the id if I need it
-    generateOption(option: GameOption, sub_option: boolean = false, id: string = "") {
+    generateOption(option: GameOption, sub_option: boolean = false) {
         const container = document.createElement('div');
         container.classList.add(sub_option ? 'sub-option-container' : 'option-container');
         const label = document.createElement('label');
@@ -123,16 +187,12 @@ class OptionsMenu extends HTMLDivElement {
         container.appendChild(label);
         if (option.sub_options) {
             option.sub_options.forEach((sub_option) => {
-                container.appendChild(this.generateOption(sub_option, true));
+                container.appendChild(this.generateOption(sub_option));
             });
         } else if (option.input_type && option.css_variable) {
-            const setValue = (v: string) => {
-                const value = option.input_transformer ? option.input_transformer(v) : v;
-                document.documentElement.style.setProperty(option.css_variable!, value);
-            }
             const input = document.createElement('input');
             input.type = option.input_type;
-            input.id = option.name;
+            input.id = option.id;
             container.appendChild(input);
             for (const key in option.input_options) {
                 input.setAttribute(key, option.input_options[key]);
@@ -143,14 +203,14 @@ class OptionsMenu extends HTMLDivElement {
                 reset.textContent = "Reset";
                 reset.addEventListener('click', () => {
                     input.value = option.default!;
-                    setValue(option.default!);
+                    updateOption(option, option.default!);
                 });
                 container.appendChild(reset);
             }
             input.addEventListener('input', () => {
-                setValue(input.value);
+                updateOption(option, input.value);
             });
-            setValue(option.default!);
+            updateOption(option, option.default!);
         }
         return container;
     }
@@ -163,15 +223,21 @@ class OptionsMenu extends HTMLDivElement {
     }
 
     connectedCallback() {
+        this.connected = true;
         this.classList.add('options-menu');
         const wrapper = document.createElement('div');
         this.wrapper = wrapper;
         wrapper.id = "options-menu-wrapper";
         this.appendChild(wrapper);
-
         this.addOptions();
-
+        if(this.restore_state) {
+            this.restoreFrom(this.restore_state);
+        }
     }
 }
 
 customElements.define('options-menu', OptionsMenu, { extends: 'div' });
+
+function getOptionsMenu() {
+    return document.querySelector("#options-menu") as OptionsMenu;
+}
