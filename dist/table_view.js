@@ -547,28 +547,49 @@ class TableView {
             this.addRow();
         }
     }
-    buyAllUpgrades(cheapest_first = false) {
+    buyallUpgradesMostExpensiveFirst() {
+        const clocks = Game.clock_manager.getClocks();
+        const pq = new PriorityQueue(mostExpensiveFirst);
+        pq.reset(clocks);
+        let clock = pq.pop();
+        let upgrade = clock === null || clock === void 0 ? void 0 : clock.getMostExpensiveUpgrade();
+        const MAX_PURCHASES = 100000; // Mostly in case I messed up
+        let purchased = 0;
+        while (clock && upgrade && Game.canPurchase(upgrade) && purchased < MAX_PURCHASES) {
+            clock.applyUpgrade(upgrade);
+            pq.updateAllPriorities();
+            pq.push(clock);
+            purchased++;
+            clock = pq.pop();
+            upgrade = clock === null || clock === void 0 ? void 0 : clock.getMostExpensiveUpgrade();
+        }
+    }
+    buyAllUpgradesCheapestFirst() {
         // keep track of clocks upgrades in priority queue sorted by cheapest available upgrade
         // Repeatedly buy the cheapest upgrade until we can't afford it
         // Since costs depend on the number of upgrades, we need to recompute the costs.
         const clocks = Game.clock_manager.getClocks();
-        const priorityFunction = cheapest_first ? cheapestFirst : mostExpensiveFirst;
-        const getNextUpgrade = cheapest_first ? getCheapestUpgrade : getMostExpensiveUpgrade;
-        const pq = new PriorityQueue(priorityFunction);
+        const pq = new PriorityQueue(cheapestFirst);
         pq.reset(clocks);
         let clock = pq.pop();
-        if (!clock) {
-            return;
-        }
-        let upgrade = getNextUpgrade(clock);
-        const MAX_PURCHASES = 100000; // Mostly case I messed up
+        let upgrade = clock === null || clock === void 0 ? void 0 : clock.getCheapestUpgrade();
+        const MAX_PURCHASES = 100000; // Mostly in case I messed up
         let purchased = 0;
         while (clock && upgrade && Game.canPurchase(upgrade) && purchased < MAX_PURCHASES) {
             clock.applyUpgrade(upgrade);
+            pq.updateAllPriorities();
             pq.push(clock);
             purchased++;
             clock = pq.pop();
-            upgrade = clock ? getNextUpgrade(clock) : null;
+            upgrade = clock === null || clock === void 0 ? void 0 : clock.getCheapestUpgrade();
+        }
+    }
+    buyAllUpgrades() {
+        if (getOptionsMenu().buy_all_method === "cheapest-first") {
+            this.buyAllUpgradesCheapestFirst();
+        }
+        else {
+            this.buyallUpgradesMostExpensiveFirst();
         }
     }
 }
@@ -579,16 +600,10 @@ const cheapestFirst = (clock) => {
     }
     return Infinity;
 };
-const getCheapestUpgrade = (clock) => {
-    return clock.getCheapestUpgrade();
-};
 const mostExpensiveFirst = (clock) => {
     const priciest = clock.getMostExpensiveUpgrade();
     if (priciest) {
         return -priciest.cost;
     }
     return Infinity;
-};
-const getMostExpensiveUpgrade = (clock) => {
-    return clock.getMostExpensiveUpgrade();
 };

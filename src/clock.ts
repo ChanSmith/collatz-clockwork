@@ -117,12 +117,13 @@ abstract class Clock {
         return cheapest;
     }
 
-    getMostExpensiveUpgrade(): PossibleUpgradeState | null {
+    getMostExpensiveUpgrade(max_cost: number = Game.game_state.resources.money.value()): PossibleUpgradeState | null {
         const possible_upgrades = this.upgrade_tree.getPossibleUpgrades();
         let most_expensive: PossibleUpgradeState | null = null;
         for (const id of Object.keys(possible_upgrades)) {
             const possible_upgrade = possible_upgrades[id];
-            if (most_expensive === null || possible_upgrade.cost > most_expensive.cost) {
+            if (possible_upgrade.cost <= max_cost && 
+                    (most_expensive === null || possible_upgrade.cost > most_expensive.cost)) {
                 most_expensive = possible_upgrade;
             }
         }

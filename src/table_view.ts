@@ -661,19 +661,17 @@ class TableView {
         }
     }
 
-    buyallUpgradesPriciestFirst() {
-        // TODO: fix this. Shouldn't exit as soon as seen one that can't be bought (need to continue until it's 
-        // impossible to buy any, not just the most expensive)
-        // Maybe pass in the max price to the mostExpensive function so that impossible upgrades aren't even considered
+    buyallUpgradesMostExpensiveFirst() {
         const clocks = Game.clock_manager.getClocks();
         const pq = new PriorityQueue<Clock>(mostExpensiveFirst);
         pq.reset(clocks);
         let clock = pq.pop();
         let upgrade = clock?.getMostExpensiveUpgrade();
-        const MAX_PURCHASES = 100000; // Mostly case I messed up
+        const MAX_PURCHASES = 100000; // Mostly in case I messed up
         let purchased = 0;
         while (clock && upgrade && Game.canPurchase(upgrade) && purchased < MAX_PURCHASES) {
             clock.applyUpgrade(upgrade);
+            pq.updateAllPriorities();
             pq.push(clock);
             purchased++;
             clock = pq.pop();
@@ -691,10 +689,11 @@ class TableView {
         pq.reset(clocks);
         let clock = pq.pop();
         let upgrade = clock?.getCheapestUpgrade();
-        const MAX_PURCHASES = 100000; // Mostly case I messed up
+        const MAX_PURCHASES = 100000; // Mostly in case I messed up
         let purchased = 0;
         while (clock && upgrade && Game.canPurchase(upgrade) && purchased < MAX_PURCHASES) {
                 clock.applyUpgrade(upgrade);
+                pq.updateAllPriorities();
                 pq.push(clock);
                 purchased++;
                 clock = pq.pop();
@@ -702,11 +701,11 @@ class TableView {
         }
     }
 
-    buyAllUpgrades(cheapest_first:boolean = false) {
-        if (cheapest_first) {
+    buyAllUpgrades() {
+        if (getOptionsMenu().buy_all_method === "cheapest-first") {
             this.buyAllUpgradesCheapestFirst();
         } else {
-            this.buyallUpgradesPriciestFirst();
+            this.buyallUpgradesMostExpensiveFirst();
         }
     }
 }
@@ -719,12 +718,6 @@ const cheapestFirst = (clock: Clock) => {
     }
     return Infinity;
 };
-
-const getCheapestUpgrade = (clock: Clock) => {
-    return clock.getCheapestUpgrade();
-
-};
-
 const mostExpensiveFirst = (clock: Clock) => {
     const priciest = clock.getMostExpensiveUpgrade();
     if (priciest) {
@@ -733,6 +726,4 @@ const mostExpensiveFirst = (clock: Clock) => {
     return Infinity;
 };
 
-const getMostExpensiveUpgrade = (clock: Clock) => {
-    return clock.getMostExpensiveUpgrade();
-}
+

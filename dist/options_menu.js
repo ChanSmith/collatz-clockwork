@@ -31,45 +31,82 @@ const CLOCK_COLOR_OPTION = {
         },
     ],
 };
-// const  = {
-//     id: "buy-all-method",
-//     name: "Buy All Method",
-//     sub_options: [
-//         {
-//             id: "",
-//         },
-//     ],
-// }
+const BUY_ALL_METHOD_OPTION = {
+    id: "buy-all-method",
+    name: "Buy All Method",
+    input_type: "radio",
+    default: "cheapest-first",
+    radio_options: {
+        name: "buy-all-method",
+        options: [
+            { value: "cheapest-first", label: "Cheapest First" },
+            { value: "most-expensive-first", label: "Most Expensive First" },
+        ],
+    },
+    input_callback: (s) => {
+        getOptionsMenu().buy_all_method = s;
+    }
+};
 const OPTIONS = [
     CELL_SIZE_OPTION,
     CLOCK_COLOR_OPTION,
+    BUY_ALL_METHOD_OPTION,
 ];
 const DEFAULT_CLOCK_TABLE_SIZE = 64;
 function updateOption(option, v) {
-    const value = option.input_transformer ? option.input_transformer(v) : v;
-    document.documentElement.style.setProperty(option.css_variable, value);
+    if (option.css_variable) {
+        const value = option.input_transformer ? option.input_transformer(v) : v;
+        document.documentElement.style.setProperty(option.css_variable, value);
+    }
+    if (option.input_callback) {
+        option.input_callback(v);
+    }
 }
-function getOptionSaveState(option) {
+function getRadioOptionSaveState(option) {
+    var _a;
+    const inputs = document.getElementsByName(option.radio_options.name);
+    for (const input of inputs) {
+        if (input.checked) {
+            return {
+                id: option.id,
+                value: input.value,
+            };
+        }
+    }
+    return {
+        id: option.id,
+        value: (_a = option.default) !== null && _a !== void 0 ? _a : "",
+    };
+}
+function getOptionSaveState(option, prefix = "") {
     var _a;
     const state = {
         id: option.id,
     };
     if ('sub_options' in option) {
-        state.sub_options = (_a = option.sub_options) === null || _a === void 0 ? void 0 : _a.map(getOptionSaveState);
+        state.sub_options = (_a = option.sub_options) === null || _a === void 0 ? void 0 : _a.map((o) => getOptionSaveState(o, prefix + option.id + "-"));
+    }
+    else if (option.input_type == "radio") {
+        return getRadioOptionSaveState(option);
     }
     else {
         const input = document.getElementById(option.id);
-        state.value = input.value;
+        if (input && input instanceof HTMLInputElement) {
+            state.value = input.value;
+        }
     }
     return state;
 }
-function optionFromId(id, from = OPTIONS) {
+function optionFromId(id, from = OPTIONS, prefix = "") {
     for (const option of from) {
-        if (option.id === id) {
+        if (option.id == id) {
             return option;
         }
         if ('sub_options' in option) {
-            return optionFromId(id, option.sub_options);
+            const sub_result = optionFromId(id, option.sub_options, prefix + option.id + "-");
+            if (sub_result) {
+                return sub_result;
+            }
         }
     }
 }
@@ -85,10 +122,18 @@ function restoreOptionFrom(state) {
             restoreOptionFrom(sub_option);
         });
     }
+    else if (option.input_type == "radio") {
+        const input = document.querySelector(`input[name="${option.radio_options.name}"][value="${state.value}"]`);
+        if (input) {
+            input.checked = true;
+        }
+    }
     else {
         const input = document.getElementById(option.id);
-        input.value = (_c = (_b = state.value) !== null && _b !== void 0 ? _b : option.default) !== null && _c !== void 0 ? _c : "";
-        updateOption(option, input.value);
+        if (input && input instanceof HTMLInputElement) {
+            input.value = (_c = (_b = state.value) !== null && _b !== void 0 ? _b : option.default) !== null && _c !== void 0 ? _c : "";
+            updateOption(option, input.value);
+        }
     }
 }
 // TODO: add a way to register/cancel a callback for when an option changes
@@ -97,6 +142,8 @@ class OptionsMenu extends HTMLDivElement {
     constructor() {
         super();
         this.connected = false;
+        // Options stored in the menu
+        this.buy_all_method = "cheapest-first";
         this.disable();
     }
     saveState() {
@@ -139,8 +186,73 @@ class OptionsMenu extends HTMLDivElement {
         });
         this.wrapper.appendChild(close_button);
     }
+    generateNonRadioOption(container, option, prefix = "") {
+        if (!option.input_type) {
+            return;
+        }
+        const input = document.createElement('input');
+        input.type = option.input_type;
+        input.id = prefix + option.id;
+        container.appendChild(input);
+        if (option.input_type === "radio") {
+            // For a radio input, 
+        }
+        for (const key in option.input_options) {
+            input.setAttribute(key, option.input_options[key]);
+        }
+        if (option.default) {
+            input.value = option.default;
+            const reset = document.createElement('button');
+            reset.textContent = "Reset";
+            reset.addEventListener('click', () => {
+                input.value = option.default;
+                updateOption(option, option.default);
+            });
+            container.appendChild(reset);
+        }
+        input.addEventListener('input', () => {
+            updateOption(option, input.value);
+        });
+        updateOption(option, option.default);
+    }
+    generateRadioOption(container, option, prefix = "") {
+        if (!option.input_type || !option.radio_options) {
+            return;
+        }
+        for (const radio_option of option.radio_options.options) {
+            const input = document.createElement('input');
+            input.type = "radio";
+            input.id = prefix + option.id + "-" + radio_option.value;
+            input.value = radio_option.value;
+            input.name = option.radio_options.name;
+            container.appendChild(input);
+            const label = document.createElement('label');
+            label.textContent = radio_option.label;
+            label.htmlFor = input.id;
+            container.appendChild(label);
+            if (radio_option.value === option.default) {
+                input.checked = true;
+            }
+            input.addEventListener('input', () => {
+                updateOption(option, input.value);
+            });
+        }
+        if (option.default) {
+            const reset = document.createElement('button');
+            reset.textContent = "Reset";
+            reset.addEventListener('click', () => {
+                const inputs = document.getElementsByName(option.radio_options.name);
+                for (const input of inputs) {
+                    input.checked = input.value === option.default;
+                }
+                updateOption(option, option.default);
+            });
+            container.appendChild(reset);
+            updateOption(option, option.default);
+        }
+    }
     // TODO: actually compute/use the id if I need it
-    generateOption(option, sub_option = false) {
+    generateOption(option, sub_option = false, prefix = "") {
         const container = document.createElement('div');
         container.classList.add(sub_option ? 'sub-option-container' : 'option-container');
         const label = document.createElement('label');
@@ -148,31 +260,16 @@ class OptionsMenu extends HTMLDivElement {
         container.appendChild(label);
         if (option.sub_options) {
             option.sub_options.forEach((sub_option) => {
-                container.appendChild(this.generateOption(sub_option));
+                container.appendChild(this.generateOption(sub_option, true, prefix + option.id + "-"));
             });
         }
-        else if (option.input_type && option.css_variable) {
-            const input = document.createElement('input');
-            input.type = option.input_type;
-            input.id = option.id;
-            container.appendChild(input);
-            for (const key in option.input_options) {
-                input.setAttribute(key, option.input_options[key]);
+        else if (option.input_type) {
+            if (option.input_type === "radio") {
+                this.generateRadioOption(container, option, prefix);
             }
-            if (option.default) {
-                input.value = option.default;
-                const reset = document.createElement('button');
-                reset.textContent = "Reset";
-                reset.addEventListener('click', () => {
-                    input.value = option.default;
-                    updateOption(option, option.default);
-                });
-                container.appendChild(reset);
+            else {
+                this.generateNonRadioOption(container, option, prefix);
             }
-            input.addEventListener('input', () => {
-                updateOption(option, input.value);
-            });
-            updateOption(option, option.default);
         }
         return container;
     }
