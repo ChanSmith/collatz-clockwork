@@ -29,6 +29,24 @@ const UPGRADE_OPTIONS = {
             Producer: true,
         },
     },
+    advance_adjacent: {
+        name: "Advance adjacent",
+        description: "Each time this clock cycles sucessfully, advance adjacent (top, bottom, left, right) clocks by a small amount per level.",
+        base_cost: 10,
+        level_multiplier: 3.0,
+        purchased_multiplier: 1.4,
+        max_level: 10,
+        max_graphics_level: 1,
+        unlocks: {
+            5: ["playback_speed",
+                // Can also be unlocked by applications_per_cycle level 10
+                "money_per_application"],
+        },
+        applies_to: {
+            Producer: true,
+        },
+        starts_unlocked_for: {},
+    },
     money_per_application: {
         name: "Money per application",
         description: "Doubles the amount of money gained each time this clock applies f.",
@@ -59,24 +77,6 @@ const UPGRADE_OPTIONS = {
         starts_unlocked_for: {
             Verifier: true,
         }
-    },
-    advance_adjacent: {
-        name: "Advance adjacent",
-        description: "Each time this clock cycles sucessfully, advance adjacent (top, bottom, left, right) clocks by a small amount per level.",
-        base_cost: 10,
-        level_multiplier: 3.0,
-        purchased_multiplier: 1.4,
-        max_level: 10,
-        max_graphics_level: 1,
-        unlocks: {
-            5: ["playback_speed",
-                // Can also be unlocked by applications_per_cycle level 10
-                "money_per_application"],
-        },
-        applies_to: {
-            Producer: true,
-        },
-        starts_unlocked_for: {},
     },
 };
 const ADVANCE_ADJACENT_AMOUNT = 250;
@@ -215,8 +215,19 @@ class UpgradeTree {
         }
         return possible_upgrades;
     }
+    hasUnlocked(id) {
+        return id in this.unlocked || id in this.maxed;
+    }
     getLockedIds() {
         return upgradeIds(this.locked);
+    }
+    // Returns upgrade IDs of upgrades that can be unlocked by upgrading an already unlocked upgrade.
+    getSinglyLockedIds() {
+        return upgradeIds(this.locked).filter(x => upgradeIds(UPGRADE_OPTIONS[x].unlocked_by).some(y => y in this.unlocked));
+    }
+    // Returns upgrade IDs for upgrades which can only be unlocked by locked upgrades (i.e. can't be unlocked by leveling up any already unlocked upgrade).
+    getDoublyLockedIds() {
+        return this.getLockedIds().filter(x => upgradeIds(UPGRADE_OPTIONS[x].unlocked_by).every(y => y in this.locked));
     }
     getUnlockedIds() {
         return upgradeIds(this.unlocked);

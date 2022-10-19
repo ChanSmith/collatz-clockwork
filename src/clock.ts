@@ -172,7 +172,7 @@ abstract class Clock {
         };
     }
 
-    generateLockedUpgradeMenuOption(upgrade_id: UpgradeId): MenuOption {
+    generateSinglyLockedUpgradeMenuOption(upgrade_id: UpgradeId): MenuOption {
         // Show an option with the upgrade name and unlock requirements
         const upgrade_options = UPGRADE_OPTIONS[upgrade_id];
         const sources: UpgradeStateMap = {};
@@ -181,7 +181,8 @@ abstract class Clock {
         }
         const unlocked_by = upgrade_options.unlocked_by!;
         for (const source_id of upgradeIds(unlocked_by)) {
-            if (this.getType() in UPGRADE_OPTIONS[source_id].applies_to) {
+            if (this.getType() in UPGRADE_OPTIONS[source_id].applies_to
+                && this.upgrade_tree.hasUnlocked(source_id)) {
                 sources[source_id] = {level: unlocked_by[source_id]!};
             }
         }
@@ -198,7 +199,20 @@ abstract class Clock {
             callback: () => {},
             disabled: true,
         };
-    
+    }
+
+    generateDoublyLockedUpgradeMenuOption(upgrade_id: UpgradeId): MenuOption {
+        const upgrade_options = UPGRADE_OPTIONS[upgrade_id];
+        const sources: UpgradeStateMap = {};
+        if (!('unlocked_by' in upgrade_options)) {
+            throw new Error("Upgrade is locked and has no way to be unlocked.");
+        }
+        return {
+            label: "??????",
+            description: "Unlock more upgrades to reveal this one.",
+            callback: () => { },
+            disabled: true,
+        };
     }
 
     generateMaxedUpgradeMenuOption(upgrade_id: UpgradeId): MenuOption {
@@ -213,30 +227,38 @@ abstract class Clock {
     }
 
     getUpgradeMenuItems(slider_value: number): MenuItem[] {
-        let ret: MenuItem[] = [];
+        const ret: MenuItem[] = [];
         let need_sep = false;
+
+        const addSepIfNeeded = () => {
+            if (need_sep) { 
+                ret.push("hr");
+                need_sep = false;
+            }
+        }
+
         for (const upgrade_id of this.upgrade_tree.getUnlockedIds()) {
             ret.push(this.generateUpgradeMenuOption(upgrade_id, slider_value));
             need_sep = true;
         }
-        if (need_sep) {
-            ret.push("hr");
-            need_sep = false;
-        }
-        for (const upgrade_id of this.upgrade_tree.getLockedIds()) {
-            ret.push(this.generateLockedUpgradeMenuOption(upgrade_id));
+        addSepIfNeeded();
+        for (const upgrade_id of this.upgrade_tree.getSinglyLockedIds()) {
+            ret.push(this.generateSinglyLockedUpgradeMenuOption(upgrade_id));
             need_sep = true;
         }
-        if (need_sep) {
-            ret.push("hr");
-            need_sep = false;
+        addSepIfNeeded();
+        for (const upgrade_id of this.upgrade_tree.getDoublyLockedIds()) {
+            ret.push(this.generateDoublyLockedUpgradeMenuOption(upgrade_id));
+            need_sep = true;
         }
+        addSepIfNeeded();
         for (const upgrade_id of this.upgrade_tree.getMaxedIds()) {
             ret.push(this.generateMaxedUpgradeMenuOption(upgrade_id));
             need_sep = true;
         }
-        // Added items and separator after them, but then didn't add any more items
         if (ret.length > 0 && !need_sep) {
+            // Added items and separator after them, but then didn't add any more items,
+            // so remove the last separator
             ret.pop();
         }
         return ret;

@@ -70,4 +70,5 @@ type GameSaveState = {
     game: GameStateSaveState;
     table_view: TableViewSaveState;
     clocks: ClockSaveState[];
+    saved_at: number;
 }

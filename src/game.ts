@@ -44,6 +44,9 @@ class Game {
         Game.table_view.addStatistic(Game.game_state.statistics.n);
 
         if (localStorage.getItem("save_state")) {
+            const loading = document.createElement("p")
+            loading.id = "loading";
+            loading.innerText = "Calculating offline progress...";
             Game.restoreFromLocalStorage();
         }
     }
@@ -70,6 +73,12 @@ class Game {
                 clock.restoreFrom(clock_state);
             }
         }
+        const now = Date.now();
+        if (state.saved_at && now > state.saved_at) {
+            // Hope this doesn't take too long. 
+            Game.advancePausedGame(now - state.saved_at);
+        }
+        document.getElementById("loading")?.remove();
     }
 
     static addRow() {
@@ -408,6 +417,7 @@ class Game {
             game: Game.game_state.saveState(),
             table_view: Game.table_view.saveState(),
             clocks: clock_states,
+            saved_at: Date.now(),
         };
         localStorage.setItem("save_state", JSON.stringify(save_state));
     }
