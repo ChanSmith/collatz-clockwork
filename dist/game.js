@@ -3,7 +3,7 @@ var logPauseInfo;
 var logUnpauseInfo;
 // logUnpauseInfo = console.log;
 var logOfflineCalcTiming;
-logOfflineCalcTiming = console.log;
+// logOfflineCalcTiming = console.log;
 var logFocusChange;
 //  logFocusChange = console.log;
 // Set to true in console to prevent save 
@@ -103,7 +103,10 @@ class Game {
         const max = TEN_SECONDS - clock.unscaledRemainingTime();
         const offset = max / count;
         while (clock) {
-            clock.animation.currentTime = max - (i * offset);
+            const new_time = max - (i * offset);
+            if (clock.animation.currentTime > new_time) {
+                clock.animation.currentTime = new_time;
+            }
             i++;
             clock = pq.pop();
         }

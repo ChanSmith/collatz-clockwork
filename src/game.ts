@@ -5,7 +5,7 @@ var logUnpauseInfo: Logger;
 // logUnpauseInfo = console.log;
 
 var logOfflineCalcTiming: Logger;
-logOfflineCalcTiming = console.log;
+// logOfflineCalcTiming = console.log;
 
 var logFocusChange: Logger;
 //  logFocusChange = console.log;
@@ -118,9 +118,9 @@ class Game {
     static redistributeTimes() {
         const count = Game.table_view.clockCount();
         // Go through the clocks in order of their elapsed time (i.e. lowest remaining time first)
-        // And move them backwards so they are equally spaced out
+        // And try to align them to ticks of (max remaining time / count), only moving them backwards.
         // The clock with lowest time remaining will not change, the one with the most time remaining
-        // will go to 0
+        // will go to 0.
         const clocks = Game.clock_manager.getClocks();
         if(!clocks) {return;} // nothing to do
         const pq = new PriorityQueue<Clock>((c) => c.remainingTime());
@@ -130,7 +130,10 @@ class Game {
         const max = TEN_SECONDS - clock!.unscaledRemainingTime();
         const offset = max / count;
         while (clock) {
-            clock.animation!.currentTime = max - (i * offset);
+            const new_time = max - (i * offset);
+            if (clock.animation!.currentTime! > new_time) {
+                clock.animation!.currentTime = new_time;
+            }
             i++;
             clock = pq.pop();
         }
