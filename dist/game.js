@@ -89,9 +89,9 @@ class Game {
     static redistributeTimes() {
         const count = Game.table_view.clockCount();
         // Go through the clocks in order of their elapsed time (i.e. lowest remaining time first)
-        // And move them backwards so they are equally spaced out
+        // And try to align them to ticks of (max remaining time / count), only moving them backwards.
         // The clock with lowest time remaining will not change, the one with the most time remaining
-        // will go to 0
+        // will go to 0.
         const clocks = Game.clock_manager.getClocks();
         if (!clocks) {
             return;

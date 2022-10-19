@@ -229,6 +229,7 @@ abstract class Clock {
         }
         if (need_sep) {
             ret.push("hr");
+            need_sep = false;
         }
         for (const upgrade_id of this.upgrade_tree.getMaxedIds()) {
             ret.push(this.generateMaxedUpgradeMenuOption(upgrade_id));
