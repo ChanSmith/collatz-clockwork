@@ -7,7 +7,7 @@ logOfflineCalcTiming = console.log;
 var logFocusChange;
 //  logFocusChange = console.log;
 // Set to true in console to prevent save 
-var cancelSaveOnHidden = true;
+var cancelSaveOnHidden = false;
 class Game {
     static testAchievementUnlocked() {
         return Game.test_achieve;

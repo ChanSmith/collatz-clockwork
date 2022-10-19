@@ -11,7 +11,7 @@ var logFocusChange: Logger;
 //  logFocusChange = console.log;
 
 // Set to true in console to prevent save 
-var cancelSaveOnHidden = true;
+var cancelSaveOnHidden = false;
 class Game {
     static game_state: GameState;
 

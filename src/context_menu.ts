@@ -60,6 +60,7 @@ class ContextMenu {
     #contextMenuElement: HTMLElement | null = null;
     #titleElement: HTMLElement | null = null;
     #currentMenuOptions: MenuOptionAndElement[] | null = null;
+    #currentMouseDownElement: HTMLElement | null = null;
 
     static currentContextMenu: ContextMenu | undefined;
     // 0 = 1, 0.5 = 1/2 Max, 1 = Max,
@@ -151,7 +152,7 @@ class ContextMenu {
     #updateMenuItems(slider_value: number): void {
         let newMenuOptions: MenuOptionAndElement[] = [];
         for (const item of this.#currentMenuOptions!) {
-            if (item.option.sliderCallback) {
+            if (item.option.sliderCallback && this.#currentMouseDownElement !== item.element) {
                 const new_option = item.option.sliderCallback(slider_value);
                 const new_element = this.#generateMenuItem(new_option);
                 newMenuOptions.push({
@@ -348,6 +349,9 @@ class ContextMenu {
                 ContextMenu.removeExistingContextMenu();
             }
         };
+        htmlEl.onmousedown = () => {
+            this.#currentMouseDownElement = htmlEl;
+        }
     };
 
     #onShowContextMenu = (event: MouseEvent): void => {

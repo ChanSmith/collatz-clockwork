@@ -9,7 +9,7 @@ var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
     return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
 };
-var _ContextMenu_instances, _ContextMenu_initialContextMenuEvent, _ContextMenu_state, _ContextMenu_contextMenuElement, _ContextMenu_titleElement, _ContextMenu_currentMenuOptions, _ContextMenu_coreOptions, _ContextMenu_defaultOptions, _ContextMenu_options, _ContextMenu_generateCloseButton, _ContextMenu_generateTitleElement, _ContextMenu_generateTooltipElement, _ContextMenu_generateSlider, _ContextMenu_updateMenuItems, _ContextMenu_generateMenuItem, _ContextMenu_buildContextMenu, _ContextMenu_normalizePozition, _ContextMenu_applyStyleOnContextMenu, _ContextMenu_bindCallbacks, _ContextMenu_onShowContextMenu, _ContextMenu_onDocumentClick;
+var _ContextMenu_instances, _ContextMenu_initialContextMenuEvent, _ContextMenu_state, _ContextMenu_contextMenuElement, _ContextMenu_titleElement, _ContextMenu_currentMenuOptions, _ContextMenu_currentMouseDownElement, _ContextMenu_coreOptions, _ContextMenu_defaultOptions, _ContextMenu_options, _ContextMenu_generateCloseButton, _ContextMenu_generateTitleElement, _ContextMenu_generateTooltipElement, _ContextMenu_generateSlider, _ContextMenu_updateMenuItems, _ContextMenu_generateMenuItem, _ContextMenu_buildContextMenu, _ContextMenu_normalizePozition, _ContextMenu_applyStyleOnContextMenu, _ContextMenu_bindCallbacks, _ContextMenu_onShowContextMenu, _ContextMenu_onDocumentClick;
 class ContextMenu {
     constructor(configurableOptions) {
         _ContextMenu_instances.add(this);
@@ -19,6 +19,7 @@ class ContextMenu {
         _ContextMenu_contextMenuElement.set(this, null);
         _ContextMenu_titleElement.set(this, null);
         _ContextMenu_currentMenuOptions.set(this, null);
+        _ContextMenu_currentMouseDownElement.set(this, null);
         _ContextMenu_coreOptions.set(this, {
             transformOrigin: ['top', 'left'],
         });
@@ -134,6 +135,9 @@ class ContextMenu {
                     ContextMenu.removeExistingContextMenu();
                 }
             };
+            htmlEl.onmousedown = () => {
+                __classPrivateFieldSet(this, _ContextMenu_currentMouseDownElement, htmlEl, "f");
+            };
         });
         _ContextMenu_onShowContextMenu.set(this, (event) => {
             var _a;
@@ -214,7 +218,7 @@ class ContextMenu {
         __classPrivateFieldGet(this, _ContextMenu_titleElement, "f").innerText = title;
     }
 }
-_ContextMenu_initialContextMenuEvent = new WeakMap(), _ContextMenu_state = new WeakMap(), _ContextMenu_contextMenuElement = new WeakMap(), _ContextMenu_titleElement = new WeakMap(), _ContextMenu_currentMenuOptions = new WeakMap(), _ContextMenu_coreOptions = new WeakMap(), _ContextMenu_defaultOptions = new WeakMap(), _ContextMenu_options = new WeakMap(), _ContextMenu_buildContextMenu = new WeakMap(), _ContextMenu_normalizePozition = new WeakMap(), _ContextMenu_applyStyleOnContextMenu = new WeakMap(), _ContextMenu_bindCallbacks = new WeakMap(), _ContextMenu_onShowContextMenu = new WeakMap(), _ContextMenu_onDocumentClick = new WeakMap(), _ContextMenu_instances = new WeakSet(), _ContextMenu_generateCloseButton = function _ContextMenu_generateCloseButton() {
+_ContextMenu_initialContextMenuEvent = new WeakMap(), _ContextMenu_state = new WeakMap(), _ContextMenu_contextMenuElement = new WeakMap(), _ContextMenu_titleElement = new WeakMap(), _ContextMenu_currentMenuOptions = new WeakMap(), _ContextMenu_currentMouseDownElement = new WeakMap(), _ContextMenu_coreOptions = new WeakMap(), _ContextMenu_defaultOptions = new WeakMap(), _ContextMenu_options = new WeakMap(), _ContextMenu_buildContextMenu = new WeakMap(), _ContextMenu_normalizePozition = new WeakMap(), _ContextMenu_applyStyleOnContextMenu = new WeakMap(), _ContextMenu_bindCallbacks = new WeakMap(), _ContextMenu_onShowContextMenu = new WeakMap(), _ContextMenu_onDocumentClick = new WeakMap(), _ContextMenu_instances = new WeakSet(), _ContextMenu_generateCloseButton = function _ContextMenu_generateCloseButton() {
     const close_button = document.createElement('button');
     close_button.textContent = "X";
     close_button.classList.add('context-menu-close-button');
@@ -262,7 +266,7 @@ _ContextMenu_initialContextMenuEvent = new WeakMap(), _ContextMenu_state = new W
 }, _ContextMenu_updateMenuItems = function _ContextMenu_updateMenuItems(slider_value) {
     let newMenuOptions = [];
     for (const item of __classPrivateFieldGet(this, _ContextMenu_currentMenuOptions, "f")) {
-        if (item.option.sliderCallback) {
+        if (item.option.sliderCallback && __classPrivateFieldGet(this, _ContextMenu_currentMouseDownElement, "f") !== item.element) {
             const new_option = item.option.sliderCallback(slider_value);
             const new_element = __classPrivateFieldGet(this, _ContextMenu_instances, "m", _ContextMenu_generateMenuItem).call(this, new_option);
             newMenuOptions.push({

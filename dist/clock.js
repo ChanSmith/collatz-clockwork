@@ -140,25 +140,67 @@ class Clock {
             preventCloseOnClick: disabled,
         };
     }
-    // generateLockedUpgradeMenuOption(upgrade_id: UpgradeId): MenuOption {
-    //     // Show an option with the upgrade name and unlock requirements
-    //     const upgrade_options = UPGRADE_OPTIONS[upgrade_id];
-    //     const sources: UpgradeStateMap = {};
-    //     if (!('unlocked_by' in upgrade_options)) {
-    //         throw new Error("Upgrade is locked and has no way to be unlocked.");
-    //     }
-    //     const unlocked_by = upgrade_options.unlocked_by!;
-    //     for (const source_id of upgradeIds(unlocked_by)) {
-    //         if (this.getType() in UPGRADE_OPTIONS[source_id].applies_to) {
-    //             sources[source_id] = {level: unlocked_by[source_id]!};
-    //         }
-    //     }
-    //     const 
-    // }
+    generateLockedUpgradeMenuOption(upgrade_id) {
+        // Show an option with the upgrade name and unlock requirements
+        const upgrade_options = UPGRADE_OPTIONS[upgrade_id];
+        const sources = {};
+        if (!('unlocked_by' in upgrade_options)) {
+            throw new Error("Upgrade is locked and has no way to be unlocked.");
+        }
+        const unlocked_by = upgrade_options.unlocked_by;
+        for (const source_id of upgradeIds(unlocked_by)) {
+            if (this.getType() in UPGRADE_OPTIONS[source_id].applies_to) {
+                sources[source_id] = { level: unlocked_by[source_id] };
+            }
+        }
+        let label = upgrade_options.name + ' - Unlocked at "';
+        for (const source_id of upgradeIds(sources)) {
+            const source = sources[source_id];
+            const source_options = UPGRADE_OPTIONS[source_id];
+            label += `${source_options.name}" level ${source.level} or "`;
+        }
+        label = label.slice(0, -5);
+        return {
+            label: label,
+            description: upgrade_options.description,
+            callback: () => { },
+            disabled: true,
+        };
+    }
+    generateMaxedUpgradeMenuOption(upgrade_id) {
+        const upgrade_options = UPGRADE_OPTIONS[upgrade_id];
+        return {
+            label: `${upgrade_options.name} fully upgraded (${upgrade_options.max_level}/${upgrade_options.max_level})`,
+            description: upgrade_options.description,
+            callback: () => { },
+            disabled: true,
+        };
+    }
     getUpgradeMenuItems(slider_value) {
         let ret = [];
+        let need_sep = false;
         for (const upgrade_id of this.upgrade_tree.getUnlockedIds()) {
             ret.push(this.generateUpgradeMenuOption(upgrade_id, slider_value));
+            need_sep = true;
+        }
+        if (need_sep) {
+            ret.push("hr");
+            need_sep = false;
+        }
+        for (const upgrade_id of this.upgrade_tree.getLockedIds()) {
+            ret.push(this.generateLockedUpgradeMenuOption(upgrade_id));
+            need_sep = true;
+        }
+        if (need_sep) {
+            ret.push("hr");
+        }
+        for (const upgrade_id of this.upgrade_tree.getMaxedIds()) {
+            ret.push(this.generateMaxedUpgradeMenuOption(upgrade_id));
+            need_sep = true;
+        }
+        // Added items and separator after them, but then didn't add any more items
+        if (ret.length > 0 && !need_sep) {
+            ret.pop();
         }
         return ret;
     }
