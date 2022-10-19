@@ -12,6 +12,7 @@ var logFocusChange: Logger;
 
 // Set to true in console to prevent save 
 var cancelSaveOnHidden = false;
+const LOCAL_STORAGE_KEY = "collatz-clockwork-save-state";
 class Game {
     static game_state: GameState;
 
@@ -43,7 +44,7 @@ class Game {
         Game.table_view.addStatistic(Game.game_state.statistics.checking);
         Game.table_view.addStatistic(Game.game_state.statistics.n);
 
-        if (localStorage.getItem("save_state")) {
+        if (localStorage.getItem(LOCAL_STORAGE_KEY)) {
             const loading = document.createElement("p")
             loading.id = "loading";
             loading.innerText = "Calculating offline progress...";
@@ -57,7 +58,7 @@ class Game {
     }
 
     static restoreFromLocalStorage() {
-        const state: GameSaveState = JSON.parse(localStorage.getItem("save_state")!);
+        const state: GameSaveState = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)!);
         Game.table_view.restoreFrom(state.table_view);
         Game.game_state.restoreFrom(state.game);
         getOptionsMenu().restoreFrom(state.options);
@@ -419,7 +420,7 @@ class Game {
             clocks: clock_states,
             saved_at: Date.now(),
         };
-        localStorage.setItem("save_state", JSON.stringify(save_state));
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(save_state));
     }
 
     static resetSave() {
@@ -427,8 +428,8 @@ class Game {
             return;
         }
         Game.save();
-        Game.removed_save = localStorage.getItem("save_state");
-        localStorage.removeItem("save_state");
+        Game.removed_save = localStorage.getItem(LOCAL_STORAGE_KEY);
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
         // https://alistapart.com/article/neveruseawarning/
         if (Game.removed_save) {
             Game.makeResetButtonUndoButton();
@@ -440,7 +441,7 @@ class Game {
     static undoResetSave() {
         if (Game.removed_save) {
             Game.teardown();
-            localStorage.setItem("save_state", Game.removed_save);
+            localStorage.setItem(LOCAL_STORAGE_KEY, Game.removed_save);
             Game.initialize();
             Game.removed_save = null;
             Game.makeUndoButtonResetButton();
