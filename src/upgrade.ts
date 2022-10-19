@@ -2,12 +2,36 @@
 // Rounded to the nearest integer
 // Where x is the number of times this upgrade has been purchased at level
 // Level effects start at 1 (i.e. 0 is unpurchased)
-const UPGRADE_OPTIONS = {
+
+type UpgradeOptions = {
+    // Display name
+    name: string,
+    // Longer description
+    description: string,
+    // Costs : see above
+    base_cost: number,
+    level_multiplier: number,
+    purchased_multiplier: number,
+
+    // Max level that can be upgraded to (Infinity means no limit)
+    max_level: number,
+    // Last level at which the graphic changes
+    max_graphics_level: number,
+    // What other upgrades are unlocked by this upgrade at each level
+    unlocks: Unlocks,
+    unlocked_by?: UnlockSources,
+    // Types of clocks that can get this upgrade
+    applies_to: ClockTypeSet,
+    // Types of clocks that start with this upgrade
+    starts_unlocked_for: ClockTypeSet,
+}
+
+const UPGRADE_OPTIONS: {[key: string]: UpgradeOptions}= {
     applications_per_cycle: {
         name: "Extra f per cycle",
         description: "Applies f an additional time each cycle.",
         base_cost : 1,
-        level_multiplier: 1.5,
+        level_multiplier: 2,
         purchased_multiplier: 1.2,
         max_level: Infinity,
         max_graphics_level: Infinity,
@@ -28,10 +52,10 @@ const UPGRADE_OPTIONS = {
         name: "Money per application",
         description: "Doubles the amount of money gained each time this clock applies f.",
         base_cost : 100,
-        level_multiplier: 2.5,
+        level_multiplier: 5,
         purchased_multiplier: 1.3,
-        max_level: 20,
-        max_graphics_level: 20,
+        max_level: 10,
+        max_graphics_level: 10,
         unlocks: {},
         applies_to: {
             Producer: true,
@@ -46,6 +70,7 @@ const UPGRADE_OPTIONS = {
         purchased_multiplier: 1.5,
         max_level: 3,
         max_graphics_level: 3,
+        unlocks: {},
         applies_to: {
             Producer: true,
             Verifier: true
@@ -58,7 +83,7 @@ const UPGRADE_OPTIONS = {
         name: "Advance adjacent",
         description: "Each time this clock cycles sucessfully, advance adjacent (top, bottom, left, right) clocks by a small amount per level.",
         base_cost : 10,
-        level_multiplier: 2.0,
+        level_multiplier: 3.0,
         purchased_multiplier: 1.4,
         max_level: 10,
         max_graphics_level: 1,
@@ -70,9 +95,11 @@ const UPGRADE_OPTIONS = {
         ,
         applies_to: {
             Producer: true,
-        }
+        },
+        starts_unlocked_for: {},
     },
 };
+type UpgradeId = keyof typeof UPGRADE_OPTIONS;
 
 const ADVANCE_ADJACENT_AMOUNT = 250;
 
@@ -83,31 +110,7 @@ type UnlockSources = {
     [key in UpgradeId]?: number;
 }
 
-type UpgradeId = keyof typeof UPGRADE_OPTIONS;
 
-
-type UpgradeOptions = {
-    // Display name
-    name: string,
-    // Longer description
-    description: string,
-    // Costs : see above
-    base_cost: number,
-    level_multiplier: number,
-    purchased_multiplier: number,
-    
-    // Max level that can be upgraded to (Infinity means no limit)
-    max_level: number,
-    // Last level at which the graphic changes
-    max_graphics_level: number,
-    // What other upgrades are unlocked by this upgrade at each level
-    unlocks?: Unlocks,
-    unlocked_by?: UnlockSources,
-    // Types of clocks that can get this upgrade
-    applies_to: ClockTypeSet,
-    // Types of clocks that start with this upgrade
-    starts_unlocked_for?: ClockTypeSet,
-}
 
 class Upgrade {
 
@@ -121,7 +124,7 @@ class Upgrade {
         if (!("unlocked_by" in UPGRADE_OPTIONS[child]) || !UPGRADE_OPTIONS[child]["unlocked_by"]) {
             UPGRADE_OPTIONS[child]["unlocked_by"] = {};
         }
-        UPGRADE_OPTIONS[child]["unlocked_by"][parent] = level;
+        UPGRADE_OPTIONS[child]["unlocked_by"]![parent] = level;
     }
 
     constructor(id:UpgradeId, options: UpgradeOptions) {
@@ -245,7 +248,7 @@ class UpgradeTree {
         for (const upgrade_id in UPGRADE_OPTIONS) {
             const upgrade_options = UPGRADE_OPTIONS[upgrade_id];
             if (upgrade_options.applies_to[type]) {
-                if ('starts_unlocked_for' in upgrade_options && upgrade_options.starts_unlocked_for[type]) {
+                if ('starts_unlocked_for' in upgrade_options && upgrade_options.starts_unlocked_for![type]) {
                     this.unlocked[upgrade_id] = {level: 0};
                 } else {
                     this.locked[upgrade_id] = {level: 0};

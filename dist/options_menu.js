@@ -1,3 +1,4 @@
+var initial_cell_size_update = true;
 const CELL_SIZE_OPTION = {
     id: "cell-size",
     name: "Cell Size",
@@ -10,6 +11,13 @@ const CELL_SIZE_OPTION = {
     },
     input_transformer: (s) => s + "px",
     css_variable: "--clock-table-cell-size",
+    input_callback: (s) => {
+        if (initial_cell_size_update) {
+            initial_cell_size_update = false;
+            return;
+        }
+        Game.table_view.updateStatisticSizes();
+    }
 };
 const CLOCK_COLOR_OPTION = {
     id: "clock-color",

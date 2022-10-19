@@ -189,6 +189,12 @@ class ContextMenu {
         // add a click event listener to create a modal effect for the context menu and close it if the user clicks outside of it
         document.addEventListener('click', __classPrivateFieldGet(this, _ContextMenu_onDocumentClick, "f"));
     }
+    static updateMenuItems() {
+        var _a;
+        if (ContextMenu.currentContextMenu) {
+            __classPrivateFieldGet((_a = ContextMenu.currentContextMenu), _ContextMenu_instances, "m", _ContextMenu_updateMenuItems).call(_a, ContextMenu.sliderValue);
+        }
+    }
     // Public methods (API)
     /**
      * Remove all the event listeners that were registered for this feature

@@ -2,8 +2,12 @@ var logPauseInfo;
 // logPauseInfo = console.log;
 var logUnpauseInfo;
 // logUnpauseInfo = console.log;
+var logOfflineCalcTiming;
+logOfflineCalcTiming = console.log;
 var logFocusChange;
 //  logFocusChange = console.log;
+// Set to true in console to prevent save 
+var cancelSaveOnHidden = true;
 class Game {
     static testAchievementUnlocked() {
         return Game.test_achieve;
@@ -144,9 +148,10 @@ class Game {
         ];
     }
     static getRefundClockMenuItems(pos) {
+        const clock = Game.clock_manager.getClock(pos);
         return [
             {
-                label: "Refund Clock",
+                label: `Scrap Clock (+$${clock.refundAmount()})`,
                 description: "Remove the clock and get back half the amount spent on its upgrades.",
                 callback: () => {
                     Game.refundClock(pos);
@@ -263,39 +268,55 @@ class Game {
         // Keep track of the total time we have simulated. While total less than diff, find the clock with the least remaining time,
         // tick it and add its remaining time to the total. 
         // TODO: this may need to be optimized if we have a lot of clocks
+        const startTime = performance.now();
         const grid = Game.clock_manager.grid;
         const notPaused = (c) => !c.manually_paused;
+        const clocks = Array.from(filter(grid.values(), notPaused));
         // Nothing to do if all clocks were manually paused clocks
-        if (!any(grid.values(), notPaused)) {
+        if (clocks.length === 0) {
             return;
         }
-        const arbitrary_unpaused_clock = first(grid.values(), notPaused);
-        const minClockFn = (a, b) => {
-            // If either is undefined/null, return the other
-            return a.remainingTime() < b.remainingTime() ? a : b;
+        const clockPriority = (c) => {
+            return c.remainingTime();
         };
-        const nextClock = () => {
-            return reduce(filter(grid.values(), c => !c.manually_paused), minClockFn, arbitrary_unpaused_clock);
+        const pq = new PriorityQueue(clockPriority);
+        pq.reset(clocks);
+        const seen = new Set();
+        let updateAdjacentPriorities = (c) => {
+            if (c.upgrade_tree.getUpgradeLevel("advance_adjacent") > 0) {
+                for (const clock of min_clock.adjacent_ticks_on_most_recent_tick) {
+                    if (!seen.has(clock) && !clock.manually_paused) {
+                        seen.add(clock);
+                        pq.updatePriority(clock);
+                        updateAdjacentPriorities(clock);
+                    }
+                }
+            }
         };
-        let min_clock = nextClock();
         let simulated = 0;
+        let min_clock = pq.pop();
         while (simulated + min_clock.remainingTime() < diff) {
             const step = min_clock.remainingTime();
             // min_clock.tickAndReset();
             Game.clock_manager.forEachClock(c => {
                 if (notPaused(c)) {
-                    c.advanceByScaled(step);
+                    c.advanceByScaled(step, true);
                 }
             });
             simulated += step;
-            min_clock = nextClock();
+            seen.clear();
+            updateAdjacentPriorities(min_clock);
+            pq.push(min_clock);
+            min_clock = pq.pop();
         }
-        // At this point simulated is smaller than the closest remaining time, so we can advance everything in whatever order
+        // At this point simulated is smaller than the smallest remaining time, so we can advance everything in whatever order
         Game.clock_manager.forEachClock(c => {
             if (notPaused(c)) {
                 c.advanceByScaled(diff - simulated);
             }
         });
+        const endTime = performance.now();
+        logOfflineCalcTiming === null || logOfflineCalcTiming === void 0 ? void 0 : logOfflineCalcTiming(`Offline calc of ${diff}ms took ${(endTime - startTime) / 1000} s`);
     }
     static unpause(manual = true) {
         const now = performance.now();
@@ -395,8 +416,9 @@ window.addEventListener("focus", () => {
 });
 // Save every 5 minutes, or when the page is closed/hidden
 window.setInterval(Game.save, 1000 * 60 * 5);
-// window.addEventListener("visibilitychange", () => {
-//     if (document.visibilityState === "hidden") {
-//         Game.save();
-//     }
-// });
+window.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden" && !cancelSaveOnHidden) {
+        console.log("Game saved");
+        Game.save();
+    }
+});

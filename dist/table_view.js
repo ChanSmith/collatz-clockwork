@@ -92,18 +92,20 @@ class StatisticView extends HTMLDivElement {
         this.value_element.setAttribute("y", "100%");
         this.value_element.textContent = this.stat.value().toString();
         this.svg_element.appendChild(this.value_element);
-        window.requestAnimationFrame(() => this.update());
+        window.requestAnimationFrame(() => { this.update(); this.updateSizes(); });
+    }
+    updateSizes() {
+        sizeTextToFitParent(this.name_element);
+        sizeTextToFitParent(this.value_element);
     }
     // TODO: look into only updating text and size when a value changes or the size changes
     // Since calculating the actual text width is pretty expensive it seems
     update() {
         // this.name_element.textContent = this.stat.displayName();
-        sizeTextToFitParent(this.name_element); // Should only need to update when cell size changes (title doesn't change)
         if (this.stat.changed()) {
             this.value_element.textContent = this.stat.value().toString();
+            sizeTextToFitParent(this.value_element);
         }
-        sizeTextToFitParent(this.value_element); // Needs to update when cell size changes or when value changes
-        // window.setTimeout(() => this.update(), STATS_UPDATE_INTERVAL);
         window.requestAnimationFrame(() => this.update());
     }
 }
@@ -203,6 +205,13 @@ class TableView {
         let stat_view = document.createElement("div", { is: "statistic-view" });
         stat_view.stat = stat;
         this.table_head.appendChild(stat_view);
+    }
+    updateStatisticSizes() {
+        for (const stat_view of this.table_head.children) {
+            if (stat_view instanceof StatisticView) {
+                stat_view.updateSizes();
+            }
+        }
     }
     canAddClock(pos) {
         return Game.clock_manager.canAddClock(pos);
@@ -564,6 +573,10 @@ class TableView {
             this.addRow();
         }
     }
+    // Using priority queues for these probably doesn't actually help since 
+    // I have to recalculate the costs anyways, unless I only update the ones that
+    // could change (which probably requires iterating over all of them anyways).
+    // But it doesn't really matter since this isn't called that often.
     buyallUpgradesMostExpensiveFirst() {
         const clocks = Game.clock_manager.getClocks();
         const pq = new PriorityQueue(mostExpensiveFirst);

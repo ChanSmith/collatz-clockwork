@@ -9,15 +9,17 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _DisplayableNumber_display_name, _DisplayableNumber_value, _DisplayableNumber_changed;
+var _DisplayableNumber_display_name, _DisplayableNumber_value, _DisplayableNumber_changed, _DisplayableNumber_update_menu_on_change;
 class DisplayableNumber {
-    constructor(display_name, value) {
+    constructor(display_name, value, update_menu_on_change = false) {
         _DisplayableNumber_display_name.set(this, void 0);
         _DisplayableNumber_value.set(this, void 0);
         _DisplayableNumber_changed.set(this, void 0);
+        _DisplayableNumber_update_menu_on_change.set(this, void 0);
         __classPrivateFieldSet(this, _DisplayableNumber_display_name, display_name, "f");
         __classPrivateFieldSet(this, _DisplayableNumber_value, value, "f");
         __classPrivateFieldSet(this, _DisplayableNumber_changed, false, "f");
+        __classPrivateFieldSet(this, _DisplayableNumber_update_menu_on_change, update_menu_on_change, "f");
     }
     set(value) {
         __classPrivateFieldSet(this, _DisplayableNumber_value, value, "f");
@@ -35,9 +37,13 @@ class DisplayableNumber {
     value() {
         return __classPrivateFieldGet(this, _DisplayableNumber_value, "f");
     }
-    // Returns whether the value changed since the last call to this function
+    // Returns whether the value changed since the last call to this function,
+    // And updates ContextMenu if necessary. 
     changed() {
         const changed = __classPrivateFieldGet(this, _DisplayableNumber_changed, "f");
+        if (changed && __classPrivateFieldGet(this, _DisplayableNumber_update_menu_on_change, "f")) {
+            ContextMenu.updateMenuItems();
+        }
         __classPrivateFieldSet(this, _DisplayableNumber_changed, false, "f");
         return changed;
     }
@@ -53,7 +59,7 @@ class DisplayableNumber {
         }
     }
 }
-_DisplayableNumber_display_name = new WeakMap(), _DisplayableNumber_value = new WeakMap(), _DisplayableNumber_changed = new WeakMap();
+_DisplayableNumber_display_name = new WeakMap(), _DisplayableNumber_value = new WeakMap(), _DisplayableNumber_changed = new WeakMap(), _DisplayableNumber_update_menu_on_change = new WeakMap();
 class Statistic extends DisplayableNumber {
     set(value) {
         super.set(value);
@@ -97,7 +103,7 @@ function getStatisticsSaveState(statistics) {
 class GameState {
     constructor() {
         this.resources = {
-            money: new Resource("Money", 0),
+            money: new Resource("Money", 0, true),
         };
         this.statistics = {
             n: new Statistic("n", 2),

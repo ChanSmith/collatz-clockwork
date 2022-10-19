@@ -41,6 +41,9 @@ class Clock {
     constructor(options) {
         this.options = options;
         this.playback_rate = 1;
+        // When updating offline, avoid updating the clock's animation time
+        this.pending_animation_time = 0;
+        this.adjacent_ticks_on_most_recent_tick = [];
         _Clock_paused.set(this, false);
         this.manually_paused = false;
         this.upgrade_tree = new UpgradeTree(new.target.clockType);
@@ -61,6 +64,9 @@ class Clock {
             const level = this.upgrade_tree.getUpgradeLevel(upgrade_id);
             this.addUpgradeGraphic(upgrade_id, level);
         }
+        for (const upgrade_id of this.upgrade_tree.getMaxedIds()) {
+            this.addUpgradeGraphic(upgrade_id, UPGRADE_OPTIONS[upgrade_id].max_level);
+        }
         this.updatePlaybackRate();
     }
     getType() {
@@ -76,7 +82,7 @@ class Clock {
     getCheapestUpgrade() {
         const possible_upgrades = this.upgrade_tree.getPossibleUpgrades();
         let cheapest = null;
-        for (const id of Object.keys(possible_upgrades)) {
+        for (const id of upgradeIds(possible_upgrades)) {
             const possible_upgrade = possible_upgrades[id];
             if (cheapest === null
                 || possible_upgrade.cost < cheapest.cost
@@ -90,7 +96,7 @@ class Clock {
     getMostExpensiveUpgrade(max_cost = Game.game_state.resources.money.value()) {
         const possible_upgrades = this.upgrade_tree.getPossibleUpgrades();
         let most_expensive = null;
-        for (const id of Object.keys(possible_upgrades)) {
+        for (const id of upgradeIds(possible_upgrades)) {
             const possible_upgrade = possible_upgrades[id];
             if (possible_upgrade.cost <= max_cost &&
                 (most_expensive === null || possible_upgrade.cost > most_expensive.cost)) {
@@ -134,6 +140,21 @@ class Clock {
             preventCloseOnClick: disabled,
         };
     }
+    // generateLockedUpgradeMenuOption(upgrade_id: UpgradeId): MenuOption {
+    //     // Show an option with the upgrade name and unlock requirements
+    //     const upgrade_options = UPGRADE_OPTIONS[upgrade_id];
+    //     const sources: UpgradeStateMap = {};
+    //     if (!('unlocked_by' in upgrade_options)) {
+    //         throw new Error("Upgrade is locked and has no way to be unlocked.");
+    //     }
+    //     const unlocked_by = upgrade_options.unlocked_by!;
+    //     for (const source_id of upgradeIds(unlocked_by)) {
+    //         if (this.getType() in UPGRADE_OPTIONS[source_id].applies_to) {
+    //             sources[source_id] = {level: unlocked_by[source_id]!};
+    //         }
+    //     }
+    //     const 
+    // }
     getUpgradeMenuItems(slider_value) {
         let ret = [];
         for (const upgrade_id of this.upgrade_tree.getUnlockedIds()) {
@@ -224,15 +245,22 @@ class Clock {
             this.addUpgradeGraphic(id, UPGRADE_OPTIONS[id].max_graphics_level);
         }
     }
-    tick() {
+    tick(offline = false) {
         tickLog === null || tickLog === void 0 ? void 0 : tickLog("tick from " + this.toString());
+        this.pending_animation_time = 0;
     }
     reset() {
         this.animation.currentTime = 0;
     }
-    tickAndReset() {
-        this.animate();
-        this.tick();
+    tickAndReset(offline = false) {
+        var _a;
+        if (!offline) {
+            this.animate();
+        }
+        else if (((_a = this.animation) === null || _a === void 0 ? void 0 : _a.currentTime) !== 0) {
+            this.animation.currentTime = 0;
+        }
+        this.tick(offline);
     }
     animate() {
         if (this.animation) {
@@ -249,20 +277,29 @@ class Clock {
     // TODO: implement handling more than one tick if needed
     // TODO?: make it happen smoothly -- maybe by increasing the playback rate temporarily
     //        or show some other sort of feedback
-    advanceByUnscaled(amount) {
+    advanceByUnscaled(amount, offline = false) {
         if (!this.animation)
             return;
         if (!this.animation.currentTime) {
             this.animation.currentTime = 0;
         }
+        let ticked = false;
         if (amount >= this.unscaledRemainingTime()) {
             amount -= this.unscaledRemainingTime();
-            this.tickAndReset();
+            this.tickAndReset(offline);
+            ticked = true;
         }
-        this.animation.currentTime += amount;
+        if (offline) {
+            this.pending_animation_time += amount;
+        }
+        else {
+            this.animation.currentTime += amount + this.pending_animation_time;
+            this.pending_animation_time = 0;
+        }
+        return ticked;
     }
-    advanceByScaled(amount) {
-        this.advanceByUnscaled(amount * this.playback_rate);
+    advanceByScaled(amount, offline = false) {
+        this.advanceByUnscaled(amount * this.playback_rate, offline);
     }
     // Returns the unscaled duration of the animation
     unscaledDuration() {
@@ -278,9 +315,9 @@ class Clock {
     }
     unscaledRemainingTime() {
         if (!this.animation || !this.animation.currentTime) {
-            return this.unscaledDuration();
+            return this.unscaledDuration() - this.pending_animation_time;
         }
-        return this.unscaledDuration() - this.animation.currentTime;
+        return this.unscaledDuration() - (this.animation.currentTime + this.pending_animation_time);
     }
     // Returns real time remaining
     remainingTime() {
@@ -338,28 +375,34 @@ class Clock {
             this.pause_element = null;
         }
     }
+    refundAmount() {
+        return this.upgrade_tree.getRefundAmount();
+    }
     refund() {
         var _a;
         (_a = this.animation) === null || _a === void 0 ? void 0 : _a.cancel();
-        Game.game_state.resources.money.add(this.upgrade_tree.getRefundAmount());
+        Game.game_state.resources.money.add(this.refundAmount());
         this.upgrade_tree.reset();
     }
 }
 _Clock_paused = new WeakMap();
 class ProducerClock extends Clock {
-    tick() {
-        super.tick();
+    tick(offline = false) {
+        super.tick(offline);
         const op_count = this.getOpCount();
         const money_multiplier = this.getMoneyMultiplier();
         const applied_ops = Game.applyOps(op_count, money_multiplier);
         const success = applied_ops > 0;
         if (success) {
-            this.advanceAdjacent();
+            this.adjacent_ticks_on_most_recent_tick = [];
+            this.advanceAdjacent(offline);
         }
         // TODO: animate the cell multiple times, or show a different color based on ratio 
         // of applied ops to requested ops.
         // Or just chose number of sucessful and failed ops in the cell somewhere
-        Game.table_view.animateCellSuccess(this.options.position, success);
+        if (!offline) {
+            Game.table_view.animateCellSuccess(this.options.position, success);
+        }
     }
     getOpCount() {
         return 1 + this.upgrade_tree.getUpgradeLevel("applications_per_cycle");
@@ -367,7 +410,7 @@ class ProducerClock extends Clock {
     getMoneyMultiplier() {
         return 1 << this.upgrade_tree.getUpgradeLevel("money_per_application");
     }
-    advanceAdjacent() {
+    advanceAdjacent(offline = false) {
         const upgrade_level = this.upgrade_tree.getUpgradeLevel("advance_adjacent");
         if (upgrade_level <= 0) {
             return;
@@ -375,17 +418,21 @@ class ProducerClock extends Clock {
         const nearby = Game.table_view.getAdjacentClocks(this.options.position);
         for (const clock of nearby) {
             if (!clock.manually_paused) {
-                clock.advanceByUnscaled(upgrade_level * ADVANCE_ADJACENT_AMOUNT);
+                if (clock.advanceByUnscaled(upgrade_level * ADVANCE_ADJACENT_AMOUNT, offline)) {
+                    this.adjacent_ticks_on_most_recent_tick.push(clock);
+                }
             }
         }
     }
 }
 ProducerClock.clockType = "Producer";
 class VerifierClock extends Clock {
-    tick() {
-        super.tick();
+    tick(offline = false) {
+        super.tick(offline);
         const success = Game.verify();
-        Game.table_view.animateCellSuccess(this.options.position, success);
+        if (!offline) {
+            Game.table_view.animateCellSuccess(this.options.position, success);
+        }
     }
 }
 VerifierClock.clockType = "Verifier";
@@ -397,8 +444,8 @@ class ReferenceClock extends Clock {
         this.attachClock();
         this.animate();
     }
-    tick() {
-        super.tick();
+    tick(offline = false) {
+        super.tick(offline);
         if (!this.last_tick) {
             tickLog === null || tickLog === void 0 ? void 0 : tickLog("Reference clock ticked. First tick");
             this.last_tick = performance.now();

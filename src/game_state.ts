@@ -2,10 +2,12 @@ class DisplayableNumber {
     #display_name: string;
     #value: number;
     #changed: boolean;
-    constructor(display_name: string, value: number) {
+    #update_menu_on_change: boolean;
+    constructor(display_name: string, value: number, update_menu_on_change: boolean = false) {
         this.#display_name = display_name;
         this.#value = value;
         this.#changed = false;
+        this.#update_menu_on_change = update_menu_on_change;
     }
 
     set(value: number) {
@@ -28,9 +30,14 @@ class DisplayableNumber {
         return this.#value;
     }
 
-    // Returns whether the value changed since the last call to this function
+    // Returns whether the value changed since the last call to this function,
+    // And updates ContextMenu if necessary. 
     changed(): boolean {
         const changed = this.#changed;
+        if (changed && this.#update_menu_on_change) {
+            ContextMenu.updateMenuItems();
+
+        }
         this.#changed = false;
         return changed;
     }
@@ -120,7 +127,7 @@ class GameState {
 
     constructor() {
         this.resources = {
-            money: new Resource("Money", 0),
+            money: new Resource("Money", 0, true),
         }
 
         this.statistics = {

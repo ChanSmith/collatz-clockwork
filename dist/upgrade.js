@@ -1,19 +1,19 @@
+// Cost model: cost(level) = base_cost * (level_multiplier^level-1) * (purchased_multiplier ^ x)
+// Rounded to the nearest integer
+// Where x is the number of times this upgrade has been purchased at level
+// Level effects start at 1 (i.e. 0 is unpurchased)
 var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
     if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _UpgradeTree_instances, _UpgradeTree_remove;
-// Cost model: cost(level) = base_cost * (level_multiplier^level-1) * (purchased_multiplier ^ x)
-// Rounded to the nearest integer
-// Where x is the number of times this upgrade has been purchased at level
-// Level effects start at 1 (i.e. 0 is unpurchased)
 const UPGRADE_OPTIONS = {
     applications_per_cycle: {
         name: "Extra f per cycle",
         description: "Applies f an additional time each cycle.",
         base_cost: 1,
-        level_multiplier: 1.5,
+        level_multiplier: 2,
         purchased_multiplier: 1.2,
         max_level: Infinity,
         max_graphics_level: Infinity,
@@ -33,10 +33,10 @@ const UPGRADE_OPTIONS = {
         name: "Money per application",
         description: "Doubles the amount of money gained each time this clock applies f.",
         base_cost: 100,
-        level_multiplier: 2.5,
+        level_multiplier: 5,
         purchased_multiplier: 1.3,
-        max_level: 20,
-        max_graphics_level: 20,
+        max_level: 10,
+        max_graphics_level: 10,
         unlocks: {},
         applies_to: {
             Producer: true,
@@ -51,6 +51,7 @@ const UPGRADE_OPTIONS = {
         purchased_multiplier: 1.5,
         max_level: 3,
         max_graphics_level: 3,
+        unlocks: {},
         applies_to: {
             Producer: true,
             Verifier: true
@@ -63,7 +64,7 @@ const UPGRADE_OPTIONS = {
         name: "Advance adjacent",
         description: "Each time this clock cycles sucessfully, advance adjacent (top, bottom, left, right) clocks by a small amount per level.",
         base_cost: 10,
-        level_multiplier: 2.0,
+        level_multiplier: 3.0,
         purchased_multiplier: 1.4,
         max_level: 10,
         max_graphics_level: 1,
@@ -74,7 +75,8 @@ const UPGRADE_OPTIONS = {
         },
         applies_to: {
             Producer: true,
-        }
+        },
+        starts_unlocked_for: {},
     },
 };
 const ADVANCE_ADJACENT_AMOUNT = 250;

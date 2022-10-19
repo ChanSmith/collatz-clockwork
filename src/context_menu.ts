@@ -166,6 +166,12 @@ class ContextMenu {
         this.#currentMenuOptions = newMenuOptions;
     }
 
+    static updateMenuItems() {
+        if (ContextMenu.currentContextMenu) {
+            ContextMenu.currentContextMenu.#updateMenuItems(ContextMenu.sliderValue);
+        }
+    }
+
     #generateMenuItem(option: MenuOption): HTMLElement {
         const menuItem = document.createElement('div');
         
