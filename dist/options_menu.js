@@ -174,16 +174,13 @@ class OptionsMenu extends HTMLDivElement {
         this.restore_state = null;
     }
     enable() {
-        this.classList.remove("disabled");
         this.classList.add("enabled");
     }
     disable() {
         this.classList.remove("enabled");
-        this.classList.add("disabled");
     }
     toggle() {
-        this.classList.toggle("enabled");
-        this.classList.toggle("disabled");
+        return this.classList.toggle("enabled");
     }
     addCloseButton() {
         const close_button = document.createElement('button');

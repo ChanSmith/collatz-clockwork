@@ -254,7 +254,19 @@ class Game {
     }
     static toggleOptionsMenu() {
         const menu = document.querySelector("#options-menu");
-        menu === null || menu === void 0 ? void 0 : menu.toggle();
+        if (menu === null || menu === void 0 ? void 0 : menu.toggle()) {
+            Game.closeHelpMenu();
+        }
+    }
+    static closeHelpMenu() {
+        const menu = document.querySelector("#help-menu");
+        menu === null || menu === void 0 ? void 0 : menu.classList.remove("enabled");
+    }
+    static toggleHelpMenu() {
+        const menu = document.querySelector("#help-menu");
+        if (menu === null || menu === void 0 ? void 0 : menu.classList.toggle("enabled")) {
+            getOptionsMenu().disable();
+        }
     }
     static pause(manual = true) {
         Game.pause_time = performance.now();

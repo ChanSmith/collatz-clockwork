@@ -29,7 +29,17 @@ body {
     position:absolute
 }
 
-#options-menu {
+#help-menu h1 {
+    margin: 0;
+    &#help-menu-title {
+        margin-left: 25px;
+    }
+}
+#help-menu h2 {
+    margin: 0;
+}
+
+#options-menu, #help-menu {
     width: 50%;
     height: 50%;
     top: 25%;
@@ -57,14 +67,15 @@ body {
     }
     
     
-    & #options-menu-wrapper {
+    & #options-menu-wrapper, #help-menu-wrapper {
         background-color: rgb(200,200,200);
         position:absolute;
         width: 100%;
         height: 100%;
-
+        
         display: flex;
         flex-direction: column;
+        overflow: auto;
     }
 
     & .option-container {
@@ -90,7 +101,8 @@ body {
     }
 
 
-    & #close-options-menu {
+    & #close-options-menu, #close-help-menu {
+        position: absolute;
         top: 0;
         left: 0;
         width: 25px;
@@ -142,7 +154,7 @@ body {
 .context-menu {
     font-family: 'Open Sans', sans-serif;
     position: fixed;
-    z-index: 10000;
+    z-index: calc(var(--foreground_z_index) - 1);
     width: fit-content;
     max-width: 50%;
     transform: scale(0);

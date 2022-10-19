@@ -296,10 +296,25 @@ class Game {
         const menu = document.querySelector("#options-menu") as OptionsMenu;
         menu?.enable();
     }
+    
 
-    static  toggleOptionsMenu() {
+    static toggleOptionsMenu() {
         const menu = document.querySelector("#options-menu") as OptionsMenu;
-        menu?.toggle();
+        if(menu?.toggle()) {
+            Game.closeHelpMenu();
+        }
+    }
+
+    static closeHelpMenu() {
+        const menu = document.querySelector("#help-menu");
+        menu?.classList.remove("enabled");
+    }
+
+    static toggleHelpMenu() {
+        const menu = document.querySelector("#help-menu");
+        if (menu?.classList.toggle("enabled")) {
+            getOptionsMenu().disable();
+        }
     }
 
     static pause(manual: boolean = true) {

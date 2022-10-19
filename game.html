@@ -66,9 +66,8 @@
         </defs>
     </svg>
 
-    <a href="https://en.wikipedia.org/wiki/Collatz_conjecture" target="_blank"><img src="./assets/shortcut_collatz_equation.svg" alt="Shortcut Collatz Equation" class="collatz-equation" title="Shortcut Collatz Equation" ></a>
-    <br>
     <button id="open-options" class="btn btn-primary" onclick="Game.toggleOptionsMenu()" title="Game options">Options</button>
+    <button id="toggle-help" class="btn btn-primary" onclick="Game.toggleHelpMenu()" title="Help">Help</button>
     <button id="pause-button" class="btn btn-primary" onclick="Game.pause()" title="Pause all clocks. Clocks can be paused individually in the right click menu.">Pause all</button>
     <button id="unpause-button" class="btn btn-primary" onclick="Game.unpause()" title="Unpause all clocks. Clocks can be unpaused individually in the right click menu.">Unpause all</button>
     <button id="buy-all-upgrades-button" class="btn btn-primary" onclick="Game.table_view.buyAllUpgrades()" title="Spend as much money as possible on upgrades. Choose what to prioritize in the options.">Buy all Upgrades</button>
@@ -81,6 +80,69 @@
         <button id="reset-save-button" class="btn btn-primary" onclick="Game.resetSave()" title="Delete your save data and start a new game.">Reset progress</button>
 
     <div id="options-menu" is="options-menu"></div>
+    <div id="help-menu">
+        <div id="help-menu-wrapper">
+        <button id="close-help-menu" class="btn btn-primary" onclick="Game.toggleHelpMenu()">X</button>
+        <h1 id="help-menu-title">Overview</h1>
+        <p>The <a href="https://en.wikipedia.org/wiki/Collatz_conjecture" target="_blank"><b>Collatz Conjecture</b></a> is a famous problem in mathematics.
+            <br>
+            The conjecture states that starting from any number <i>n</i>, repeatedly calling <i>f</i>(<i>n</i>) (using the result as the next value of <i>n</i>)
+            will always reach 1.
+            <br>
+            <!-- Equation -->
+            <span style="display:flex; align-items: center">
+            <span style="vertical-align: middle">&fnof;(<i>n</i>) =</span> <span style="font-size: 200%;">{</span>
+                <span style="display:flex;flex-direction: column;">
+                    <span><i>n</i>/2</span><br>
+                    <span>(3<i>n</i>+ 1)/2</span>
+                </span>
+                <span style="display:flex;flex-direction: column;">
+                    <span>, if <i>n</i> is even</span><br>
+                    <span>, if <i>n</i> is odd</span>
+                </span>
+            </span>
+                <br>
+            For example, Starting with <i>n</i> = 5 yields the sequence, <i>f</i>(5) = 8, <i>f</i>(8) = 4, <i>f</i>(4) = 2, <i>f</i>(2) = 1.
+            <br>
+            (Note that this is the 'shortcut' version of the Collatz function.)
+            </p>   
+    
+        <h1>How to play</h1>
+        <p>
+        To start checking numbers, add clocks to the grid by left clicking any cell and choosing a type.
+        <br>
+        Whenever a clock completes a cycle, it will perform an action based on its type and its upgrades.
+        <br>
+        After buying a clock, click it to open its upgrade menu. Hover over an upgrade to see its description.
+        <br>
+        Right click a clock to pause/unpause or scrap it (for half the amount spent on upgrades).
+        <br>
+        Drag a clock to move it to a different cell.
+        </p>
+        <h2>Clock Types</h2>
+        <p>
+        When a <b>Producer</b> cycles, if <i>n</i> is not 1, it updates the value of <i>n</i> to <i>f</i>(<i>n</i>) and adds $1 to your money.
+        <br>
+        When a <b>Verifier</b> cycles, if <i>n</i> is 1, it updates <i>n</i> to <i>Checking</i>+1.
+        </p>
+        <h1>Objective</h1>
+        <p>
+            Get <i>Checking</i> as high as possible. This represents a lower bound for a counterexample to the Collatz Conjecture.
+            <br>
+            Get <i>Checking</i> to increase as fast as possible by optimizing the placement of your clocks and how you spend your money.
+            <br>
+            Achievements: coming soon™
+        </p>
+        <h1>Miscellaneous</h1>
+        <p>
+            Hover over buttons / upgrades to see their descriptions.
+            <br>
+            Options and progress will be saved automatically.
+            <br>
+            When the game is in the background, the clocks will appear paused but the game will still progress:
+            <br>&emsp;Every 10 seconds, 10 seconds gets simulated, and any remaining time is simulated when the game is brought back into focus.
+        </div>
+    </div>
     <div id="game-container">
         <div id="table-container">
 

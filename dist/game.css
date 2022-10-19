@@ -21,7 +21,18 @@ body {
   position: absolute;
 }
 
-#options-menu {
+#help-menu h1 {
+  margin: 0;
+}
+#help-menu h1#help-menu-title {
+  margin-left: 25px;
+}
+
+#help-menu h2 {
+  margin: 0;
+}
+
+#options-menu, #help-menu {
   width: 50%;
   height: 50%;
   top: 25%;
@@ -34,28 +45,30 @@ body {
   position: absolute;
   z-index: var(--foreground_z_index);
 }
-#options-menu.enabled {
+#options-menu.enabled, #help-menu.enabled {
   transform: scale(1);
 }
-#options-menu #options-menu-wrapper {
+#options-menu #options-menu-wrapper, #options-menu #help-menu-wrapper, #help-menu #options-menu-wrapper, #help-menu #help-menu-wrapper {
   background-color: rgb(200, 200, 200);
   position: absolute;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: auto;
 }
-#options-menu .option-container {
+#options-menu .option-container, #help-menu .option-container {
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
   border: 1px solid #000000;
 }
-#options-menu .option-container .sub-option-container {
+#options-menu .option-container .sub-option-container, #help-menu .option-container .sub-option-container {
   border: 1px solid #000000;
 }
-#options-menu #close-options-menu {
+#options-menu #close-options-menu, #options-menu #close-help-menu, #help-menu #close-options-menu, #help-menu #close-help-menu {
+  position: absolute;
   top: 0;
   left: 0;
   width: 25px;
@@ -87,7 +100,7 @@ body {
 .context-menu {
   font-family: "Open Sans", sans-serif;
   position: fixed;
-  z-index: 10000;
+  z-index: calc(var(--foreground_z_index) - 1);
   width: -webkit-fit-content;
   width: -moz-fit-content;
   width: fit-content;
