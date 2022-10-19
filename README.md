@@ -1,6 +1,6 @@
 # Collatz Clockwork
 
-A game based on the [Collatz conjecture](https://en.wikipedia.org/wiki/Collatz_conjecture) created as an Extra for [Ludum Dare 51](https://ldjam.com/events/ludum-dare/51/) (Theme: Every 10 seconds).
+A game based on the [Collatz conjecture](https://en.wikipedia.org/wiki/Collatz_conjecture) created as an Extra for [Ludum Dare 51](https://ldjam.com/events/ludum-dare/51/collatz-clockwork) (Theme: Every 10 seconds).
 
 
 ## Contents
@@ -8,9 +8,10 @@ A game based on the [Collatz conjecture](https://en.wikipedia.org/wiki/Collatz_c
 * `src` contains the source TypeScript and SCSS
 * `dist` contains the compiled JavaScript and CSS
 
-Doesn't have any external requirements or dependencies -- you should be able to clone the repo and open index.html to play.
+Play online on [itch.io](https://chansmith.itch.io/collatz-clockwork).
 
-(itch.io link coming soon)
+Or play offline: it doesn't have any external requirements or dependencies, you should be able to clone the repo and open index.html to play.
+
 
 
 Click the help button in game for more info.
