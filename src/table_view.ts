@@ -157,9 +157,7 @@ class StatisticView extends HTMLDivElement {
         // this.name_element.textContent = this.stat.displayName();
         if (this.stat.changed()) {
             this.value_element.textContent = this.stat.value().toString();
-            if (this.on_firefox) {
-                sizeTextToFitParent(this.value_element);
-            }
+            this.updateSizes();
         }
         window.requestAnimationFrame(() => this.update());
     }

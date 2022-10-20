@@ -73,7 +73,11 @@ const sizeTextToFitParent = (element, max_horizontal = 0.95, max_veritical = 0.5
 class StatisticView extends HTMLDivElement {
     constructor() {
         super();
+        this.on_firefox = false;
         this.classList.add("statistic-box");
+        if (navigator.userAgent.includes("Firefox")) {
+            this.on_firefox = true;
+        }
     }
     connectedCallback() {
         this.svg_element = document.createElementNS(SVG_NS, "svg");
@@ -96,7 +100,7 @@ class StatisticView extends HTMLDivElement {
         window.requestAnimationFrame(() => { this.update(); this.updateSizes(); });
     }
     updateSizes() {
-        if (navigator.userAgent.includes("Firefox")) {
+        if (this.on_firefox) {
             // For some reason these don't work in chrome (not sure if it only work in Firefox)
             sizeTextToFitParent(this.name_element);
             sizeTextToFitParent(this.value_element);
@@ -112,7 +116,7 @@ class StatisticView extends HTMLDivElement {
         // this.name_element.textContent = this.stat.displayName();
         if (this.stat.changed()) {
             this.value_element.textContent = this.stat.value().toString();
-            sizeTextToFitParent(this.value_element);
+            this.updateSizes();
         }
         window.requestAnimationFrame(() => this.update());
     }
