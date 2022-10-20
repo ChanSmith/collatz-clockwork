@@ -70,5 +70,7 @@ type GameSaveState = {
     game: GameStateSaveState;
     table_view: TableViewSaveState;
     clocks: ClockSaveState[];
+    started_at: number;
     saved_at: number;
+    missing_started_at: boolean;
 }

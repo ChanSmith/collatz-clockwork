@@ -30,6 +30,9 @@ class Game {
             loading.innerText = "Calculating offline progress...";
             Game.restoreFromLocalStorage();
         }
+        else {
+            Game.started_at = Date.now();
+        }
     }
     static teardown() {
         Game.table_view.teardown();
@@ -57,6 +60,16 @@ class Game {
         if (state.saved_at && now > state.saved_at) {
             // Hope this doesn't take too long. 
             Game.advancePausedGame(now - state.saved_at);
+        }
+        if (!('started_at' in state)) {
+            // Sorry, no way to know when you started. Change it manually if you want.
+            Game.started_at = Date.now();
+            // Keeping this around for the few people who have already played.
+            // TODO: add a way to reset it in game if this was detected.
+            Game.missing_started_at = true;
+        }
+        else {
+            Game.started_at = state.started_at;
         }
         (_a = document.getElementById("loading")) === null || _a === void 0 ? void 0 : _a.remove();
     }
@@ -364,6 +377,8 @@ class Game {
             game: Game.game_state.saveState(),
             table_view: Game.table_view.saveState(),
             clocks: clock_states,
+            started_at: Game.started_at,
+            missing_started_at: Game.missing_started_at,
             saved_at: Date.now(),
         };
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(save_state));
@@ -409,6 +424,8 @@ class Game {
     }
 }
 Game.click_count = 0;
+Game.started_at = 0;
+Game.missing_started_at = false;
 Game.auto_paused = false;
 Game.pause_time = 0;
 Game.test_achieve = false;
