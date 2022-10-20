@@ -48,6 +48,7 @@ const clockMaskId = (clock) => {
     const p = clock.getPosition();
     return `clock-mask-${p.row}-${p.col}`;
 };
+//
 // Returns whether the ratio of both targets to actuals is greater than max_difference
 const needsResize = (element, max_horizontal, max_vertical, max_difference = 0.1 /* 10% */) => {
     if (horizontalRatio(element) > max_horizontal || verticalRatio(element) > max_vertical) {
@@ -95,8 +96,15 @@ class StatisticView extends HTMLDivElement {
         window.requestAnimationFrame(() => { this.update(); this.updateSizes(); });
     }
     updateSizes() {
-        sizeTextToFitParent(this.name_element);
-        sizeTextToFitParent(this.value_element);
+        if (navigator.userAgent.includes("Firefox")) {
+            // For some reason these don't work in chrome (not sure if it only work in Firefox)
+            sizeTextToFitParent(this.name_element);
+            sizeTextToFitParent(this.value_element);
+        }
+        else {
+            this.name_element.setAttribute("font-size", "1.75em");
+            this.value_element.setAttribute("font-size", "1.75em");
+        }
     }
     // TODO: look into only updating text and size when a value changes or the size changes
     // Since calculating the actual text width is pretty expensive it seems

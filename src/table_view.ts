@@ -66,6 +66,7 @@ const clockMaskId = (clock: Clock) :string => {
     return `clock-mask-${p.row}-${p.col}`;
 }
 
+//
 
 // Returns whether the ratio of both targets to actuals is greater than max_difference
 const needsResize = (element: SVGTextElement, max_horizontal: number, max_vertical: number, max_difference: number = 0.1 /* 10% */) => {
@@ -98,6 +99,7 @@ class StatisticView extends HTMLDivElement {
     name_element: SVGTextElement;
     value_element: SVGTextElement;
 
+    on_firefox: boolean = false;
 
 
     connectedCallback() {
@@ -131,13 +133,22 @@ class StatisticView extends HTMLDivElement {
         super();
 
         this.classList.add("statistic-box");
+        if (navigator.userAgent.includes("Firefox")) {
+            this.on_firefox = true;
+        }
         
 
     }
 
     updateSizes() {
-        sizeTextToFitParent(this.name_element);
-        sizeTextToFitParent(this.value_element);
+        if (this.on_firefox) {
+            // For some reason these don't work in chrome (not sure if it only work in Firefox)
+            sizeTextToFitParent(this.name_element);
+            sizeTextToFitParent(this.value_element);
+        } else {
+            this.name_element.setAttribute("font-size", "1.75em");
+            this.value_element.setAttribute("font-size", "1.75em");
+        }
     }
     
     // TODO: look into only updating text and size when a value changes or the size changes
@@ -146,7 +157,9 @@ class StatisticView extends HTMLDivElement {
         // this.name_element.textContent = this.stat.displayName();
         if (this.stat.changed()) {
             this.value_element.textContent = this.stat.value().toString();
-            sizeTextToFitParent(this.value_element);
+            if (this.on_firefox) {
+                sizeTextToFitParent(this.value_element);
+            }
         }
         window.requestAnimationFrame(() => this.update());
     }
