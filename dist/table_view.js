@@ -10,6 +10,17 @@ const cell_success_keyframes = [
     { backgroundColor: "rgba(0,255,0, 1.0)" },
     { backgroundColor: "rgba(0,255,0, 0.0)" },
 ];
+const advance_segment_keyframes = [
+    // { stroke: "rgba(255,125,0,1.0)" },
+    // { stroke: "rgba(255,125,0,0.0)" },
+    { opacity: 1.0 },
+    { opacity: 0.0 },
+];
+const advance_segment_timing = {
+    duration: 1000,
+    iterations: 1,
+    easing: "linear",
+};
 const cell_failure_keyframes = [
     { backgroundColor: "rgba(255,0,0, 1.0)" },
     { backgroundColor: "rgba(255,0,0, 0.0)" },

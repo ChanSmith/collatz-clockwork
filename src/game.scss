@@ -24,6 +24,10 @@ body {
     stroke-width:50%;
     stroke: white;
 }
+.advance-segment {
+    transform: rotate(-90deg) translateX(-100%);
+    stroke-width:50%;
+}
 
 #game-container {
     position:absolute
@@ -368,12 +372,11 @@ body {
 }
 
 
-use.Producer {
+use.Producer,svg.Producer {
     --color: var(--producer-color);
 }
 
-
-use.Verifier {
+use.Verifier,svg.Verifier {
     --color: var(--verifier-color);
 }
 

@@ -525,3 +525,8 @@ window.addEventListener("visibilitychange", () => {
         Game.save();
     }
 });
+
+function addMoney() {
+    const money = Game.game_state.resources.money.value();
+    Game.game_state.resources.money.add(money + 1000000);
+}

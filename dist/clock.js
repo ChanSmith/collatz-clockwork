@@ -340,6 +340,7 @@ class Clock {
     // TODO: implement handling more than one tick if needed
     // TODO?: make it happen smoothly -- maybe by increasing the playback rate temporarily
     //        or show some other sort of feedback
+    // Returns whether this caused a tick
     advanceByUnscaled(amount, offline = false) {
         if (!this.animation)
             return;
@@ -347,6 +348,8 @@ class Clock {
             this.animation.currentTime = 0;
         }
         let ticked = false;
+        const before = this.animation.currentTime;
+        const full_amount = amount;
         if (amount >= this.unscaledRemainingTime()) {
             amount -= this.unscaledRemainingTime();
             this.tickAndReset(offline);
@@ -358,8 +361,47 @@ class Clock {
         else {
             this.animation.currentTime += amount + this.pending_animation_time;
             this.pending_animation_time = 0;
+            this.animateAdvance(full_amount, before);
         }
         return ticked;
+    }
+    animateAdvance(amount, start) {
+        const segment = document.createElementNS(SVG_NS, "circle");
+        segment.classList.add("advance-segment");
+        segment.setAttribute("cx", "50%");
+        segment.setAttribute("cy", "50%");
+        segment.setAttribute("r", "25%");
+        segment.setAttribute("fill", "none");
+        // segment.setAttribute("stroke", `url(#segment-gradient-${this.getType()}) green`);
+        segment.setAttribute("stroke", `url(#segment-gradient-generic) green`);
+        segment.setAttribute("stroke-width", "50%");
+        segment.setAttribute("stroke-dasharray", this.getSegmentDasharray(amount, start));
+        segment.setAttribute("stroke-dashoffset", this.getSegmentDashOffset(amount, start));
+        this.svg_element.appendChild(segment);
+        const anim = segment.animate(advance_segment_keyframes, advance_segment_timing);
+        anim.onfinish = () => {
+            segment.remove();
+        };
+    }
+    getSegmentDashOffset(amount, start) {
+        const end = this.animation.currentTime;
+        const length = (amount / TEN_SECONDS) * Math.PI * 50;
+        if (end < start) {
+            return ((amount - end) / TEN_SECONDS) * Math.PI * 50 + "%";
+        }
+        else {
+            return -(start / TEN_SECONDS) * Math.PI * 50 + "%";
+        }
+    }
+    getSegmentDasharray(amount, start) {
+        let end = this.animation.currentTime;
+        const length = ((amount / TEN_SECONDS) * Math.PI).toFixed(2);
+        if (end < start) {
+            return `calc(50% * ${length}) calc(157% - (50% * ${length}))`;
+        }
+        else {
+            return `calc(50% * ${length}) 500%`;
+        }
     }
     advanceByScaled(amount, offline = false) {
         this.advanceByUnscaled(amount * this.playback_rate, offline);
