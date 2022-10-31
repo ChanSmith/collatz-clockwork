@@ -236,6 +236,11 @@ class TableView {
             }
         }
     }
+    updateClockTextSizes() {
+        Game.clock_manager.forEachClock(clock => {
+            clock.updateApplicationsPerCycleFontSize();
+        });
+    }
     canAddClock(pos) {
         return Game.clock_manager.canAddClock(pos);
     }

@@ -45,7 +45,10 @@ const CELL_SIZE_OPTION = {
             initial_cell_size_update = false;
             return;
         }
+        OptionsMenu.cell_size = parseInt(s);
+        Game.table_view.updateClockTextSizes();
         Game.table_view.updateStatisticSizes();
+
     }
 };
 
@@ -190,6 +193,7 @@ class OptionsMenu extends HTMLDivElement {
 
     // Options stored in the menu
     buy_all_method: BuyAllMethod = "cheapest-first";
+    static cell_size: number = DEFAULT_CLOCK_TABLE_SIZE;
 
     constructor() {
         super();

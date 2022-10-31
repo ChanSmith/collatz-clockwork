@@ -371,6 +371,13 @@ body {
     }
 }
 
+.applications-per-cycle-text {
+    stroke: white;
+    paint-order: stroke;
+    text-anchor: end;
+    dominant-baseline: middle;
+    stroke-width: 1%;
+}
 
 use.Producer,svg.Producer {
     --color: var(--producer-color);

@@ -55,6 +55,8 @@ abstract class Clock {
     svg_element: SVGSVGElement;
     // SVG Element used to display progress for this clock
     mask_circle: SVGCircleElement;
+    // SVG Element to show applications_per_cycle level
+    applications_per_cycle_text: SVGTextElement;
     pause_element: SVGUseElement | null;
     upgrade_graphics_state: UpgradeGraphicsState;
     playback_rate: number = 1;
@@ -320,6 +322,25 @@ abstract class Clock {
         }
     }
 
+    addApplicationsPerCycleUpgradeGraphic(applied_level: number, new_level: number) {
+        if (applied_level == 0) {
+            const text = document.createElementNS(SVG_NS, "text");
+            text.classList.add("applications-per-cycle-text");
+            text.setAttribute("x", "85%");
+            text.setAttribute("y", "50%");
+            text.setAttribute("font-size", `${100 * OptionsMenu.cell_size / 52}%`);
+            this.svg_element.appendChild(text);
+            this.applications_per_cycle_text = text;
+
+        }
+        this.applications_per_cycle_text!.textContent = new_level.toString();
+    }
+    updateApplicationsPerCycleFontSize() {
+        if (this.applications_per_cycle_text) {
+            this.applications_per_cycle_text.setAttribute("font-size", `${100 * OptionsMenu.cell_size / 52}%`);
+        }
+    }
+
     addUpgradeGraphic(id: UpgradeId, new_level: number) {
         const applied_level = this.upgrade_graphics_state[id]?.applied_level ?? 0;
         const max_graphics_level = UPGRADE_OPTIONS[id].max_graphics_level;
@@ -332,7 +353,7 @@ abstract class Clock {
         } else if (id === "advance_adjacent") {
             this.addConnectorGraphic();
         } else if (id === "applications_per_cycle") {
-            // TODO: Add some sort of visual to the svg
+            this.addApplicationsPerCycleUpgradeGraphic(applied_level, new_level);
         } else if (id === "money_per_application") {
             this.addMoneyUpgradeGraphic(applied_level, new_level);
         }

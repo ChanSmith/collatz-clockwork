@@ -16,6 +16,8 @@ const CELL_SIZE_OPTION = {
             initial_cell_size_update = false;
             return;
         }
+        OptionsMenu.cell_size = parseInt(s);
+        Game.table_view.updateClockTextSizes();
         Game.table_view.updateStatisticSizes();
     }
 };
@@ -297,6 +299,7 @@ class OptionsMenu extends HTMLDivElement {
         }
     }
 }
+OptionsMenu.cell_size = DEFAULT_CLOCK_TABLE_SIZE;
 customElements.define('options-menu', OptionsMenu, { extends: 'div' });
 function getOptionsMenu() {
     return document.querySelector("#options-menu");

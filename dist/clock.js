@@ -275,6 +275,23 @@ class Clock {
             this.svg_element.appendChild(use);
         }
     }
+    addApplicationsPerCycleUpgradeGraphic(applied_level, new_level) {
+        if (applied_level == 0) {
+            const text = document.createElementNS(SVG_NS, "text");
+            text.classList.add("applications-per-cycle-text");
+            text.setAttribute("x", "85%");
+            text.setAttribute("y", "50%");
+            text.setAttribute("font-size", `${100 * OptionsMenu.cell_size / 52}%`);
+            this.svg_element.appendChild(text);
+            this.applications_per_cycle_text = text;
+        }
+        this.applications_per_cycle_text.textContent = new_level.toString();
+    }
+    updateApplicationsPerCycleFontSize() {
+        if (this.applications_per_cycle_text) {
+            this.applications_per_cycle_text.setAttribute("font-size", `${100 * OptionsMenu.cell_size / 52}%`);
+        }
+    }
     addUpgradeGraphic(id, new_level) {
         var _a, _b;
         const applied_level = (_b = (_a = this.upgrade_graphics_state[id]) === null || _a === void 0 ? void 0 : _a.applied_level) !== null && _b !== void 0 ? _b : 0;
@@ -290,7 +307,7 @@ class Clock {
             this.addConnectorGraphic();
         }
         else if (id === "applications_per_cycle") {
-            // TODO: Add some sort of visual to the svg
+            this.addApplicationsPerCycleUpgradeGraphic(applied_level, new_level);
         }
         else if (id === "money_per_application") {
             this.addMoneyUpgradeGraphic(applied_level, new_level);
@@ -372,7 +389,6 @@ class Clock {
         segment.setAttribute("cy", "50%");
         segment.setAttribute("r", "25%");
         segment.setAttribute("fill", "none");
-        // segment.setAttribute("stroke", `url(#segment-gradient-${this.getType()}) green`);
         segment.setAttribute("stroke", `url(#segment-gradient-generic) green`);
         segment.setAttribute("stroke-width", "50%");
         segment.setAttribute("stroke-dasharray", this.getSegmentDasharray(amount, start));
@@ -397,6 +413,7 @@ class Clock {
         let end = this.animation.currentTime;
         const length = ((amount / TEN_SECONDS) * Math.PI).toFixed(2);
         if (end < start) {
+            // 157 = 50 * 3.14
             return `calc(50% * ${length}) calc(157% - (50% * ${length}))`;
         }
         else {
